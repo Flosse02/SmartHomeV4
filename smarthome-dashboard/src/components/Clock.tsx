@@ -1,0 +1,36 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
+export default function Clock() {
+  const [time, setTime] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setTime(new Date());
+    const id = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!time) return null;
+
+  const timeStr = time.toLocaleTimeString('en-AU', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  return (
+    <div style={{ textAlign: 'right', position: 'absolute', top: '20px', left: '20px' }}>
+      <div style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: '28px',
+        fontWeight: 700,
+        color: 'var(--text-primary)',
+        lineHeight: 1,
+        textShadow: '0 2px 12px rgba(0,0,0,0.6)',
+      }}>
+        {timeStr}
+      </div>
+    </div>
+  );
+}
