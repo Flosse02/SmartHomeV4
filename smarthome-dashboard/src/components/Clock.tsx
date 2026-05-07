@@ -26,7 +26,7 @@ export default function Clock() {
   });
 
   return (
-    <div style={{ textAlign: 'right', position: 'absolute', top: '20px', left: '20px' }}>
+    <div style={{ textAlign: 'right'}}>
       <div style={{
         fontFamily: 'var(--font-mono)',
         fontSize: '28px',

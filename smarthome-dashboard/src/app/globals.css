@@ -152,18 +152,6 @@ body {
   padding: 8px 0;
 }
 
-.cal-cell {
-  background: var(--background);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--text-primary);
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-  padding: 6px 8px;
-  min-height: 48px;
-}
-
 .cal-cell--faded {
   color: rgba(255,255,255,0.15);
 }
@@ -212,34 +200,47 @@ body {
   border-color: transparent;
 }
 
+.cal-event {
+  font-size: 9px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 3px;
+  padding: 2px 4px;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  display: flex;
+  gap: 4px;
+}
+
+.cal-event-time {
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.cal-event-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .cal-cell {
   background: var(--background);
   font-family: var(--font-mono);
   font-size: 13px;
   color: var(--text-primary);
   display: flex;
-  flex-direction: column;    /* stack number and events vertically */
-  align-items: flex-end;     /* number aligned right */
+  flex-direction: column;
+  align-items: flex-start;
   padding: 6px 8px;
+  gap: 2px;
   min-height: 48px;
   overflow: hidden;
-  gap: 2px;
 }
-
-.cal-cell span {
+.cal-day-number {
   width: 100%;
-  text-align: right;         /* day number right-aligned */
-}
-
-.cal-event {
-  font-size: 9px;
-  background: var(--accent);
-  color: #fff;
-  border-radius: 3px;
-  padding: 1px 4px;
-  width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: left;          /* event text left-aligned */
+  text-align: right;
+  margin-bottom: 2px;
 }

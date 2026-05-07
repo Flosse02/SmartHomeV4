@@ -79,10 +79,24 @@ export default function CalendarPanel() {
               key={i}
               className={`cal-cell ${cell.type !== 'current' ? 'cal-cell--faded' : ''} ${isToday(cell.day, cell.type) ? 'cal-cell--today' : ''}`}
             >
-              {cellEvents.map((e, j) => (
-                <div key={j} className="cal-event">{e.summary}</div>
-              ))}
-              <span>{cell.day}</span>
+              <span className="cal-day-number">{cell.day}</span>
+              {cellEvents.map((e, j) => {
+                const timeStr = e.start?.dateTime
+                  ? new Date(e.start.dateTime).toLocaleTimeString('en-AU', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true,
+                    })
+                  : 'All day';
+
+                return (
+                  <div key={j} className="cal-event">
+                    <span className="cal-event-time">{timeStr}</span>
+                    <span className="cal-event-title">{e.summary}</span>
+                  </div>
+                );
+              })}
+              
             </div>
           );
         })}
