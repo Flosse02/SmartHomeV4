@@ -1,8 +1,7 @@
 'use client';
 
 // import DeviceGrid from '@/components/top/DeviceGrid';
-// import CalendarPanel from '@/components/bottom/CalendarPanel';
-import Clock from '@/components/Clock';
+import CalendarPanel from '@/components/CalendarPanel';
 import SmartArea from '@/components/SmartArea';
 
 export default function Home() {
@@ -18,7 +17,7 @@ export default function Home() {
 
       {/* BOTTOM HALF */}
       <section className="bottom-half">
-        {/* <CalendarPanel /> */}
+        <CalendarPanel />
       </section>
     </main>
   );

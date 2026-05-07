@@ -19,6 +19,12 @@ export default function Clock() {
     hour12: true,
   });
 
+  const dateStr = time.toLocaleDateString('en-AU', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+
   return (
     <div style={{ textAlign: 'right', position: 'absolute', top: '20px', left: '20px' }}>
       <div style={{
@@ -30,6 +36,17 @@ export default function Clock() {
         textShadow: '0 2px 12px rgba(0,0,0,0.6)',
       }}>
         {timeStr}
+      </div>
+      <div style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: '11px',
+        color: 'var(--accent)',
+        marginTop: '4px',
+        letterSpacing: '1.5px',
+        textTransform: 'uppercase',
+        textShadow: '0 1px 8px rgba(0,0,0,0.6)',
+      }}>
+        {dateStr}
       </div>
     </div>
   );
