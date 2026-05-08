@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import Slideshow from './smarthome/Slideshow';
 import MusicPlayer from './smarthome/MusicPlayer';
+import SmartHome from './smarthome/SmartHome';
 import Clock from '@/components/Clock';
 
-const TABS = ['Slideshow', 'Music'] as const;
+const TABS = ['Slideshow', 'Music', 'Smart Home'] as const;
 type Tab = typeof TABS[number];
 
 export default function SmartArea() {
@@ -34,6 +35,7 @@ export default function SmartArea() {
       <div className="smart-content">
         {activeTab === 'Slideshow' && <Slideshow />}
         {activeTab === 'Music' && <MusicPlayer />}
+        {activeTab === 'Smart Home' && <SmartHome />}
       </div>
     </div>
   );
