@@ -1,140 +1,253 @@
-import { useState, useCallback, useRef } from 'react';
+import { useReducer, useCallback, useRef } from 'react';
 import { JellyfinItem } from './useJellyFinLibrary';
 
 export interface QueueTrack extends JellyfinItem {
-  queueId: string; // unique per queue entry
+  queueId: string;
+}
+
+type State = {
+  queue: QueueTrack[];
+  currentIndex: number;
+};
+
+type Action =
+  | { type: 'SET_QUEUE'; queue: QueueTrack[]; index?: number }
+  | { type: 'ADD_END'; items: QueueTrack[] }
+  | { type: 'INSERT_AFTER_CURRENT'; items: QueueTrack[] }
+  | { type: 'REMOVE'; id: string }
+  | { type: 'CLEAR' }
+  | { type: 'SET_INDEX'; index: number };
+
+function wrap(item: JellyfinItem): QueueTrack {
+  return {
+    ...item,
+    queueId: `${item.Id}-${crypto.randomUUID()}`,
+  };
+}
+
+const initialState: State = {
+  queue: [],
+  currentIndex: -1,
+};
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+
+    case 'SET_QUEUE':
+      return {
+        queue: action.queue,
+        currentIndex: action.index ?? -1,
+      };
+
+    case 'ADD_END':
+      return {
+        ...state,
+        queue: [...state.queue, ...action.items],
+      };
+
+    case 'INSERT_AFTER_CURRENT': {
+      const insertAt =
+        state.currentIndex < 0
+          ? state.queue.length
+          : state.currentIndex + 1;
+
+      const newQueue = [
+        ...state.queue.slice(0, insertAt),
+        ...action.items,
+        ...state.queue.slice(insertAt),
+      ];
+
+      return {
+        queue: newQueue,
+        currentIndex: state.currentIndex,
+      };
+    }
+
+    case 'REMOVE': {
+      const idx = state.queue.findIndex(t => t.queueId === action.id);
+      if (idx === -1) return state;
+
+      const newQueue = state.queue.filter(t => t.queueId !== action.id);
+
+      let newIndex = state.currentIndex;
+
+      if (idx < state.currentIndex) newIndex--;
+      if (idx === state.currentIndex) newIndex = Math.max(0, newIndex - 1);
+
+      if (newQueue.length === 0) newIndex = -1;
+
+      return {
+        queue: newQueue,
+        currentIndex: newIndex,
+      };
+    }
+
+    case 'CLEAR':
+      return initialState;
+
+    case 'SET_INDEX':
+      return {
+        ...state,
+        currentIndex: Math.max(0, Math.min(action.index, state.queue.length - 1)),
+      };
+
+    default:
+      return state;
+  }
 }
 
 export function useQueue(
-  playInBrowser: (itemId: string) => Promise<void>,
-  onTrackChange?: (item: QueueTrack) => void,
+  playInBrowser: (id: string) => Promise<void>,
+  onTrackChange?: (item: QueueTrack | null) => void,
+  onStop?: () => void,
+
 ) {
-  const [queue, setQueue] = useState<QueueTrack[]>([]);
-  const [currentIndex, setCurrentIndex] = useState<number>(-1);
-  const currentIndexRef = useRef(-1);
+  const [state, dispatch] = useReducer(reducer, initialState);
 
-  const wrap = (item: JellyfinItem): QueueTrack => ({
-    ...item,
-    queueId: `${item.Id}-${Date.now()}-${Math.random()}`,
-  });
+  // prevents stale queue access inside async callbacks
+  const queueRef = useRef(state.queue);
+  const indexRef = useRef(state.currentIndex);
 
-  // ── Mutators ──────────────────────────────────────────────────────────────
-  const addToQueue = useCallback((item: JellyfinItem) => {
-    setQueue(q => [...q, wrap(item)]);
-  }, []);
+  queueRef.current = state.queue;
+  indexRef.current = state.currentIndex;
 
-  const addManyToQueue = useCallback((items: any[]) => {
-    setQueue(q => [
-      ...q,
-      ...items.map((item: any) =>
-        item.queueId ? item : wrap(item)
-      ),
-    ]);
-  }, []);
+  const emit = useCallback((track: QueueTrack | null) => {
+    onTrackChange?.(track);
+  }, [onTrackChange]);
 
-  const removeFromQueue = useCallback((queueId: string) => {
-    setQueue(q => {
-      const idx = q.findIndex(t => t.queueId === queueId);
-      const next = q.filter(t => t.queueId !== queueId);
-      // adjust currentIndex if needed
-      if (idx <= currentIndexRef.current) {
-        const newIdx = Math.max(-1, currentIndexRef.current - 1);
-        currentIndexRef.current = newIdx;
-        setCurrentIndex(newIdx);
-      }
-      return next;
-    });
-  }, []);
+  // ── PLAY ───────────────────────────────
 
-  const clearQueue = useCallback(() => {
-    setQueue([]);
-  }, []);
+  const playIndex = useCallback(async (index: number) => {
+    const clamped = Math.max(0, Math.min(index, queueRef.current.length - 1));
+    const track = queueRef.current[clamped];
 
-  const shuffleQueue = useCallback(() => {
-    setQueue(q => {
-      const copy = [...q];
-      for (let i = copy.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [copy[i], copy[j]] = [copy[j], copy[i]];
-      }
-      return copy;
-    });
-    setCurrentIndex(-1);
-    currentIndexRef.current = -1;
-  }, []);
+    if (!track) return;
 
-  const moveUp = useCallback((queueId: string) => {
-    setQueue(q => {
-      const idx = q.findIndex(t => t.queueId === queueId);
-      if (idx <= 0) return q;
-      const copy = [...q];
-      [copy[idx - 1], copy[idx]] = [copy[idx], copy[idx - 1]];
-      return copy;
-    });
-  }, []);
+    dispatch({ type: 'SET_INDEX', index: clamped });
 
-  const moveDown = useCallback((queueId: string) => {
-    setQueue(q => {
-      const idx = q.findIndex(t => t.queueId === queueId);
-      if (idx === -1 || idx >= q.length - 1) return q;
-      const copy = [...q];
-      [copy[idx], copy[idx + 1]] = [copy[idx + 1], copy[idx]];
-      return copy;
-    });
-  }, []);
-
-  // ── Playback ──────────────────────────────────────────────────────────────
-  const playIndex = useCallback(async (idx: number, currentQueue?: QueueTrack[]) => {
-    const q = currentQueue ?? queue;
-    if (idx < 0 || idx >= q.length) return;
-    currentIndexRef.current = idx;
-    setCurrentIndex(idx);
-    await playInBrowser(q[idx].Id);
-    onTrackChange?.(q[idx]);
-  }, [queue, playInBrowser, onTrackChange]);
+    emit(track);
+    await playInBrowser(track.Id);
+  }, [playInBrowser, emit]);
 
   const playNext = useCallback(async () => {
-    const next = currentIndexRef.current + 1;
+    const next = indexRef.current + 1;
+    const track = queueRef.current[next];
 
-    if (next < queue.length) {
-      await playIndex(next);
-    }
-  }, [playIndex, queue.length]);
+    if (!track) return;
+
+    dispatch({ type: 'SET_INDEX', index: next });
+
+    emit(track);
+    await playInBrowser(track.Id);
+  }, [playInBrowser, emit]);
 
   const playPrev = useCallback(async () => {
-    const prev = currentIndexRef.current - 1;
+    const prev = indexRef.current - 1;
+    const track = queueRef.current[prev];
 
-    if (prev >= 0) {
-      await playIndex(prev);
-    }
-  }, [playIndex]);
+    if (!track) return;
+
+    dispatch({ type: 'SET_INDEX', index: prev });
+
+    emit(track);
+    await playInBrowser(track.Id);
+  }, [playInBrowser, emit]);
 
   const playNow = useCallback(async (item: JellyfinItem) => {
     const track = wrap(item);
-    setQueue(q => {
-      const next = [track, ...q.slice(currentIndexRef.current + 1)];
-      const newQueue = [...q.slice(0, currentIndexRef.current + 1), ...next];
-      const newIdx = currentIndexRef.current + 1;
-      currentIndexRef.current = newIdx;
-      setCurrentIndex(newIdx);
-      playInBrowser(track.Id);
-      return newQueue;
+
+    dispatch({
+      type: 'SET_QUEUE',
+      queue: [...queueRef.current, track],
+      index: queueRef.current.length,
     });
+
+    emit(track);
+    await playInBrowser(track.Id);
+  }, [playInBrowser, emit]);
+
+  // ── QUEUE OPS ──────────────────────────
+
+  const addToQueue = useCallback((item: JellyfinItem) => {
+    dispatch({ type: 'ADD_END', items: [wrap(item)] });
+  }, []);
+
+  const addManyToQueue = useCallback((items: JellyfinItem[]) => {
+    dispatch({ type: 'ADD_END', items: items.map(wrap) });
+  }, []);
+
+  // ✅ THIS is your fixed "play next / add to front of queue"
+  const addNext = useCallback((items: JellyfinItem[]) => {
+    dispatch({
+      type: 'INSERT_AFTER_CURRENT',
+      items: items.map(wrap),
+    });
+  }, []);
+
+  const removeFromQueue = useCallback((queueId: string) => {
+    const queue = queueRef.current;
+    const currentIndex = indexRef.current;
+
+    const idx = queue.findIndex(t => t.queueId === queueId);
+    if (idx === -1) return;
+
+    const newQueue = queue.filter(t => t.queueId !== queueId);
+
+    let newIndex = currentIndex;
+
+    const removedCurrent = idx === currentIndex;
+
+    if (idx < currentIndex) newIndex--;
+    if (idx === currentIndex) newIndex = currentIndex; // will adjust below
+
+    if (newQueue.length === 0) {
+      dispatch({ type: 'SET_QUEUE', queue: [], index: -1 });
+      return;
+    }
+
+    // clamp index
+    newIndex = Math.max(0, Math.min(newIndex, newQueue.length - 1));
+
+    dispatch({
+      type: 'SET_QUEUE',
+      queue: newQueue,
+      index: newIndex,
+    });
+
+    // 🔥 KEY FIX: auto-advance if we deleted current
+    if (removedCurrent) {
+      const nextTrack = newQueue[newIndex];
+      if (nextTrack) {
+        playInBrowser(nextTrack.Id).catch(() => {});
+      }
+    }
   }, [playInBrowser]);
 
+  const clearQueue = useCallback(() => {
+    dispatch({ type: 'CLEAR' });
+    onStop?.();
+  }, [onStop]);
+
+  const playFirst = useCallback(async () => {
+    if (queueRef.current.length === 0) return;
+    await playIndex(0);
+  }, [playIndex]);
+
   return {
-    queue,
-    currentIndex,
+    queue: state.queue,
+    currentIndex: state.currentIndex,
+    currentTrack: state.queue[state.currentIndex] ?? null,
+
     addToQueue,
     addManyToQueue,
+    addNext,
     removeFromQueue,
     clearQueue,
-    shuffleQueue,
-    moveUp,
-    moveDown,
-    playIndex,
+
+    playNow,
     playNext,
     playPrev,
-    playNow,
+    playIndex,
+    playFirst,
   };
 }

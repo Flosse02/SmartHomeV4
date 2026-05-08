@@ -172,12 +172,10 @@ function DevicePicker({ jellyfin }: { jellyfin: ReturnType<typeof useJellyfin> }
 
 // ── Queue Panel ──────────────────────────────────────────────────────────────
 
-function QueuePanel({ queue: q, currentIndex, onRemove, onMoveUp, onMoveDown, onPlayIndex, onClear, imageUrl }: {
+function QueuePanel({ queue: q, currentIndex, onRemove, onPlayIndex, onClear, imageUrl }: {
   queue: ReturnType<typeof useQueue>['queue'];
   currentIndex: number;
   onRemove: (id: string) => void;
-  onMoveUp: (id: string) => void;
-  onMoveDown: (id: string) => void;
   onPlayIndex: (i: number) => void;
   onClear: () => void;
   imageUrl: (item: JellyfinItem) => string | null;
@@ -227,8 +225,6 @@ function QueuePanel({ queue: q, currentIndex, onRemove, onMoveUp, onMoveDown, on
 
               {/* Actions */}
               <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
-                <button onClick={() => onMoveUp(track.queueId)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 10, padding: '2px 3px' }}>▲</button>
-                <button onClick={() => onMoveDown(track.queueId)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 10, padding: '2px 3px' }}>▼</button>
                 <button onClick={() => onRemove(track.queueId)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 11, padding: '2px 4px' }}>✕</button>
               </div>
             </div>
@@ -292,6 +288,18 @@ function SidePanel({ open, onClose, jellyfin, queue: q, lib }: {
     }
   };
 
+  const handleAddAlbumToFrontQueue = async (item: JellyfinItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (item.Type === 'MusicAlbum') {
+      // fetch tracks then add all
+      const res = await fetch(`${BASE}/Items?ParentId=${item.Id}&IncludeItemTypes=Audio&Recursive=true&SortBy=IndexNumber&api_key=${API_KEY}`);
+      const data = await res.json();
+      q.addNext(data.Items ?? []);
+    } else {
+      q.addNext([item]);
+    }
+  };
+
   return (
     <>
       {/* Backdrop */}
@@ -305,14 +313,15 @@ function SidePanel({ open, onClose, jellyfin, queue: q, lib }: {
 
       {/* Panel */}
       <div style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 150,
-        width: 420, maxWidth: '95vw',
+        position: 'fixed', top: '5%', right: '5%', bottom: '5%', left: '5%', zIndex: 150,
         background: 'var(--card-bg, #1a1a2e)',
         borderLeft: '1px solid rgba(255,255,255,0.08)',
         boxShadow: '-8px 0 32px rgba(0,0,0,0.5)',
         display: 'flex', flexDirection: 'column',
-        transform: open ? 'translateX(0)' : 'translateX(100%)',
-        transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1)',
+        transform: open ? 'scale(1)' : 'scale(0.98)',
+        opacity: open ? 1 : 0,
+        transition: 'transform 0.2s ease, opacity 0.2s ease',
+        pointerEvents: open ? 'auto' : 'none',
       }}>
 
         {/* Panel header */}
@@ -391,6 +400,10 @@ function SidePanel({ open, onClose, jellyfin, queue: q, lib }: {
                       background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 4,
                       color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '11px', padding: '3px 6px',
                     }}>+Q</button>
+                    <button onClick={e => handleAddAlbumToFrontQueue(item, e)} title="Add to front of queue" style={{
+                      background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 4,
+                      color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '11px', padding: '3px 6px',
+                    }}>+F</button>
                     <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
                       {item.Type === 'MusicAlbum' ? '▸' : lib.ticksToTime(item.RunTimeTicks)}
                     </span>
@@ -418,7 +431,11 @@ export default function MusicPlayer() {
 
   const queue = useQueue(
     jellyfin.playInBrowser,
-    // auto-advance: called when a track starts
+    undefined,
+    () => {
+      jellyfin.stopBrowser?.();
+      jellyfin.pause?.();
+    }
   );
 
   useEffect(() => {
@@ -429,24 +446,22 @@ export default function MusicPlayer() {
 
   const handleShuffle = async () => {
     const tracks = await jellyfin.fetchShuffleTracks(200);
-
     if (tracks.length === 0) return;
 
-    // Shuffle array first
     const shuffled = [...tracks].sort(() => Math.random() - 0.5);
 
-    // Create queue items with queueIds
     const queueTracks = shuffled.map((t: any) => ({
       ...t,
       queueId: `${t.Id}-${Date.now()}-${Math.random()}`,
     }));
 
-    // Replace queue
     queue.clearQueue();
     queue.addManyToQueue(queueTracks);
 
-    // Start first shuffled song immediately
-    await queue.playIndex(0, queueTracks);
+    // wait for reducer to apply state before playing
+    setTimeout(() => {
+      queue.playIndex(0);
+    }, 0);
 
     setShuffleActive(true);
   };
@@ -707,8 +722,6 @@ export default function MusicPlayer() {
           queue={queue.queue}
           currentIndex={queue.currentIndex}
           onRemove={queue.removeFromQueue}
-          onMoveUp={queue.moveUp}
-          onMoveDown={queue.moveDown}
           onPlayIndex={queue.playIndex}
           onClear={queue.clearQueue}
           imageUrl={lib.imageUrl}
