@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useJellyfin } from '@/hooks/useJellyFin';
 import { useJellyfinLibrary, JellyfinItem } from '@/hooks/useJellyFinLibrary';
-import { useQueue } from '@/hooks/useQueue';
+import { useQueue, QueueTrack} from '@/hooks/useQueue';
 
 const BASE = process.env.NEXT_PUBLIC_JELLYFIN_URL ?? '';
 const API_KEY = process.env.NEXT_PUBLIC_JELLYFIN_API_KEY ?? '';
@@ -171,62 +171,181 @@ function DevicePicker({ jellyfin }: { jellyfin: ReturnType<typeof useJellyfin> }
 }
 
 // ── Queue Panel ──────────────────────────────────────────────────────────────
+function QueueRow({
+  track,
+  index,
+  isCurrent,
+  isDragging,
+  onPointerDown,
+  onPlayIndex,
+  onRemove,
+  imageUrl,
+}: any) {
+  return (
+    <div
+      onPointerDown={(e) => onPointerDown(e, index)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '6px 16px',
+        userSelect: 'none',
+        cursor: isDragging ? 'grabbing' : 'grab',
+        opacity: isDragging ? 0.4 : 1,
+        background: isCurrent ? 'rgba(255,255,255,0.07)' : 'transparent',
+        borderLeft: isCurrent
+          ? '2px solid var(--accent)'
+          : '2px solid transparent',
+      }}
+    >
+      {imageUrl(track) ? (
+        <img
+          src={imageUrl(track)!}
+          style={{ width: 30, height: 30, borderRadius: 3 }}
+        />
+      ) : (
+        <div
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: 3,
+            background: 'rgba(255,255,255,0.06)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          🎵
+        </div>
+      )}
 
-function QueuePanel({ queue: q, currentIndex, onRemove, onPlayIndex, onClear, imageUrl }: {
-  queue: ReturnType<typeof useQueue>['queue'];
-  currentIndex: number;
-  onRemove: (id: string) => void;
-  onPlayIndex: (i: number) => void;
-  onClear: () => void;
-  imageUrl: (item: JellyfinItem) => string | null;
-}) {
-  if (q.length === 0) return (
-    <div style={{ padding: '20px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>
-      Queue is empty — add tracks from Browse
+      <div style={{ flex: 1 }} onClick={() => onPlayIndex(index)}>
+        <div
+          style={{
+            fontSize: 12,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            color: isCurrent ? 'var(--accent)' : 'var(--text-primary)',
+          }}
+        >
+          {track.Name}
+        </div>
+      </div>
+
+      <button
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={() => onRemove(track.queueId)}
+        style={{
+          background: 'none',
+          border: 'none',
+          color: 'var(--text-muted)',
+          cursor: 'pointer',
+        }}
+      >
+        ✕
+      </button>
     </div>
   );
+}
+
+function QueuePanel({
+  queue,
+  currentIndex,
+  onRemove,
+  onMove,
+  onPlayIndex,
+  imageUrl,
+}: any) {
+  const listRef = useRef<HTMLDivElement | null>(null);
+
+  const dragIndexRef = useRef<number | null>(null);
+  const hoverIndexRef = useRef<number | null>(null);
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+
+  const getIndexFromY = (y: number) => {
+    if (!listRef.current) return 0;
+
+    const items = Array.from(listRef.current.children) as HTMLElement[];
+
+    for (let i = 0; i < items.length; i++) {
+      const rect = items[i].getBoundingClientRect();
+      const mid = rect.top + rect.height / 2;
+      if (y < mid) return i;
+    }
+
+    return items.length;
+  };
+
+  const handlePointerMove = (e: PointerEvent) => {
+    if (dragIndexRef.current === null) return;
+
+    const idx = getIndexFromY(e.clientY);
+
+    hoverIndexRef.current = idx;
+    setHoverIndex(idx);
+  };
+
+  const handlePointerUp = () => {
+    const from = dragIndexRef.current;
+    const to = hoverIndexRef.current;
+
+    if (from !== null && to !== null && from !== to) {
+      onMove(currentIndex + from, currentIndex + to);
+    }
+
+    dragIndexRef.current = null;
+    hoverIndexRef.current = null;
+    setHoverIndex(null);
+
+    document.removeEventListener('pointermove', handlePointerMove);
+    document.removeEventListener('pointerup', handlePointerUp);
+  };
+
+  const startDrag = (index: number, e: React.PointerEvent) => {
+    dragIndexRef.current = index;
+    hoverIndexRef.current = index;
+
+    setHoverIndex(index);
+
+    document.addEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointerup', handlePointerUp);
+  };
+
+  const visible = queue.slice(currentIndex);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Track{q.length !== 1 ? 's' : ''}</span>
-        <button onClick={onClear} style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>Clear all</button>
-      </div>
-      <div style={{ overflowY: 'auto', flex: 1 }}>
-        {q.map((track, i) => {
-          const isCurrent = i === currentIndex;
+      <div ref={listRef} style={{ overflowY: 'auto', flex: 1 }}>
+        {visible.map((track: any, i: number) => {
+          const realIndex = currentIndex + i;
+          const isCurrent = realIndex === currentIndex;
+
           return (
-            <div key={track.queueId} style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '6px 16px', cursor: 'pointer',
-              background: isCurrent ? 'rgba(255,255,255,0.07)' : 'transparent',
-              borderLeft: isCurrent ? '2px solid var(--accent)' : '2px solid transparent',
-              transition: 'background 0.1s',
-            }}
-              onMouseEnter={e => !isCurrent && (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
-              onMouseLeave={e => !isCurrent && (e.currentTarget.style.background = 'transparent')}
-            >
-              {/* Thumbnail */}
-              {imageUrl(track) ? (
-                <img src={imageUrl(track)!} alt="" style={{ width: 30, height: 30, borderRadius: 3, objectFit: 'cover', flexShrink: 0 }} />
-              ) : (
-                <div style={{ width: 30, height: 30, borderRadius: 3, background: 'rgba(255,255,255,0.06)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>🎵</div>
+            <div key={track.queueId}>
+              {/* drop indicator */}
+              {hoverIndex === i && dragIndexRef.current !== null && (
+                <div
+                  style={{
+                    height: 2,
+                    background: 'var(--accent)',
+                    margin: '0 16px',
+                  }}
+                />
               )}
 
-              {/* Info */}
-              <div style={{ flex: 1, minWidth: 0 }} onClick={() => onPlayIndex(i)}>
-                <div style={{ fontSize: '12px', color: isCurrent ? 'var(--accent)' : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {isCurrent ? '▶ ' : ''}{track.Name}
-                </div>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {track.AlbumArtist ?? track.Artists?.[0] ?? ''}
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
-                <button onClick={() => onRemove(track.queueId)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 11, padding: '2px 4px' }}>✕</button>
-              </div>
+              <QueueRow
+                track={track}
+                index={i}
+                isCurrent={isCurrent}
+                isDragging={dragIndexRef.current === i}
+                onPointerDown={startDrag}
+                onPlayIndex={(uiIndex: number) =>
+                  onPlayIndex(currentIndex + uiIndex)
+                }
+                onRemove={onRemove}
+                imageUrl={imageUrl}
+              />
             </div>
           );
         })}
@@ -721,6 +840,7 @@ export default function MusicPlayer() {
         <QueuePanel
           queue={queue.queue}
           currentIndex={queue.currentIndex}
+          onMove={queue.move}
           onRemove={queue.removeFromQueue}
           onPlayIndex={queue.playIndex}
           onClear={queue.clearQueue}
