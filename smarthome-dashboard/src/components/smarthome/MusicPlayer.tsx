@@ -98,24 +98,13 @@ function ProgressBar({
       }}>
         <div style={{
           height: '100%',
-          width: `${Math.min(progress * 100, 100)}%`,
+          width: `${Math.min((progress ?? 0) * 100, 100)}%`,
           background: 'var(--accent)',
           borderRadius: '1px',
           transition: isDragging.current ? 'none' : 'width 0.2s linear',
         }} />
       </div>
     </div>
-  );
-}
-
-function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <button onClick={onClick} style={{
-      fontSize: '10px', padding: '3px 8px', borderRadius: 20, cursor: 'pointer',
-      background: active ? 'var(--accent)' : 'rgba(255,255,255,0.06)',
-      color: active ? 'white' : 'var(--text-secondary)',
-      border: 'none', transition: 'background 0.15s', whiteSpace: 'nowrap',
-    }}>{label}</button>
   );
 }
 
@@ -592,36 +581,53 @@ interface MusicPlayerProps {
   devices: ReturnType<typeof useDevices>;
 }
 
-
-export default function MusicPlayer({ selectedDevice, onSelectDevice, devices }: MusicPlayerProps) {
+export default function MusicPlayer({
+  selectedDevice,
+  onSelectDevice,
+  devices,
+}: MusicPlayerProps) {
   const jellyfin = useJellyfin();
   const lib = useJellyfinLibrary();
+
   const [showPanel, setShowPanel] = useState(false);
   const [showDevices, setShowDevices] = useState(false);
   const [shuffleActive, setShuffleActive] = useState(false);
+
   const SHUFFLE_AHEAD = 10;
   const shufflePoolRef = useRef<any[]>([]);
   const shuffleModeRef = useRef(false);
+  const [now, setNow] = useState(Date.now());
 
-  // ── Device routing ───────────────────────────────────────────────────────
-  const selectedDeviceRef = useRef(selectedDevice);
-  useEffect(() => { selectedDeviceRef.current = selectedDevice; }, [selectedDevice]);
+  useEffect(() => {
+    const i = setInterval(() => {
+      setNow(Date.now());
+    }, 500); // smoother than 1s
+
+    return () => clearInterval(i);
+  }, []);
+
+  // ── Device routing ────────────────────────────────────────────────
+  const playbackRouter = useRef({
+    getDevice: () => selectedDevice,
+  }).current;
 
   const queueRef = useRef<ReturnType<typeof useQueue> | null>(null);
 
-  const playInBrowser = useCallback(async (itemId: string) => {
-    const device = selectedDeviceRef.current;
-    if (device) {
-      const trackName = queueRef.current?.queue.find(t => t.Id === itemId)?.Name;
-      await devices.playOnDevice(device, itemId, trackName);
-    } else {
-      await jellyfin.playInBrowser(itemId);
-    }
-  }, []); // reads everything via refs at call time
+  const playTrack = useCallback(async (itemId: string) => {
+    const device = selectedDevice;
+    console.log("Casting to device:", selectedDevice);
 
-  // ── Queue ────────────────────────────────────────────────────────────────
+    if (device) {
+      await devices.playOnDevice(device, itemId);
+      return;
+    }
+
+    await jellyfin.playInBrowser(itemId);
+  }, [selectedDevice, devices, jellyfin]);
+
+  // ── Queue ──────────────────────────────────────────────────────────
   const queue = useQueue(
-    playInBrowser,
+    playTrack,
     undefined,
     () => {
       jellyfin.stopBrowser?.();
@@ -629,27 +635,46 @@ export default function MusicPlayer({ selectedDevice, onSelectDevice, devices }:
     }
   );
 
-  queueRef.current = queue; // keep in sync for track name lookup
+  const formatTime = (s: number) => {
+    if (!isFinite(s)) return '--:--';
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+  };
 
-  // ── Shuffle top-up ───────────────────────────────────────────────────────
+  useEffect(() => {
+    queueRef.current = queue;
+  }, [queue]);
+
+  // ── Shuffle system ────────────────────────────────────────────────
   const queueLengthRef = useRef(queue.queue.length);
   const currentIndexRef = useRef(queue.currentIndex);
-  queueLengthRef.current = queue.queue.length;
-  currentIndexRef.current = queue.currentIndex;
 
   const pendingAddRef = useRef(0);
 
+  queueLengthRef.current = queue.queue.length;
+  currentIndexRef.current = queue.currentIndex;
+
   const topUpQueue = useCallback(() => {
     if (!shuffleModeRef.current) return;
-    const effectiveLength = queueLengthRef.current + pendingAddRef.current;
-    const ahead = effectiveLength - (currentIndexRef.current + 1);
+
+    const effectiveLength =
+      queueLengthRef.current + pendingAddRef.current;
+
+    const ahead =
+      effectiveLength - (currentIndexRef.current + 1);
+
     const needed = SHUFFLE_AHEAD - ahead;
+
     if (needed <= 0) return;
+
     const toAdd = shufflePoolRef.current.splice(0, needed);
+
     if (toAdd.length === 0) return;
+
     pendingAddRef.current += toAdd.length;
     queue.addManyToQueue(toAdd);
-  }, [queue.addManyToQueue]);
+  }, [queue]);
 
   useEffect(() => {
     pendingAddRef.current = 0;
@@ -661,7 +686,7 @@ export default function MusicPlayer({ selectedDevice, onSelectDevice, devices }:
 
   const handleShuffle = async () => {
     const tracks = await jellyfin.fetchShuffleTracks(200);
-    if (tracks.length === 0) return;
+    if (!tracks.length) return;
 
     const shuffled = [...tracks]
       .sort(() => Math.random() - 0.5)
@@ -671,6 +696,7 @@ export default function MusicPlayer({ selectedDevice, onSelectDevice, devices }:
       }));
 
     const first = shuffled.slice(0, SHUFFLE_AHEAD);
+
     shufflePoolRef.current = shuffled.slice(SHUFFLE_AHEAD);
     shuffleModeRef.current = true;
 
@@ -681,63 +707,89 @@ export default function MusicPlayer({ selectedDevice, onSelectDevice, devices }:
     setShuffleActive(true);
   };
 
-
-
+  // ── Playback state ────────────────────────────────────────────────
   const {
-    track, playing, progress, elapsed, duration, error,
-    play, pause, next, previous,
-    browserPlaying, browserProgress, browserTrackId,
-    pauseBrowser, resumeBrowser, stopBrowser,
+    track,
+    playing,
+    progress,
+    elapsed,
+    duration,
+    error,
+    play,
+    pause,
+    next,
+    previous,
+    browserPlaying,
+    browserProgress,
+    browserTrackId,
+    pauseBrowser,
+    resumeBrowser,
+    stopBrowser,
   } = jellyfin;
 
+  const deviceState = selectedDevice
+    ? devices.playback[selectedDevice.location]
+    : null;
+
+  const getDeviceElapsed = () => {
+    if (!deviceState) return 0;
+
+    return deviceState.position
+  };
+
+  const isPlaying =
+    deviceState?.playing ?? browserPlaying ?? playing;
+
+  const activeElapsed = deviceState
+    ? formatTime(getDeviceElapsed())
+    : elapsed;
+  
+  const activeProgress = deviceState
+    ? Math.min(getDeviceElapsed() / deviceState.duration, 1)
+    : browserProgress ?? progress;
+
+  const activeTrack =
+    queue.currentIndex >= 0
+      ? queue.queue[queue.currentIndex]
+      : null;
+
+  const songLength = formatTime(deviceState?.duration ?? 0);
   const showBrowserPlayer = !!browserTrackId;
-  const activeProgress = showBrowserPlayer ? browserProgress : progress;
-  const activePlaying = showBrowserPlayer ? browserPlaying : playing;
 
-  // Current queue track info (richer than session poll)
-  const queueTrack = queue.currentIndex >= 0 ? queue.queue[queue.currentIndex] : null;
+  const handlePlayPause = async () => {
+    if (selectedDevice) {
+      if (isPlaying) {
+        await devices.pauseDevice(selectedDevice);
+      } else {
+        await devices.resumeDevice(selectedDevice);
+      }
+      return;
+    }
 
-  const activeElapsed = showBrowserPlayer
-  ? jellyfin.browserElapsed
-  : elapsed;
+    isPlaying ? pauseBrowser() : resumeBrowser();
+  };
 
-  const activeDuration = showBrowserPlayer
-  ? jellyfin.browserDuration
-  : duration;
+  const useQueueControls = queue.queue.length > 0;
 
   return (
-  <>
-    <SidePanel
-      open={showPanel}
-      onClose={() => setShowPanel(false)}
-      jellyfin={jellyfin}
-      queue={queue}
-      lib={lib}
-    />
+    <>
+      <SidePanel
+        open={showPanel}
+        onClose={() => setShowPanel(false)}
+        jellyfin={jellyfin}
+        queue={queue}
+        lib={lib}
+      />
 
-    {/* Main layout */}
-    <div style={{
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-      overflow: 'hidden',
-      minWidth: 0,
-      maxWidth: '100vw',
-    }}>
+      <div style={{ display: 'flex', width: '100%', height: '100%' }}>
 
-      {/* Player */}
-      <div style={{
-        flex: 1,
-        padding: '14px 18px',
-        display: 'flex',
-        flexDirection: 'column',
-        minWidth: 0,
-        overflow: 'hidden',
-      }}>
-        {/* Header row */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div className="section-label">Now Playing</div>
-          <div style={{ display: 'flex', gap: 6 }}>
+        {/* ── PLAYER ───────────────────────────────────────────── */}
+        <div style={{ flex: 1, padding: 16, display: 'flex', flexDirection: 'column' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div>Now Playing</div>
+
             <button onClick={handleShuffle} title="Shuffle" style={{
               fontSize: '11px',
               background: shuffleActive ? 'rgba(var(--accent-rgb, 99,102,241),0.2)' : 'rgba(255,255,255,0.06)',
@@ -748,88 +800,27 @@ export default function MusicPlayer({ selectedDevice, onSelectDevice, devices }:
             }}>
               {jellyfin.shuffling ? '…' : '🔀 Shuffle'}
             </button>
-
-            <button onClick={() => setShowPanel(true)} style={{
-              fontSize: '11px',
-              background: 'rgba(255,255,255,0.06)',
-              border: 'none',
-              borderRadius: 6,
-              padding: '3px 8px',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-            }}>
-              Browse
-            </button>
           </div>
-        </div>
 
-        {/* Track info */}
-        {error ? (
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-            ⚠ {error}
-          </span>
-        ) : (!track && !browserTrackId) ? (
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-            Nothing playing — browse to start
-          </span>
-        ) : (
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', minWidth: 0 }}>
-            {(queueTrack ? lib.imageUrl(queueTrack) : track?.imageUrl) && (
-              <img
-                src={queueTrack ? (lib.imageUrl(queueTrack) ?? '') : (track?.imageUrl ?? '')}
-                alt=""
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 4,
-                  objectFit: 'cover',
-                  flexShrink: 0
-                }}
-              />
-            )}
-
-            <div style={{ minWidth: 0 }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: 'var(--text-primary)',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
-              }}>
-                {queueTrack?.Name ?? track?.title ?? 'Browser playback'}
-              </div>
-
-              <div style={{
-                fontSize: '11px',
-                color: 'var(--text-secondary)',
-                marginTop: '2px',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
-              }}>
-                {queueTrack
-                  ? (queueTrack.AlbumArtist ?? queueTrack.Artists?.[0] ?? '')
-                  : track?.artist}
-              </div>
+          {/* Track */}
+          <div style={{ marginTop: 12 }}>
+            <div>{activeTrack?.Name ?? track?.title ?? 'Nothing playing'}</div>
+            <div style={{ fontSize: 12 }}>
+              {activeTrack?.AlbumArtist ?? track?.artist}
             </div>
           </div>
-        )}
 
-        {/* Progress */}
-        <div>
-          <div style={{ marginBottom: 6 }}>
-            <ProgressBar
-              progress={activeProgress}
-              onSeek={(ratio) => {
-                if (showBrowserPlayer) {
-                  jellyfin.seekBrowser(ratio);
-                }
-              }}
-            />
-          </div>
+          {/* Progress */}
+          <ProgressBar
+            progress={activeProgress}
+            onSeek={(ratio) => {
+              if (showBrowserPlayer) {
+                jellyfin.seekBrowser(ratio);
+              }
+            }}
+          />
 
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{
               fontSize: '9px',
               fontFamily: 'var(--font-mono)',
@@ -843,112 +834,77 @@ export default function MusicPlayer({ selectedDevice, onSelectDevice, devices }:
               fontFamily: 'var(--font-mono)',
               color: 'var(--text-muted)'
             }}>
-              {activeDuration}
+              {songLength}
             </span>
           </div>
-        </div>
 
-        {/* Controls */}
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-          {showBrowserPlayer ? (
-            <>
-              <CtrlButton
-                onClick={() => queue.playPrev()}
-                disabled={queue.currentIndex <= 0}
-              >
-                ⏮
-              </CtrlButton>
-
-              <CtrlButton
-                accent
-                onClick={browserPlaying ? pauseBrowser : resumeBrowser}
-              >
-                {browserPlaying ? '⏸' : '▶'}
-              </CtrlButton>
-
-              <CtrlButton
-                onClick={() => queue.playNext()}
-                disabled={queue.currentIndex >= queue.queue.length - 1}
-              >
-                ⏭
-              </CtrlButton>
-
-              <CtrlButton onClick={stopBrowser} style={{ fontSize: '11px' }}>
-                ⏹
-              </CtrlButton>
-            </>
-          ) : (
-            <>
-              <CtrlButton onClick={previous} disabled={!track}>
-                ⏮
-              </CtrlButton>
-
-              <CtrlButton accent onClick={playing ? pause : play} disabled={!track}>
-                {playing ? '⏸' : '▶'}
-              </CtrlButton>
-
-              <CtrlButton onClick={next} disabled={!track}>
-                ⏭
-              </CtrlButton>
-            </>
-          )}
-
-          <div style={{ marginLeft: 'auto', position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}>
-            {selectedDevice && (
-              <span style={{ fontSize: '10px', color: 'var(--accent)', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {selectedDevice.name}
-              </span>
-            )}
-            <CtrlButton onClick={() => { setShowDevices(v => !v); jellyfin.loadAudioDevices(); }}>
-              🔊
-            </CtrlButton>
-
-            {showDevices && (
+          {/* Controls */}
+          <div style={{ display: 'flex', gap: 16 }}>
+            {useQueueControls ? (
               <>
-                <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowDevices(false)} />
-                <DevicePicker
-                  jellyfin={jellyfin}
-                  devices={devices}
-                  selectedDevice={selectedDevice}
-                  onSelectDevice={onSelectDevice}
-                  onClose={() => setShowDevices(false)}
-                />
+                <CtrlButton onClick={() => queue.playPrev()}>⏮</CtrlButton>
+
+                <CtrlButton onClick={handlePlayPause}>
+                  {isPlaying ? '⏸' : '▶'}
+                </CtrlButton>
+
+                <CtrlButton onClick={() => queue.playNext()}>⏭</CtrlButton>
+
+                {!selectedDevice && (
+                  <CtrlButton onClick={stopBrowser}>⏹</CtrlButton>
+                )}
+              </>
+            ) : (
+              <>
+                <CtrlButton onClick={previous}>⏮</CtrlButton>
+                <CtrlButton onClick={playing ? pause : play}>▶</CtrlButton>
+                <CtrlButton onClick={next}>⏭</CtrlButton>
               </>
             )}
+            <div style={{ marginLeft: 'auto', position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}>
+              {selectedDevice && (
+                <span style={{ fontSize: '10px', color: 'var(--accent)', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {selectedDevice.name}
+                </span>
+              )}
+              <CtrlButton
+                onClick={() => {
+                  setShowDevices(v => !v);
+                  jellyfin.loadAudioDevices?.();
+                }}
+              >
+                🔊
+              </CtrlButton>
+
+              {showDevices && (
+                <>
+                  <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowDevices(false)} />
+                  <DevicePicker
+                    jellyfin={jellyfin}
+                    devices={devices}
+                    selectedDevice={selectedDevice}
+                    onSelectDevice={onSelectDevice}
+                    onClose={() => setShowDevices(false)}
+                  />
+                </>
+              )}
+            </div> 
           </div>
         </div>
-      </div>
 
-      {/* Queue */}
-      <div style={{
-        width: 'clamp(240px, 28vw, 320px)',
-        flexShrink: 0,
-        borderLeft: '1px solid rgba(255,255,255,0.06)',
-        background: 'rgba(255,255,255,0.02)',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-      }}>
-        <div style={{
-          padding: '12px 16px',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-          fontSize: '13px',
-          fontWeight: 600,
-        }}>
-          Queue
+        {/* ── QUEUE ───────────────────────────────────────────── */}
+        <div style={{ width: 320 }}>
+          <QueuePanel
+            queue={queue.queue}
+            currentIndex={queue.currentIndex}
+            onMove={queue.move}
+            onRemove={queue.removeFromQueue}
+            onPlayIndex={queue.playIndex}
+            onClear={queue.clearQueue}
+            imageUrl={lib.imageUrl}
+          />
         </div>
-
-        <QueuePanel
-          queue={queue.queue}
-          currentIndex={queue.currentIndex}
-          onMove={queue.move}
-          onRemove={queue.removeFromQueue}
-          onPlayIndex={queue.playIndex}
-          onClear={queue.clearQueue}
-          imageUrl={lib.imageUrl}
-        />
       </div>
-    </div>
-  </>
-);
+    </>
+  );
 }
