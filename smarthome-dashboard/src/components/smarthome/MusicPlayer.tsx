@@ -5,6 +5,7 @@ import { useJellyfin } from '@/hooks/useJellyFin';
 import { useJellyfinLibrary, JellyfinItem } from '@/hooks/useJellyFinLibrary';
 import { useQueue, QueueTrack} from '@/hooks/useQueue';
 import { SmartDevice, useDevices } from '@/hooks/useDevices';
+import { Session } from 'inspector/promises';
 
 const BASE = process.env.NEXT_PUBLIC_JELLYFIN_URL ?? '';
 const API_KEY = process.env.NEXT_PUBLIC_JELLYFIN_API_KEY ?? '';
@@ -607,9 +608,6 @@ export default function MusicPlayer({
   }, []);
 
   // ── Device routing ────────────────────────────────────────────────
-  const playbackRouter = useRef({
-    getDevice: () => selectedDevice,
-  }).current;
 
   const queueRef = useRef<ReturnType<typeof useQueue> | null>(null);
 
@@ -753,7 +751,8 @@ export default function MusicPlayer({
       ? queue.queue[queue.currentIndex]
       : null;
 
-  const songLength = formatTime(deviceState?.duration ?? 0);
+  const songLength = duration;
+
   const showBrowserPlayer = !!browserTrackId;
 
   const handlePlayPause = async () => {

@@ -73,15 +73,12 @@ export function useDevices() {
 
     const e = await res.json();
 
-    const position = e.attributes.media_position ?? 0;
-    const duration = e.attributes.media_length ?? 0;
-
     setPlayback(prev => ({
       ...prev,
       [entityId]: {
         playing: e.state === 'playing',
-        position,
-        duration,
+        position: e.attributes.media_position ?? 0,
+        duration: e.attributes.media_length ?? 0,
         updatedAt: Date.now(),
       },
     }));
@@ -124,8 +121,19 @@ export function useDevices() {
     });
 
     syncDevice(device.location);
-  }, [syncDevice]);
 
+    // store duration immediately (no extra fetch)
+    setPlayback(prev => ({
+      ...prev,
+      [device.location]: {
+        ...prev[device.location],
+        position: 0,
+        updatedAt: Date.now(),
+        playing: true,
+      },
+    }));
+  }, [syncDevice]);
+  
   // ───────────────────────────────
   // Pause
   // ───────────────────────────────
