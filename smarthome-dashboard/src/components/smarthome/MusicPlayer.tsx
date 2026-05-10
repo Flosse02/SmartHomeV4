@@ -183,6 +183,7 @@ function QueueRow({
 }: any) {
   return (
     <div
+      data-queue-row
       onPointerDown={(e) => onPointerDown(e, index)}
       style={{
         display: 'flex',
@@ -249,67 +250,71 @@ function QueueRow({
   );
 }
 
-function QueuePanel({
-  queue,
-  currentIndex,
-  onRemove,
-  onMove,
-  onPlayIndex,
-  imageUrl,
-}: any) {
+function QueuePanel({ queue, currentIndex, onRemove, onMove, onPlayIndex, imageUrl }: any) {
   const listRef = useRef<HTMLDivElement | null>(null);
 
-  const dragIndexRef = useRef<number | null>(null);
+  const dragIndexRef  = useRef<number | null>(null);
   const hoverIndexRef = useRef<number | null>(null);
+  const currentIndexRef = useRef(currentIndex);
+  useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
+
+  const [dragIndex,  setDragIndex]  = useState<number | null>(null);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+
+  const onMoveRef = useRef(onMove);
+  useEffect(() => { onMoveRef.current = onMove; }, [onMove]);
 
   const getIndexFromY = (y: number) => {
     if (!listRef.current) return 0;
-
-    const items = Array.from(listRef.current.children) as HTMLElement[];
-
-    for (let i = 0; i < items.length; i++) {
-      const rect = items[i].getBoundingClientRect();
-      const mid = rect.top + rect.height / 2;
-      if (y < mid) return i;
+    const rows = Array.from(
+      listRef.current.querySelectorAll<HTMLElement>('[data-queue-row]')
+    );
+    for (let i = 0; i < rows.length; i++) {
+      const rect = rows[i].getBoundingClientRect();
+      if (y < rect.top + rect.height / 2) return i;
     }
-
-    return items.length;
+    return rows.length;
   };
 
-  const handlePointerMove = (e: PointerEvent) => {
+  const handlePointerMoveRef = useRef<(e: PointerEvent) => void>(() => {});
+  const handlePointerUpRef   = useRef<(e: PointerEvent) => void>(() => {});
+
+  handlePointerMoveRef.current = (e: PointerEvent) => {
     if (dragIndexRef.current === null) return;
-
     const idx = getIndexFromY(e.clientY);
-
     hoverIndexRef.current = idx;
     setHoverIndex(idx);
   };
 
-  const handlePointerUp = () => {
+  handlePointerUpRef.current = () => {
     const from = dragIndexRef.current;
-    const to = hoverIndexRef.current;
-
+    const to   = hoverIndexRef.current;
     if (from !== null && to !== null && from !== to) {
-      onMove(currentIndex + from, currentIndex + to);
+      onMoveRef.current(currentIndexRef.current + from, currentIndexRef.current + to);
     }
-
-    dragIndexRef.current = null;
+    dragIndexRef.current  = null;
     hoverIndexRef.current = null;
+    setDragIndex(null);
     setHoverIndex(null);
-
-    document.removeEventListener('pointermove', handlePointerMove);
-    document.removeEventListener('pointerup', handlePointerUp);
   };
 
-  const startDrag = (index: number, e: React.PointerEvent) => {
-    dragIndexRef.current = index;
+  useEffect(() => {
+    const move = (e: PointerEvent) => handlePointerMoveRef.current(e);
+    const up   = (e: PointerEvent) => handlePointerUpRef.current(e);
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup',   up);
+    return () => {
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup',   up);
+    };
+  }, []);
+
+  const startDrag = (e: React.PointerEvent, index: number) => {
+    e.preventDefault();
+    dragIndexRef.current  = index;
     hoverIndexRef.current = index;
-
+    setDragIndex(index);
     setHoverIndex(index);
-
-    document.addEventListener('pointermove', handlePointerMove);
-    document.addEventListener('pointerup', handlePointerUp);
   };
 
   const visible = queue.slice(currentIndex);
@@ -318,37 +323,29 @@ function QueuePanel({
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div ref={listRef} style={{ overflowY: 'auto', flex: 1 }}>
         {visible.map((track: any, i: number) => {
-          const realIndex = currentIndex + i;
-          const isCurrent = realIndex === currentIndex;
+          const isCurrent = (currentIndex + i) === currentIndex; // i === 0
 
           return (
             <div key={track.queueId}>
-              {/* drop indicator */}
-              {hoverIndex === i && dragIndexRef.current !== null && (
-                <div
-                  style={{
-                    height: 2,
-                    background: 'var(--accent)',
-                    margin: '0 16px',
-                  }}
-                />
+              {hoverIndex === i && dragIndex !== null && (
+                <div style={{ height: 2, background: 'var(--accent)', margin: '0 16px' }} />
               )}
-
               <QueueRow
                 track={track}
                 index={i}
                 isCurrent={isCurrent}
-                isDragging={dragIndexRef.current === i}
+                isDragging={dragIndex === i}
                 onPointerDown={startDrag}
-                onPlayIndex={(uiIndex: number) =>
-                  onPlayIndex(currentIndex + uiIndex)
-                }
+                onPlayIndex={(uiIndex: number) => onPlayIndex(currentIndex + uiIndex)}
                 onRemove={onRemove}
                 imageUrl={imageUrl}
               />
             </div>
           );
         })}
+        {hoverIndex === visible.length && dragIndex !== null && (
+          <div style={{ height: 2, background: 'var(--accent)', margin: '0 16px' }} />
+        )}
       </div>
     </div>
   );
@@ -545,8 +542,9 @@ export default function MusicPlayer() {
   const [showPanel, setShowPanel] = useState(false);
   const [showDevices, setShowDevices] = useState(false);
   const [shuffleActive, setShuffleActive] = useState(false);
-  const previousProgress = useRef(0);
-  const hasAdvancedRef = useRef(false);
+  const SHUFFLE_AHEAD = 10;
+  const shufflePoolRef = useRef<any[]>([]);
+  const shuffleModeRef = useRef(false);
 
   const queue = useQueue(
     jellyfin.playInBrowser,
@@ -557,33 +555,56 @@ export default function MusicPlayer() {
     }
   );
 
+  const queueLengthRef = useRef(queue.queue.length);
+  const currentIndexRef = useRef(queue.currentIndex);
+  queueLengthRef.current = queue.queue.length;
+  currentIndexRef.current = queue.currentIndex;
+
+  const pendingAddRef = useRef(0);
+
+  const topUpQueue = useCallback(() => {
+    if (!shuffleModeRef.current) return;
+    const effectiveLength = queueLengthRef.current + pendingAddRef.current;
+    const ahead = effectiveLength - (currentIndexRef.current + 1);
+    const needed = SHUFFLE_AHEAD - ahead;
+    if (needed <= 0) return;
+    const toAdd = shufflePoolRef.current.splice(0, needed);
+    if (toAdd.length === 0) return;
+    pendingAddRef.current += toAdd.length;
+    queue.addManyToQueue(toAdd);
+  }, [queue.addManyToQueue]);
+
   useEffect(() => {
-    jellyfin.setOnEnded(() => {
-      queue.playNext();
-    });
-  }, [jellyfin, queue]);
+    pendingAddRef.current = 0;
+  }, [queue.queue.length]);
+
+  useEffect(() => {
+    topUpQueue();
+  }, [queue.currentIndex, topUpQueue]);
 
   const handleShuffle = async () => {
     const tracks = await jellyfin.fetchShuffleTracks(200);
     if (tracks.length === 0) return;
 
-    const shuffled = [...tracks].sort(() => Math.random() - 0.5);
+    const shuffled = [...tracks]
+      .sort(() => Math.random() - 0.5)
+      .map((t: any) => ({
+        ...t,
+        queueId: `${t.Id}-${Date.now()}-${Math.random()}`,
+      }));
 
-    const queueTracks = shuffled.map((t: any) => ({
-      ...t,
-      queueId: `${t.Id}-${Date.now()}-${Math.random()}`,
-    }));
+    const first = shuffled.slice(0, SHUFFLE_AHEAD);
+    shufflePoolRef.current = shuffled.slice(SHUFFLE_AHEAD);
+    shuffleModeRef.current = true;
 
     queue.clearQueue();
-    queue.addManyToQueue(queueTracks);
+    queue.addManyToQueue(first);
 
-    // wait for reducer to apply state before playing
-    setTimeout(() => {
-      queue.playIndex(0);
-    }, 0);
-
+    setTimeout(() => queue.playIndex(0), 0);
     setShuffleActive(true);
   };
+
+
 
   const {
     track, playing, progress, elapsed, duration, error,
