@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useJellyfin } from '@/hooks/useJellyFin';
 import { useJellyfinLibrary, JellyfinItem } from '@/hooks/useJellyFinLibrary';
 import { useQueue, QueueTrack} from '@/hooks/useQueue';
+import { SmartDevice, useDevices } from '@/hooks/useDevices';
 
 const BASE = process.env.NEXT_PUBLIC_JELLYFIN_URL ?? '';
 const API_KEY = process.env.NEXT_PUBLIC_JELLYFIN_API_KEY ?? '';
@@ -120,8 +121,21 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
 
 // ── Device Picker ────────────────────────────────────────────────────────────
 
-function DevicePicker({ jellyfin }: { jellyfin: ReturnType<typeof useJellyfin> }) {
-  const { audioDevices, selectedDeviceId, selectOutputDevice, loadAudioDevices, sessions } = jellyfin;
+function DevicePicker({
+  jellyfin,
+  devices,
+  selectedDevice,
+  onSelectDevice,
+  onClose,
+}: {
+  jellyfin: ReturnType<typeof useJellyfin>;
+  devices: ReturnType<typeof useDevices>;
+  selectedDevice: SmartDevice | null;
+  onSelectDevice: (d: SmartDevice | null) => void;
+  onClose: () => void;
+}) {
+  const { audioDevices, selectedDeviceId, selectOutputDevice, loadAudioDevices } = jellyfin;
+
   return (
     <div style={{
       position: 'absolute', top: '110%', right: 0, zIndex: 100,
@@ -129,6 +143,8 @@ function DevicePicker({ jellyfin }: { jellyfin: ReturnType<typeof useJellyfin> }
       minWidth: 240, maxWidth: 300, boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
       border: '1px solid rgba(255,255,255,0.08)',
     }}>
+
+      {/* Browser audio outputs */}
       <div style={{ marginBottom: 10 }}>
         <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Browser Output
@@ -140,32 +156,67 @@ function DevicePicker({ jellyfin }: { jellyfin: ReturnType<typeof useJellyfin> }
             padding: '4px 10px', cursor: 'pointer', width: '100%',
           }}>Allow & detect devices</button>
         ) : audioDevices.map(d => (
-          <div key={d.deviceId} onClick={() => selectOutputDevice(d.deviceId)} style={{
+          <div key={d.deviceId} onClick={() => { selectOutputDevice(d.deviceId); onSelectDevice(null); onClose(); }} style={{
             fontSize: '11px', padding: '5px 8px', borderRadius: 4, cursor: 'pointer',
-            background: selectedDeviceId === d.deviceId ? 'rgba(255,255,255,0.1)' : 'transparent',
-            color: selectedDeviceId === d.deviceId ? 'var(--text-primary)' : 'var(--text-secondary)',
+            background: selectedDeviceId === d.deviceId && !selectedDevice ? 'rgba(255,255,255,0.1)' : 'transparent',
+            color: selectedDeviceId === d.deviceId && !selectedDevice ? 'var(--text-primary)' : 'var(--text-secondary)',
             display: 'flex', alignItems: 'center', gap: 6,
           }}>
-            <span>{selectedDeviceId === d.deviceId ? '✓' : '○'}</span>
+            <span>{selectedDeviceId === d.deviceId && !selectedDevice ? '✓' : '○'}</span>
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {d.label || 'Default'}
             </span>
           </div>
         ))}
       </div>
-      {sessions.length > 0 && (
-        <div>
-          <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Jellyfin Sessions
+
+      {/* Smart / UPnP devices */}
+      <div>
+        <div style={{
+          fontSize: '10px', color: 'var(--text-muted)', marginBottom: 6,
+          textTransform: 'uppercase', letterSpacing: '0.05em',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        }}>
+          <span>Network Speakers</span>
+          <button onClick={devices.discover} style={{
+            fontSize: '10px', background: 'none', border: 'none',
+            color: 'var(--accent)', cursor: 'pointer', padding: 0,
+          }}>
+            {devices.loading ? '…' : '↺ Scan'}
+          </button>
+        </div>
+
+        {devices.error && (
+          <div style={{ fontSize: '11px', color: 'var(--color-text-danger)', padding: '4px 8px' }}>
+            {devices.error}
           </div>
-          {sessions.map(s => (
-            <div key={s.id} style={{ fontSize: '11px', padding: '5px 8px', borderRadius: 4, color: 'var(--text-secondary)' }}>
-              <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{s.deviceName}</div>
-              {s.nowPlaying && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: 1 }}>▶ {s.nowPlaying}</div>}
+        )}
+
+        {devices.devices.length === 0 && !devices.loading && (
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', padding: '4px 8px' }}>
+            No devices found — press Scan
+          </div>
+        )}
+
+        {devices.devices
+          .filter(d => d.type === 'renderer')
+          .map(d => (
+            <div key={d.id} onClick={() => { onSelectDevice(d); onClose(); }} style={{
+              fontSize: '11px', padding: '5px 8px', borderRadius: 4, cursor: 'pointer',
+              background: selectedDevice?.id === d.id ? 'rgba(255,255,255,0.1)' : 'transparent',
+              color: selectedDevice?.id === d.id ? 'var(--text-primary)' : 'var(--text-secondary)',
+              display: 'flex', alignItems: 'center', gap: 6,
+            }}>
+              <span>{selectedDevice?.id === d.id ? '✓' : '○'}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {d.name}
+                </div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{d.ip}</div>
+              </div>
             </div>
           ))}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -535,8 +586,14 @@ function SidePanel({ open, onClose, jellyfin, queue: q, lib }: {
 }
 
 // ── Main Player ──────────────────────────────────────────────────────────────
+interface MusicPlayerProps {
+  selectedDevice: SmartDevice | null;
+  onSelectDevice: (device: SmartDevice | null) => void;
+  devices: ReturnType<typeof useDevices>;
+}
 
-export default function MusicPlayer() {
+
+export default function MusicPlayer({ selectedDevice, onSelectDevice, devices }: MusicPlayerProps) {
   const jellyfin = useJellyfin();
   const lib = useJellyfinLibrary();
   const [showPanel, setShowPanel] = useState(false);
@@ -546,8 +603,25 @@ export default function MusicPlayer() {
   const shufflePoolRef = useRef<any[]>([]);
   const shuffleModeRef = useRef(false);
 
+  // ── Device routing ───────────────────────────────────────────────────────
+  const selectedDeviceRef = useRef(selectedDevice);
+  useEffect(() => { selectedDeviceRef.current = selectedDevice; }, [selectedDevice]);
+
+  const queueRef = useRef<ReturnType<typeof useQueue> | null>(null);
+
+  const playInBrowser = useCallback(async (itemId: string) => {
+    const device = selectedDeviceRef.current;
+    if (device) {
+      const trackName = queueRef.current?.queue.find(t => t.Id === itemId)?.Name;
+      await devices.playOnDevice(device, itemId, trackName);
+    } else {
+      await jellyfin.playInBrowser(itemId);
+    }
+  }, []); // reads everything via refs at call time
+
+  // ── Queue ────────────────────────────────────────────────────────────────
   const queue = useQueue(
-    jellyfin.playInBrowser,
+    playInBrowser,
     undefined,
     () => {
       jellyfin.stopBrowser?.();
@@ -555,6 +629,9 @@ export default function MusicPlayer() {
     }
   );
 
+  queueRef.current = queue; // keep in sync for track name lookup
+
+  // ── Shuffle top-up ───────────────────────────────────────────────────────
   const queueLengthRef = useRef(queue.queue.length);
   const currentIndexRef = useRef(queue.currentIndex);
   queueLengthRef.current = queue.queue.length;
@@ -816,27 +893,30 @@ export default function MusicPlayer() {
             </>
           )}
 
-          <div style={{ marginLeft: 'auto', position: 'relative' }}>
-            <CtrlButton onClick={() => {
-              setShowDevices(v => !v);
-              jellyfin.loadAudioDevices();
-            }}>
+          <div style={{ marginLeft: 'auto', position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}>
+            {selectedDevice && (
+              <span style={{ fontSize: '10px', color: 'var(--accent)', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {selectedDevice.name}
+              </span>
+            )}
+            <CtrlButton onClick={() => { setShowDevices(v => !v); jellyfin.loadAudioDevices(); }}>
               🔊
             </CtrlButton>
 
             {showDevices && (
               <>
-                <div
-                  style={{ position: 'fixed', inset: 0, zIndex: 99 }}
-                  onClick={() => setShowDevices(false)}
+                <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowDevices(false)} />
+                <DevicePicker
+                  jellyfin={jellyfin}
+                  devices={devices}
+                  selectedDevice={selectedDevice}
+                  onSelectDevice={onSelectDevice}
+                  onClose={() => setShowDevices(false)}
                 />
-
-                <DevicePicker jellyfin={jellyfin} />
               </>
             )}
           </div>
         </div>
-
       </div>
 
       {/* Queue */}

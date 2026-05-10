@@ -147,28 +147,29 @@ export function useQueue(
 
   const queueRef = useRef(state.queue);
   const indexRef = useRef(state.currentIndex);
-
   queueRef.current = state.queue;
   indexRef.current = state.currentIndex;
 
-  const emit = useCallback((track: QueueTrack | null) => {
-    onTrackChange?.(track);
-  }, [onTrackChange]);
+  // ← Mirror all callbacks into refs so internal functions never go stale
+  const playInBrowserRef = useRef(playInBrowser);
+  const onTrackChangeRef = useRef(onTrackChange);
+  const onStopRef = useRef(onStop);
+  playInBrowserRef.current = playInBrowser;
+  onTrackChangeRef.current = onTrackChange;
+  onStopRef.current = onStop;
 
-  // ─────────────────────────────────────────
-  // PLAY FUNCTIONS
-  // ─────────────────────────────────────────
+  const emit = useCallback((track: QueueTrack | null) => {
+    onTrackChangeRef.current?.(track);
+  }, []); // ← no deps needed, reads ref at call time
 
   const playIndex = useCallback(async (index: number) => {
     const clamped = Math.max(0, Math.min(index, queueRef.current.length - 1));
     const track = queueRef.current[clamped];
     if (!track) return;
-
     dispatch({ type: 'SET_INDEX', index: clamped });
-
     emit(track);
-    await playInBrowser(track.Id);
-  }, [playInBrowser, emit]);
+    await playInBrowserRef.current(track.Id);
+  }, [emit]); // ← no playInBrowser dep needed
 
   const playFirst = useCallback(async () => {
     if (queueRef.current.length === 0) return;
@@ -179,38 +180,30 @@ export function useQueue(
     const next = indexRef.current + 1;
     const track = queueRef.current[next];
     if (!track) return;
-
     dispatch({ type: 'NEXT' });
-    await playInBrowser(track.Id);
-  }, [playInBrowser]);
+    emit(track);
+    await playInBrowserRef.current(track.Id);
+  }, [emit]);
 
   const playPrev = useCallback(async () => {
     const prev = indexRef.current - 1;
     const track = queueRef.current[prev];
     if (!track) return;
-
     dispatch({ type: 'PREV' });
-
     emit(track);
-    await playInBrowser(track.Id);
-  }, [playInBrowser, emit]);
+    await playInBrowserRef.current(track.Id);
+  }, [emit]);
 
   const playNow = useCallback(async (item: JellyfinItem) => {
     const track = wrap(item);
-
     dispatch({
       type: 'SET_QUEUE',
       queue: [...queueRef.current, track],
       index: queueRef.current.length,
     });
-
     emit(track);
-    await playInBrowser(track.Id);
-  }, [playInBrowser, emit]);
-
-  // ─────────────────────────────────────────
-  // QUEUE OPERATIONS
-  // ─────────────────────────────────────────
+    await playInBrowserRef.current(track.Id);
+  }, [emit]);
 
   const addToQueue = useCallback((item: JellyfinItem) => {
     dispatch({ type: 'ADD_END', items: [wrap(item)] });
@@ -221,10 +214,7 @@ export function useQueue(
   }, []);
 
   const addNext = useCallback((items: JellyfinItem[]) => {
-    dispatch({
-      type: 'INSERT_AFTER_CURRENT',
-      items: items.map(wrap),
-    });
+    dispatch({ type: 'INSERT_AFTER_CURRENT', items: items.map(wrap) });
   }, []);
 
   const removeFromQueue = useCallback((queueId: string) => {
@@ -233,28 +223,23 @@ export function useQueue(
 
   const clearQueue = useCallback(() => {
     dispatch({ type: 'CLEAR' });
-    onStop?.();
-  }, [onStop]);
+    onStopRef.current?.();
+  }, []);
 
   const move = useCallback((from: number, to: number) => {
     dispatch({ type: 'MOVE', from, to });
   }, []);
 
   return {
-    // state
     queue: state.queue,
     currentIndex: state.currentIndex,
     currentTrack: state.queue[state.currentIndex] ?? null,
-
-    // queue ops
     addToQueue,
     addManyToQueue,
     addNext,
     removeFromQueue,
     clearQueue,
     move,
-
-    // playback
     playNow,
     playNext,
     playPrev,
