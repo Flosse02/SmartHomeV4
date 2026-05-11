@@ -236,6 +236,7 @@ export default function SmartHome({ selectedDevice, onSelectDevice, devices }: S
         </Section>
       )}
 
+      con
       {smarthome.tvs.length > 0 && (
         <Section title="TVs & Displays">
           {smarthome.tvs.map(d => <DeviceCard key={d.id} device={d} smarthome={smarthome} />)}
