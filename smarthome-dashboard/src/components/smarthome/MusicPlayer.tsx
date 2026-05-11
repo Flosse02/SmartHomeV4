@@ -373,6 +373,28 @@ export default function MusicPlayer() {
   const queue = useQueue(playTrack, undefined, stopAll);
   useEffect(() => { queueRef.current = queue; }, [queue]);
 
+  const prevDeviceRef = useRef<SmartDevice>(BROWSER_DEVICE);
+
+  useEffect(() => {
+    const prev = prevDeviceRef.current;
+    prevDeviceRef.current = selectedDevice;
+
+    const current = queueRef.current?.queue[queueRef.current?.currentIndex];
+    if (!current) return;
+    if (prev.id === selectedDevice.id) return;
+
+    // Capture position synchronously before any state changes
+    const position = prev.type === 'browser'
+      ? devices.audioRef.current?.currentTime ?? 0
+      : livePosition
+
+    const duration = current.RunTimeTicks ? current.RunTimeTicks / 10_000_000 : undefined;
+
+    devices.pauseDevice(prev);
+
+    devices.playOnDevice(selectedDevice, current.Id, duration, position)
+  }, [selectedDevice]);
+
   // ── Shuffle top-up ────────────────────────────────────────────────
   const topUpQueue = useCallback(() => {
     if (!shuffleModeRef.current) return;
@@ -389,8 +411,9 @@ export default function MusicPlayer() {
   useEffect(() => { topUpQueue(); }, [queue.currentIndex, topUpQueue]);
 
   const handleShuffle = async () => {
+    console.log("Shuffling: " + SHUFFLE_AHEAD)
     // Fetch a large pool from Jellyfin
-    const res = await fetch(`${BASE}/Items?IncludeItemTypes=Audio&Recursive=true&Limit=200&SortBy=Random&api_key=${API_KEY}`);
+    const res = await fetch(`${BASE}/Items?IncludeItemTypes=Audio&Recursive=true&Limit=50&SortBy=Random&api_key=${API_KEY}`);
     const data = await res.json();
     const tracks: JellyfinItem[] = data.Items ?? [];
     if (!tracks.length) return;
@@ -404,8 +427,14 @@ export default function MusicPlayer() {
     pendingAddRef.current    = 0;
 
     queue.clearQueue();
-    queue.addManyToQueue(shuffled.slice(0, SHUFFLE_AHEAD));
-    setTimeout(() => queue.playIndex(0), 0);
+
+    requestAnimationFrame(() => {
+      queue.addManyToQueue(shuffled.slice(0, SHUFFLE_AHEAD));
+
+      requestAnimationFrame(() => {
+        queue.playIndex(0);
+      });
+    });
     setShuffleActive(true);
   };
 
@@ -416,7 +445,10 @@ export default function MusicPlayer() {
 
   const livePosition = pb.playing && selectedDevice.type === 'renderer'
     ? pb.position + (Date.now() - pb.positionFetchedAt) / 1000
+    : pb.playing && selectedDevice.type === 'browser'
+    ? pb.position + (Date.now() - pb.updatedAt) / 1000
     : pb.position;
+
 
   const progress = pb.duration > 0 ? Math.min(livePosition / pb.duration, 1) : 0;
 
