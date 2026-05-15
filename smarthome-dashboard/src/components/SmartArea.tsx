@@ -7,11 +7,11 @@ import SmartHome from './smarthome/SmartHome';
 import Clock from '@/components/Clock';
 import { SmartDevice, useDevices } from '@/hooks/useDevices';
 
-const TABS = ['Slideshow', 'Music', 'Smart Home'] as const;
+const TABS = ['Pictures', 'Music', 'Home'] as const;
 type Tab = typeof TABS[number];
 
 export default function SmartArea() {
-  const [activeTab, setActiveTab] = useState<Tab>('Slideshow');
+  const [activeTab, setActiveTab] = useState<Tab>('Pictures');
   const devices = useDevices();
   const [selectedDevice, setSelectedDevice] = useState<SmartDevice | null>(null);
 
@@ -36,19 +36,17 @@ export default function SmartArea() {
       </div>
 
       {/* Content */}
-      <div className="smart-content">
-        {activeTab === 'Slideshow' && <Slideshow />}
-        {activeTab === 'Music' && 
-          <MusicPlayer
-          selectedDevice={selectedDevice}
-          onSelectDevice={setSelectedDevice}
-          devices={devices}/>}
-        {activeTab === 'Smart Home' && 
+      {activeTab === 'Pictures' && <Slideshow />}
+        <div style={{ display: activeTab === 'Music' ? 'contents' : 'none' }}>
+          <MusicPlayer/>
+        </div>
+        <div style={{ display: activeTab === 'Home' ? 'contents' : 'none' }}>
           <SmartHome
-          selectedDevice={selectedDevice}
-          onSelectDevice={setSelectedDevice}
-          devices={devices}/>}
-      </div>
+            selectedDevice={selectedDevice}
+            onSelectDevice={setSelectedDevice}
+            devices={devices}
+          />
+        </div>
     </div>
   );
 }

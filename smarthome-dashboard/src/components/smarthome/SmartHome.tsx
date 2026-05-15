@@ -2,6 +2,8 @@
 
 import { SmartDevice, useDevices } from '@/hooks/useDevices';
 import { useSmartHome, SmartHomeDevice } from '@/hooks/useSmartHome';
+import { VolumeMuteIcon, VolumeHighIcon, TvIcon, TabletIcon, SpeakerIcon, SpeakerGroupIcon, PowerIcon, PauseIcon, PlayIcon, StopIcon, VolumeVeryLowIcon, VolumeLowIcon, UnknownDeviceIcon, RefreshIcon } from '@/lib/icons';
+import { useMemo } from 'react';
 
 interface SmartHomeProps {
   selectedDevice: SmartDevice | null;
@@ -32,11 +34,19 @@ function DeviceCard({ device, smarthome }: { device: SmartHomeDevice; smarthome:
     ? `${process.env.NEXT_PUBLIC_HA_URL}${device.attributes.entity_picture}`
     : null;
 
-  const typeIcon = device.type === 'tv' ? '📺'
-    : device.type === 'speaker_group' ? '🔊🔊'
-    : device.type === 'tablet' ? '🔳'
-    : device.type === 'speaker' ? '🔊'
-    : 'ᯤ';
+  const typeIcon = device.type === 'tv' ? <TvIcon/>
+    : device.type === 'speaker_group' ? <SpeakerGroupIcon/>
+    : device.type === 'tablet' ? <TabletIcon/>
+    : device.type === 'speaker' ? <SpeakerIcon/>
+    : <UnknownDeviceIcon/>;
+
+  const VolumeIcon = useMemo(() => {
+    if (isMuted || volume === 0) return <VolumeMuteIcon />;
+    if (volume <= 0.1) return <VolumeVeryLowIcon />;
+    if (volume < 0.5) return <VolumeLowIcon />;
+    return <VolumeHighIcon />;
+  }, [isMuted, volume]);
+
 
   return (
     <div style={{
@@ -64,13 +74,15 @@ function DeviceCard({ device, smarthome }: { device: SmartHomeDevice; smarthome:
         <button
           onClick={() => isOff ? smarthome.turnOn(device.id) : smarthome.turnOff(device.id)}
           style={{
-            background: isOff ? 'rgba(255,255,255,0.06)' : 'rgba(var(--accent-rgb,99,102,241),0.2)',
+            display: 'flex', 
+            gap: 4,
+            background: isOff ? 'var(--error)' : 'var(--success)',
             border: 'none', borderRadius: 6, padding: '4px 8px',
-            color: isOff ? 'var(--text-muted)' : 'var(--accent)',
+            color: isOff ? 'var(--text-muted)' : 'var(--text)',
             cursor: 'pointer', fontSize: 11,
           }}
         >
-          {isOff ? '⏻ Off' : '⏻ On'}
+          {isOff ? <><PowerIcon/>off</> : <><PowerIcon/>On</>}
         </button>
       </div>
 
@@ -106,7 +118,7 @@ function DeviceCard({ device, smarthome }: { device: SmartHomeDevice; smarthome:
               padding: '4px 10px', opacity: isPaused || isPlaying ? 1 : 0.4,
             }}
           >
-            {isPlaying ? '⏸' : '▶'}
+            {isPlaying ? <PauseIcon/> : <PlayIcon/>}
           </button>
 
           <button
@@ -116,7 +128,7 @@ function DeviceCard({ device, smarthome }: { device: SmartHomeDevice; smarthome:
               color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 13, padding: '4px 8px',
             }}
           >
-            ⏹
+            <StopIcon/>
           </button>
 
           <button
@@ -128,7 +140,7 @@ function DeviceCard({ device, smarthome }: { device: SmartHomeDevice; smarthome:
               cursor: 'pointer', fontSize: 13, padding: '4px 8px',
             }}
           >
-            {isMuted ? '🔇' : '🔉'}
+            {VolumeIcon}
           </button>
 
           {/* Volume */}
@@ -185,12 +197,12 @@ export default function SmartHome({ selectedDevice, onSelectDevice, devices }: S
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-          Smart Home
+          Devices
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{
             width: 6, height: 6, borderRadius: '50%',
-            background: smarthome.connected ? '#4ade80' : '#f87171',
+            background: smarthome.connected ? 'var(--success)' : 'var(--error)',
           }} />
           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
             {smarthome.connected ? 'Connected' : smarthome.error ? 'Error' : 'Connecting…'}
@@ -199,7 +211,7 @@ export default function SmartHome({ selectedDevice, onSelectDevice, devices }: S
             fontSize: 11, background: 'rgba(255,255,255,0.06)', border: 'none',
             borderRadius: 6, padding: '3px 8px', color: 'var(--text-secondary)', cursor: 'pointer',
           }}>
-            {smarthome.loading ? '…' : '↺ Refresh'}
+            {smarthome.loading ? '...' : <RefreshIcon/>}
           </button>
         </div>
       </div>

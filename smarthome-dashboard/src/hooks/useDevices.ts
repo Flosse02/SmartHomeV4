@@ -14,6 +14,7 @@ export type PlaybackState = {
   duration: number;
   updatedAt: number;
   positionFetchedAt: number;
+  volume: number;
 };
 
 const HA_URL   = process.env.NEXT_PUBLIC_HA_URL   ?? '';
@@ -31,7 +32,7 @@ export const BROWSER_DEVICE: SmartDevice = {
 
 const INITIAL_BROWSER_STATE: PlaybackState = {
   playing: false, position: 0, duration: 0,
-  updatedAt: Date.now(), positionFetchedAt: 0,
+  updatedAt: Date.now(), positionFetchedAt: 0, volume: 0,
 };
 
 export function useDevices() {
@@ -163,6 +164,7 @@ export function useDevices() {
         position,
         duration,
         positionFetchedAt,
+        volume: e.attributes.volume_level ?? 1,
       });
     } catch { /* ignore */ }
   }, [patchPlayback]);
@@ -289,6 +291,18 @@ export function useDevices() {
     patchPlayback('browser', { playing: false, position: 0, duration: 0 });
   }, [getAudio, patchPlayback]);
 
+  const setVolume = useCallback(async (device: SmartDevice, volume: number) => {
+    if (device.type === 'browser') {
+      // handled in MusicPlayer directly via audioRef
+      return;
+    }
+    await fetch(`${HA_URL}/api/services/media_player/volume_set`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${HA_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entity_id: device.location, volume_level: Math.max(0, Math.min(1, volume)) }),
+    });
+  }, []);
+
   return {
     devices,
     discovering,
@@ -301,6 +315,7 @@ export function useDevices() {
     playOnDevice,
     pauseDevice,
     resumeDevice,
+    setVolume,
     seekDevice,
     stopBrowser,
   };

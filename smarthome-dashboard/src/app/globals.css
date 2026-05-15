@@ -6,6 +6,9 @@
   --accent: #5b8dee;
   --text-primary: #ededed;
   --text-secondary: rgba(255,255,255,0.5);
+  --error: #ef4444;
+  --warning: #f59e0b;
+  --success: #22c55e;
 }
 
 @theme inline {
