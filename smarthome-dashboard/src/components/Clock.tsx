@@ -26,7 +26,7 @@ export default function Clock() {
   });
 
   return (
-    <div style={{ textAlign: 'right'}}>
+    <div style={{ textAlign: 'center'}}>
       <div style={{
         fontFamily: 'var(--font-mono)',
         fontSize: '28px',

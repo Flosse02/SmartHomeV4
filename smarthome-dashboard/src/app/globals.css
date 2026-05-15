@@ -80,6 +80,9 @@ body {
   position: static;
 }
 
+.weather-overlay {
+  position: static;
+}
 .bottom-half {
   flex: 1;
   min-height: 0;

@@ -4,8 +4,9 @@ import { useState } from 'react';
 import Slideshow from './smarthome/Slideshow';
 import MusicPlayer from './smarthome/MusicPlayer';
 import SmartHome from './smarthome/SmartHome';
-import Clock from '@/components/Clock';
+import Clock from './Clock';
 import { SmartDevice, useDevices } from '@/hooks/useDevices';
+import { Weather } from './Weather';
 
 const TABS = ['Pictures', 'Music', 'Home'] as const;
 type Tab = typeof TABS[number];
@@ -19,6 +20,9 @@ export default function SmartArea() {
   return (
     <div className="smart-area">
       <div className="smart-topbar">
+        <div className="weather-overlay">
+          <Weather />
+        </div>
         <div className="clock-overlay">
           <Clock />
         </div>
