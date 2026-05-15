@@ -25,7 +25,7 @@ import {
   MdGrain,
   MdThunderstorm,
   MdAcUnit,
-  MdNightsStay,
+  MdLogout,
 } from 'react-icons/md';
 
 
@@ -105,6 +105,10 @@ export function PowerIcon({ size = 14, color = 'currentColor' }: { size?: number
 
 export function UnknownDeviceIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
   return <MdDeviceUnknown size={size} color={color} />;
+}
+
+export function LogoutIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdLogout size={size} color={color} />;
 }
 
 export function WeatherIcon({code, size = 18,color = 'currentColor'}: {code: number; size?: number; color?: string;}) {

@@ -228,7 +228,7 @@ export default function SmartHome({ selectedDevice, onSelectDevice, devices }: S
 
       {smarthome.loading && (
         <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: 24 }}>
-          Loading devices…
+          Loading devices...
         </div>
       )}
 

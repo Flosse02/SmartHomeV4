@@ -567,18 +567,19 @@ export default function MusicPlayer() {
         </div>
 
         {/* ── QUEUE ── */}
-        <div style={{ width: 320 }}>
-          <QueuePanel
-            queue={queue.queue}
-            currentIndex={queue.currentIndex}
-            onMove={queue.move}
-            onRemove={queue.removeFromQueue}
-            onPlayIndex={queue.playIndex}
-            onClear={queue.clearQueue}
-            imageUrl={lib.imageUrl}
-          />
-        </div>
-
+        {queue.queue.length > 0 && (
+          <div style={{ width: 320 }}>
+            <QueuePanel
+              queue={queue.queue}
+              currentIndex={queue.currentIndex}
+              onMove={queue.move}
+              onRemove={queue.removeFromQueue}
+              onPlayIndex={queue.playIndex}
+              onClear={queue.clearQueue}
+              imageUrl={lib.imageUrl}
+            />
+          </div>
+        )}
       </div>
     </>
   );

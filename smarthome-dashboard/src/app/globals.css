@@ -166,6 +166,8 @@ body {
   color: var(--accent);
   font-weight: 700;
   position: relative;
+  border: 1px solid var(--accent);
+  box-sizing: border-box;
 }
 
 .cal-cell--today::after {
@@ -424,8 +426,8 @@ body {
   width: 3.5rem;
   height: 3.5rem;
   border-radius: 50%;
-  background: #4285f4;
-  color: white;
+  background: var(--accent);
+  color: var(--text-primary);
   font-size: 1.8rem;
   line-height: 1;
   border: none;
@@ -435,6 +437,28 @@ body {
   z-index: 100;
 }
 .cal-fab:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(66, 133, 244, 0.5);
+}
+
+.cal-logout {
+  position: fixed;
+  bottom: 2rem;
+  left: 2rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--text-primary);
+  font-size: 1.8rem;
+  line-height: 1;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(66, 133, 244, 0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+  z-index: 100;
+}
+.cal-logout:hover {
   transform: scale(1.08);
   box-shadow: 0 6px 20px rgba(66, 133, 244, 0.5);
 }

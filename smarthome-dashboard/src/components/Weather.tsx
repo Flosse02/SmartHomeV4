@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import useSWR from 'swr';
 import { WeatherIcon } from '@/lib/icons';
 

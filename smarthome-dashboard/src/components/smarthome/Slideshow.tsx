@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 
-const INTERVAL_MS = 8000;
+const INTERVAL = 5 * 60 * 1000
 
 const GRADIENTS = [
   'linear-gradient(135deg, #1a2a3a 0%, #0d1f2d 50%, #162030 100%)',
@@ -32,7 +32,7 @@ export default function Slideshow() {
         setCurrent(prev => (prev + 1) % total);
         setFading(false);
       }, 600);
-    }, INTERVAL_MS);
+    }, INTERVAL);
     return () => clearInterval(id);
   }, [total]);
 

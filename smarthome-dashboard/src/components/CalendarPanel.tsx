@@ -1,7 +1,8 @@
 'use client';
 
-import { useSession, signIn } from 'next-auth/react';
 import { useEffect, useState } from 'react';
+import { useSession, signIn, signOut } from 'next-auth/react';
+import { LogoutIcon } from '@/lib/icons';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -543,6 +544,18 @@ export default function CalendarPanel() {
         aria-label="Add event"
       >
         +
+      </button>
+
+      <button
+        onClick={() => signOut()}
+        className="cal-logout"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <LogoutIcon size={24}/>
       </button>
     </>
   );
