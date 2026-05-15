@@ -33,8 +33,10 @@ function DeviceCard({ device, smarthome }: { device: SmartHomeDevice; smarthome:
     : null;
 
   const typeIcon = device.type === 'tv' ? '📺'
-    : device.type === 'speaker_group' ? '🔊'
-    : '🔈';
+    : device.type === 'speaker_group' ? '🔊🔊'
+    : device.type === 'tablet' ? '🔳'
+    : device.type === 'speaker' ? '🔊'
+    : 'ᯤ';
 
   return (
     <div style={{
@@ -224,22 +226,27 @@ export default function SmartHome({ selectedDevice, onSelectDevice, devices }: S
         </div>
       )}
 
-      {smarthome.speakerGroups.length > 0 && (
-        <Section title="Speaker Groups">
-          {smarthome.speakerGroups.map(d => <DeviceCard key={d.id} device={d} smarthome={smarthome} />)}
-        </Section>
-      )}
-
       {smarthome.speakers.length > 0 && (
         <Section title="Speakers">
           {smarthome.speakers.map(d => <DeviceCard key={d.id} device={d} smarthome={smarthome} />)}
         </Section>
       )}
 
-      con
       {smarthome.tvs.length > 0 && (
         <Section title="TVs & Displays">
           {smarthome.tvs.map(d => <DeviceCard key={d.id} device={d} smarthome={smarthome} />)}
+        </Section>
+      )}
+
+      {smarthome.tablets.length > 0 && (
+        <Section title="Tablets">
+          {smarthome.tablets.map(d => <DeviceCard key={d.id} device={d} smarthome={smarthome} />)}
+        </Section>
+      )}
+
+      {smarthome.speakerGroups.length > 0 && (
+        <Section title="Speaker Groups">
+          {smarthome.speakerGroups.map(d => <DeviceCard key={d.id} device={d} smarthome={smarthome} />)}
         </Section>
       )}
     </div>
