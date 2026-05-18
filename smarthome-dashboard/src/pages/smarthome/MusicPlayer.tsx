@@ -5,6 +5,8 @@ import { useJellyfinLibrary, JellyfinItem } from '@/hooks/useJellyFinLibrary';
 import { useQueue } from '@/hooks/useQueue';
 import { SmartDevice, useDevices, BROWSER_DEVICE } from '@/hooks/useDevices';
 import { CastIcon, PlayIcon, PauseIcon, FastForwardIcon, FastRewindIcon, ShuffleIcon, StopIcon, RefreshIcon, VolumeHighIcon, VolumeMuteIcon, VolumeVeryLowIcon, VolumeLowIcon } from '@/lib/icons';
+import Select from 'react-select';
+import { Picker } from '@/components/form/picker';
 
 const BASE    = process.env.NEXT_PUBLIC_JELLYFIN_URL     ?? '';
 const API_KEY = process.env.NEXT_PUBLIC_JELLYFIN_API_KEY ?? '';
@@ -366,6 +368,15 @@ export default function MusicPlayer() {
   const [volume,           setVolume]           = useState(1);
   const [shuffleActive,    setShuffleActive]    = useState(false);
 
+  const musicSourceOptions = [
+    {value: "file", label: "Files"},
+    {value: "jellyfin", label: "Jellyfin"},
+    {value: "spotify", label: "Spotify"},
+  ];
+  const [musicSource,      setMusicSource]      = useState("file")
+  const [musicPickerOpen,  setMusicPickerOpen]  = useState(false)
+  const [localFiles, setLocalFiles] = useState<{ name: string; path: string }[]>([]);
+
   const SHUFFLE_AHEAD  = 10;
   const shufflePoolRef = useRef<JellyfinItem[]>([]);
   const shuffleModeRef = useRef(false);
@@ -384,6 +395,22 @@ export default function MusicPlayer() {
     }
   }, [selectedDevice]);
 
+  useEffect(() => {
+    if (musicSource === 'file') {
+      fetch('/api/music')
+        .then(r => r.json())
+        .then(d => setLocalFiles(d.files ?? []));
+    } else if (musicSource === 'jellyfin') {
+      console.log("Jellyfin")
+    } else if (musicSource === 'spotify') {
+      console.log("Spotify")
+    }
+  }, [musicSource]);
+
+  useEffect(() => {
+    queue.clearQueue();
+    devices.stopBrowser();
+  }, [musicSource]);
 
   const handleVolume = useCallback((v: number) => {
     setVolume(v);
@@ -487,7 +514,15 @@ export default function MusicPlayer() {
 
         {/* ── PLAYER ── */}
         <div style={{ flex: 1, padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
-
+          {/* Music Selector */}
+          <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <div>Music Source: </div>
+            <Picker
+              options={musicSourceOptions}
+              value={musicSource}
+              onChange={setMusicSource}
+            />
+          </div>
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <button onClick={() => setShowPanel(true)} style={{ fontSize: 11, background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: 6, padding: '3px 8px', color: 'var(--text-secondary)', cursor: 'pointer' }}>

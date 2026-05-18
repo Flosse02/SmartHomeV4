@@ -18,3 +18,4 @@ When using WSL it wont automatically open the browser so simply open [http://loc
 
 ## To Do
 - Fix local player not getting song length
+- Choose from mutiple ways to store music. - Wire it up

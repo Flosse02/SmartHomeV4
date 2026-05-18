@@ -1,8 +1,8 @@
 'use client';
 
 // import DeviceGrid from '@/components/top/DeviceGrid';
-import CalendarPanel from '@/components/CalendarPanel';
-import SmartArea from '@/components/SmartArea';
+import CalendarPanel from '@/pages/CalendarPanel';
+import SmartArea from '@/pages/SmartArea';
 
 export default function Home() {
   return (
