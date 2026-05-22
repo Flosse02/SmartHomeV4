@@ -9,7 +9,7 @@ export interface HAEntity {
 export interface SmartHomeDevice {
   id: string;
   name: string;
-  type: 'speaker' | 'speaker_group' | 'tv' | 'unknown' | 'tablet';
+  type: 'speaker' | 'speaker_group' | 'tv' | 'unknown' | 'tablet' | 'camera';
   state: string;
   attributes: Record<string, any>;
 }
@@ -29,9 +29,15 @@ function classifyDevice(entity: HAEntity, groupEntityIds: string[]): SmartHomeDe
     if (groupEntityIds.includes(id)) return 'speaker_group';
     if (deviceClass === 'tv' || model.includes('tv') || model.includes('chromecast')) return 'tv';
     if (icon === 'mdi:tablet' || model.includes('tablet')) return 'tablet';
-
     return 'speaker';
   }
+
+  if (id.startsWith('camera.')) {
+    const model = (attrs.friendly_name ?? '').toLowerCase();
+    if (model.includes('google') || model.includes('nest')) return 'camera';
+    return 'camera';
+  }
+
 
   return 'unknown';
 }
@@ -85,7 +91,7 @@ export function useSmartHome() {
     try {
       const entities: HAEntity[] = await haFetch('/states');
       const mediaPlayers = entities
-        .filter(e => e.entity_id.startsWith('media_player.'))
+        .filter(e => e.entity_id.startsWith('media_player.') || e.entity_id.startsWith('camera.'))
         .filter(e => !e.attributes.restored)
         .map(e => toDevice(e, castGroupEntityIdsRef.current));
       setDevices(mediaPlayers);
@@ -267,5 +273,6 @@ export function useSmartHome() {
     speakerGroups: devices.filter(d => d.type === 'speaker_group'),
     tvs:           devices.filter(d => d.type === 'tv'),
     tablets:       devices.filter(d => d.type === 'tablet'),
+    cameras: devices.filter(d => d.type === 'camera'),
   };
 }

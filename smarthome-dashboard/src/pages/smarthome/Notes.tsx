@@ -21,15 +21,21 @@ const COLORS = {
     gray:   { bg: '#D3D1C7', header: '#B4B2A9', text: '#2C2C2A' },
 } as const;
 
-const savedNotes = localStorage.getItem('sticky-notes');
-const initialNotes: StickyNote[] = savedNotes ? JSON.parse(savedNotes)  : [
-    { id: 1, title: 'Welcome!', text: 'This is a sticky note. You can move it around, edit the text, and change its color. Your notes will be saved in your browser.', color: 'yellow', x: 50, y: 50 },
-];
-
 export default function Notes() {
-    const [notes, setNotes] = useState<StickyNote[]>(initialNotes);
+    const [notes, setNotes] = useState<StickyNote[]>(() => {
+        if (typeof window === 'undefined') return [
+            { id: 1, title: 'Welcome!', text: 'Move me around!', color: 'yellow', x: 50, y: 50 },
+        ];
+        const saved = localStorage.getItem('sticky-notes');
+        return saved ? JSON.parse(saved) : [
+            { id: 1, title: 'Welcome!', text: 'Move me around!', color: 'yellow', x: 50, y: 50 },
+        ];
+    });
     const [selectedColor, setSelectedColor] = useState<keyof typeof COLORS>(
-        () => (localStorage.getItem('sticky-color') as keyof typeof COLORS) ?? 'yellow'
+        () => {
+            if (typeof window === 'undefined') return 'yellow';
+            return (localStorage.getItem('sticky-color') as keyof typeof COLORS) ?? 'yellow';
+        }
     );
     const [topZ, setTopZ] = useState(10);
     const nextId = useRef(2);

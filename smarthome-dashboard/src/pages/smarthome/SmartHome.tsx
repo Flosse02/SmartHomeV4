@@ -2,7 +2,7 @@
 
 import { SmartDevice, useDevices } from '@/hooks/useDevices';
 import { useSmartHome, SmartHomeDevice } from '@/hooks/useSmartHome';
-import { VolumeMuteIcon, VolumeHighIcon, TvIcon, TabletIcon, SpeakerIcon, SpeakerGroupIcon, PowerIcon, PauseIcon, PlayIcon, StopIcon, VolumeVeryLowIcon, VolumeLowIcon, UnknownDeviceIcon, RefreshIcon } from '@/lib/icons';
+import { VolumeMuteIcon, VolumeHighIcon, TvIcon, TabletIcon, SpeakerIcon, SpeakerGroupIcon, PowerIcon, PauseIcon, PlayIcon, StopIcon, VolumeVeryLowIcon, VolumeLowIcon, UnknownDeviceIcon, RefreshIcon, CameraIcon } from '@/lib/icons';
 import { useMemo } from 'react';
 
 interface SmartHomeProps {
@@ -38,6 +38,7 @@ function DeviceCard({ device, smarthome }: { device: SmartHomeDevice; smarthome:
     : device.type === 'speaker_group' ? <SpeakerGroupIcon/>
     : device.type === 'tablet' ? <TabletIcon/>
     : device.type === 'speaker' ? <SpeakerIcon/>
+    : device.type === 'camera' ? <CameraIcon/>
     : <UnknownDeviceIcon/>;
 
   const VolumeIcon = useMemo(() => {

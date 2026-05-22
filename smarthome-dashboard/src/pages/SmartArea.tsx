@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import Slideshow from './smarthome/Slideshow';
 import MusicPlayer from './smarthome/MusicPlayer';
@@ -7,9 +8,10 @@ import SmartHome from './smarthome/SmartHome';
 import Clock from './Clock';
 import { SmartDevice, useDevices } from '@/hooks/useDevices';
 import { Weather } from './Weather';
-import Notes from './smarthome/Notes';
+const Notes = dynamic(() => import('./smarthome/Notes'), { ssr: false });
+const Camera = dynamic(() => import('./smarthome/Camera'), { ssr: false });
 
-const TABS = ['Pictures', 'Music', 'Home', 'Notes'] as const;
+const TABS = ['Pictures', 'Music', 'Home', 'Notes', 'Camera'] as const;
 type Tab = typeof TABS[number];
 
 export default function SmartArea() {
@@ -54,6 +56,9 @@ export default function SmartArea() {
         </div>
         <div style={{ display: activeTab === 'Notes' ? 'contents' : 'none' }}>
           <Notes/>
+        </div>
+        <div style={{ display: activeTab === 'Camera' ? 'contents' : 'none' }}>
+          <Camera/>
         </div>
     </div>
   );

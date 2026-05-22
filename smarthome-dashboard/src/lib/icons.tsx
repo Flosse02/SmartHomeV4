@@ -28,6 +28,8 @@ import {
   MdLogout,
   MdClose,
   MdAdd,
+  MdCamera,
+  MdRemove,
 } from 'react-icons/md';
 
 
@@ -97,6 +99,10 @@ export function SpeakerIcon({ size = 14, color = 'currentColor' }: { size?: numb
   return <MdSpeaker size={size} color={color} />;
 }
 
+export function CameraIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdCamera size={size} color={color} />;
+}
+
 export function SpeakerGroupIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
   return <MdSpeakerGroup size={size} color={color} />;
 }
@@ -119,6 +125,10 @@ export function CloseIcon({ size = 14, color = 'currentColor' }: { size?: number
 
 export function AddIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
   return <MdAdd size={size} color={color} />;
+}
+
+export function MinusIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdRemove size={size} color={color} />;
 }
 
 export function WeatherIcon({code, size = 18,color = 'currentColor'}: {code: number; size?: number; color?: string;}) {
