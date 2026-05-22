@@ -37,7 +37,7 @@ export const authOptions: NextAuthOptions = {
         params: {
           access_type: "offline",
           prompt: "consent",
-          scope: "openid email profile https://www.googleapis.com/auth/calendar.events",
+          scope: "openid email profile https://www.googleapis.com/auth/calendar.events", // scope: "openid email profile https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/keep", IF GOOGLE KEEP INTEGRATION IS ADDED for non enterpise apps :(
         },
       },
     }),

@@ -7,8 +7,9 @@ import SmartHome from './smarthome/SmartHome';
 import Clock from './Clock';
 import { SmartDevice, useDevices } from '@/hooks/useDevices';
 import { Weather } from './Weather';
+import Notes from './smarthome/Notes';
 
-const TABS = ['Pictures', 'Music', 'Home'] as const;
+const TABS = ['Pictures', 'Music', 'Home', 'Notes'] as const;
 type Tab = typeof TABS[number];
 
 export default function SmartArea() {
@@ -50,6 +51,9 @@ export default function SmartArea() {
             onSelectDevice={setSelectedDevice}
             devices={devices}
           />
+        </div>
+        <div style={{ display: activeTab === 'Notes' ? 'contents' : 'none' }}>
+          <Notes/>
         </div>
     </div>
   );
