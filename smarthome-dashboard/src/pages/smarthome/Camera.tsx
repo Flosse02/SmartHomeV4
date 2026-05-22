@@ -51,19 +51,13 @@ export default function Camera() {
 
     const onMouseUp = () => { draggingRef.current = false; };
 
-    const displayCameras = TEST_MODE || cameras.length === 0 ? [
-        { id: 'camera.front_door', name: 'Front Door' },
-        { id: 'camera.backyard', name: 'Backyard' },
-        { id: 'camera.kitchen', name: 'Kitchen' },
-        { id: 'camera.bedroom', name: 'Bedroom' },
-        { id: 'camera.yard', name: 'Yard' },
-        { id: 'camera.inside', name: 'Inside' },
-    ] : cameras;
-
     return (
         <div className="camera-page">
             <h1>Cameras</h1>
-
+            {cameras.length === 0 ? (
+                <p>No cameras available.</p>
+            ) : null}
+            
             {expanded && (
                 <div className="camera-expanded">
                     <div className="camera-expanded-inner" onClick={e => e.stopPropagation()}>
@@ -80,7 +74,7 @@ export default function Camera() {
                             })}><MinusIcon /></button>
                         </div>
                         <p className="camera-name">
-                            {displayCameras.find(c => c.id === expanded)?.name}
+                            {cameras.find(c => c.id === expanded)?.name}
                         </p>
                         <div
                             ref={containerRef}
@@ -102,7 +96,7 @@ export default function Camera() {
                             >
                                 <CameraFeed
                                     entityId={expanded}
-                                    name={displayCameras.find(c => c.id === expanded)?.name ?? ''}
+                                    name={cameras.find(c => c.id === expanded)?.name ?? ''}
                                     onClick={() => {}}
                                 />
                             </div>
@@ -112,7 +106,7 @@ export default function Camera() {
             )}
 
             <div className="camera-grid">
-                {displayCameras.map(camera => (
+                {cameras.map(camera => (
                     <div className="camera-card" key={camera.id} onClick={() => handleExpand(camera.id)}>
                         <p className="camera-name">{camera.name}</p>
                         <CameraFeed
