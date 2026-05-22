@@ -26,6 +26,8 @@ import {
   MdThunderstorm,
   MdAcUnit,
   MdLogout,
+  MdClose,
+  MdAdd,
 } from 'react-icons/md';
 
 
@@ -109,6 +111,14 @@ export function UnknownDeviceIcon({ size = 14, color = 'currentColor' }: { size?
 
 export function LogoutIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
   return <MdLogout size={size} color={color} />;
+}
+
+export function CloseIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdClose size={size} color={color} />;
+}
+
+export function AddIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdAdd size={size} color={color} />;
 }
 
 export function WeatherIcon({code, size = 18,color = 'currentColor'}: {code: number; size?: number; color?: string;}) {
