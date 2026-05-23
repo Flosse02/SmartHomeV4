@@ -1,14 +1,32 @@
+// src/app/api/music/route.ts
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
+const MUSIC_DIR = process.env.MUSIC_LOCATION ?? '';
+const AUDIO_EXTS = new Set(['.mp3', '.flac', '.ogg', '.wav', '.m4a', '.aac']);
+
+function scan(dir: string, base: string): { name: string; path: string }[] {
+  const results: { name: string; path: string }[] = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      results.push(...scan(full, base));
+    } else if (AUDIO_EXTS.has(path.extname(entry.name).toLowerCase())) {
+      results.push({
+        name: path.relative(base, full).replace(/\\/g, '/'),
+        path: '/api/music/stream?file=' + encodeURIComponent(path.relative(base, full)),
+      });
+    }
+  }
+  return results;
+}
+
 export async function GET() {
-  const dir = (process.env.MUSIC_LOCATION ?? '').replace(/\\/g, path.sep);
-  if (!dir) return NextResponse.json({ error: 'MUSIC_LOCATION not set' }, { status: 500 });
-
-  const files = fs.readdirSync(dir)
-    .filter(f => /\.(mp3|flac|wav|ogg|m4a|aac)$/i.test(f))
-    .map(f => ({ name: f, path: f }));
-
-  return NextResponse.json({ files });
+  if (!MUSIC_DIR) return NextResponse.json({ files: [] });
+  try {
+    return NextResponse.json({ files: scan(MUSIC_DIR, MUSIC_DIR) });
+  } catch {
+    return NextResponse.json({ files: [], error: 'Cannot read music directory' });
+  }
 }

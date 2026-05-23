@@ -42,6 +42,50 @@ function CtrlButton({ children, onClick, accent, disabled, style }: {
   );
 }
 
+function LocalBrowsePanel({ open, onClose, files, queue }: {
+  open: boolean; onClose: () => void;
+  files: JellyfinItem[]; queue: ReturnType<typeof useQueue>;
+}) {
+  const [filter, setFilter] = useState('');
+  const visible = filter
+    ? files.filter(f => f.Name.toLowerCase().includes(filter.toLowerCase()))
+    : files;
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 149, background: 'rgba(0,0,0,0.4)', opacity: open ? 1 : 0, pointerEvents: open ? 'all' : 'none', transition: 'opacity 0.25s' }} />
+      <div style={{ position: 'fixed', top: '5%', right: '5%', bottom: '5%', left: '5%', zIndex: 150, background: 'var(--card-bg, #1a1a2e)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, display: 'flex', flexDirection: 'column', opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none', transition: 'opacity 0.2s' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>Local Files</span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 18 }}>✕</button>
+        </div>
+        <div style={{ padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <input placeholder="Filter…" value={filter} onChange={e => setFilter(e.target.value)}
+            style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: '7px 10px', color: 'inherit', fontSize: 13, boxSizing: 'border-box' }} />
+        </div>
+        <div style={{ overflowY: 'auto', flex: 1 }}>
+          {visible.map(f => (
+            <div key={f.Id} onClick={() => { queue.playNow(f); onClose(); }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+              <div style={{ width: 36, height: 36, borderRadius: 4, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🎵</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.Name}</div>
+                {f.Album && <div style={{ fontSize: 11, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.Album}</div>}
+              </div>
+              <button onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); queue.addToQueue(f); }}
+                style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 4, color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 11, padding: '3px 6px' }}>+Q</button>
+            </div>
+          ))}
+          {visible.length === 0 && <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>{files.length === 0 ? 'No files found in MUSIC_LOCATION' : 'No matches'}</div>}
+        </div>
+      </div>
+    </>
+  );
+}
+
+
 function VolumeSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const prevVolumeRef = useRef(value > 0 ? value : 1);
 
@@ -375,7 +419,8 @@ export default function MusicPlayer() {
   ];
   const [musicSource,      setMusicSource]      = useState("file")
   const [musicPickerOpen,  setMusicPickerOpen]  = useState(false)
-  const [localFiles, setLocalFiles] = useState<{ name: string; path: string }[]>([]);
+  const [localFiles, setLocalFiles] = useState<JellyfinItem[]>([]);
+
 
   const SHUFFLE_AHEAD  = 10;
   const shufflePoolRef = useRef<JellyfinItem[]>([]);
@@ -396,16 +441,20 @@ export default function MusicPlayer() {
   }, [selectedDevice]);
 
   useEffect(() => {
-    if (musicSource === 'file') {
-      fetch('/api/music')
-        .then(r => r.json())
-        .then(d => setLocalFiles(d.files ?? []));
-    } else if (musicSource === 'jellyfin') {
-      console.log("Jellyfin")
-    } else if (musicSource === 'spotify') {
-      console.log("Spotify")
-    }
+    if (musicSource !== 'file') return;
+    fetch('/api/music')
+      .then(r => r.json())
+      .then(d => {
+        const files: JellyfinItem[] = (d.files ?? []).map((f: { name: string; path: string }) => ({
+          Id:   f.path,
+          Name: f.name.split('/').pop()?.replace(/\.[^.]+$/, '') ?? f.name,
+          Type: 'Audio',
+          Album: f.name.includes('/') ? f.name.split('/').slice(0, -1).join(' / ') : undefined,
+        }));
+        setLocalFiles(files);
+      });
   }, [musicSource]);
+
 
   useEffect(() => {
     queue.clearQueue();
@@ -422,10 +471,14 @@ export default function MusicPlayer() {
   }, [selectedDevice, devices]);
 
   const playTrack = useCallback(async (itemId: string) => {
+    if (musicSource === 'file') {
+      await devices.playUrl(itemId); // itemId is the /api/music/stream?file=... URL
+      return;
+    }
     const item = queueRef.current?.queue.find(t => t.Id === itemId);
     const duration = item?.RunTimeTicks ? item.RunTimeTicks / 10_000_000 : undefined;
     await devices.playOnDevice(selectedDeviceRef.current, itemId, duration);
-  }, [devices]);
+  }, [devices, musicSource]);
 
   const stopAll = useCallback(() => {
     devices.stopBrowser();
@@ -469,14 +522,28 @@ export default function MusicPlayer() {
   useEffect(() => { topUpQueue(); }, [queue.currentIndex, topUpQueue]);
 
   const handleShuffle = async () => {
-    const res = await fetch(`${BASE}/Items?IncludeItemTypes=Audio&Recursive=true&Limit=50&SortBy=Random&api_key=${API_KEY}`);
-    const data = await res.json();
-    const tracks: JellyfinItem[] = data.Items ?? [];
+    let tracks: JellyfinItem[];
+
+    if (musicSource === 'file') {
+      // Shuffle from already-loaded local files, or fetch them if not yet loaded
+      const pool = localFiles.length > 0 ? localFiles : await fetch('/api/music')
+        .then(r => r.json())
+        .then(d => (d.files ?? []).map((f: { name: string; path: string }) => ({
+          Id:   f.path,
+          Name: f.name.split('/').pop()?.replace(/\.[^.]+$/, '') ?? f.name,
+          Type: 'Audio',
+          Album: f.name.includes('/') ? f.name.split('/').slice(0, -1).join(' / ') : undefined,
+        })));
+      tracks = [...pool].sort(() => Math.random() - 0.5);
+    } else {
+      const res = await fetch(`${BASE}/Items?IncludeItemTypes=Audio&Recursive=true&Limit=50&SortBy=Random&api_key=${API_KEY}`);
+      const data = await res.json();
+      tracks = (data.Items ?? []).sort(() => Math.random() - 0.5);
+    }
+
     if (!tracks.length) return;
 
-    const shuffled = tracks
-      .sort(() => Math.random() - 0.5)
-      .map(t => ({ ...t, queueId: `${t.Id}-${Date.now()}-${Math.random()}` }));
+    const shuffled = tracks.map(t => ({ ...t, queueId: `${t.Id}-${Date.now()}-${Math.random()}` }));
 
     shufflePoolRef.current = shuffled.slice(SHUFFLE_AHEAD);
     shuffleModeRef.current = true;
@@ -509,6 +576,11 @@ export default function MusicPlayer() {
   return (
     <>
       <BrowsePanel open={showPanel} onClose={() => setShowPanel(false)} lib={lib} queue={queue} />
+
+      {musicSource === 'jellyfin'
+        ? <BrowsePanel open={showPanel} onClose={() => setShowPanel(false)} lib={lib} queue={queue} />
+        : <LocalBrowsePanel open={showPanel} onClose={() => setShowPanel(false)} files={localFiles} queue={queue} />
+      }
 
       <div style={{ display: 'flex', width: '100%', height: '100%' }}>
 

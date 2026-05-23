@@ -303,6 +303,17 @@ export function useDevices() {
     });
   }, []);
 
+  const playUrl = useCallback(async (url: string) => {
+    const audio = getAudio();
+    audio.pause();
+    audio.src = url;
+    audio.load();
+    patchPlayback('browser', { position: 0 });
+    try { await audio.play(); } catch (e: any) {
+      if (e.name !== 'AbortError') console.error('Play failed:', e);
+    }
+  }, [getAudio, patchPlayback]);
+
   return {
     devices,
     discovering,
@@ -318,5 +329,6 @@ export function useDevices() {
     setVolume,
     seekDevice,
     stopBrowser,
+    playUrl,
   };
 }
