@@ -51,7 +51,7 @@ export default function Home() {
     <KioskSleepMode
       events={events}
       nowPlaying={nowPlaying}
-      onWake={() => setActiveTab('Pictures')}
+      onWake={() => console.log('Woke up from sleep')}
     >
       <main className="dashboard-root">
         {/* TOP HALF */}

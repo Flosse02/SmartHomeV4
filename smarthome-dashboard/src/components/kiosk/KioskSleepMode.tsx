@@ -45,8 +45,6 @@ export default function KioskSleepMode({
     reenterFromToast,
   } = useKiosk()
 
-  console.log('Now playing:', nowPlaying)
-
   return (
     <div className="relative w-full h-full">
       {!fullscreen && !sleeping && (
