@@ -8,7 +8,7 @@ import SleepOverlay from './SleepOverlay'
 import KioskToast from './KioskToast'
 
 // const IDLE_MS = 10 * 60 * 1000 // 10 minutes
-const IDLE_MS = 10 * 60 // 10 minutes
+const IDLE_MS = Number(process.env.NEXT_PUBLIC_IDLE_TIMEOUT) * 60 * 1000 || 10 * 60 * 1000 // 10 minutes
 
 export default function KioskSleepMode({
   children,
