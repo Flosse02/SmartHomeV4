@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { CalendarEvent, NowPlaying } from './types'
 import { groupUpcomingEvents, formatEventTime } from './calendarUtils'
+import { FastForwardIcon, FastRewindIcon, MusicIcon, PauseIcon } from '@/lib/icons'
 
 // ─── Clock ────────────────────────────────────────────────────────────────────
 
@@ -111,16 +112,7 @@ function MusicBar({ nowPlaying, onPause, onPrev, onNext }: MusicBarProps) {
   return (
     <div className="px-4 pb-6 pt-2 border-t border-white/8">
       <div className="flex items-center gap-3 bg-white/7 rounded-xl px-3 py-2.5">
-        <svg
-          className="w-4 h-4 text-white/35 flex-shrink-0"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={1.5}
-          aria-hidden="true"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z" />
-        </svg>
+        <MusicIcon />
         <div className="flex-1 min-w-0">
           <p className="text-[12px] font-medium text-white/85 truncate">{nowPlaying.title}</p>
           <p className="text-[11px] text-white/35">{subtitle}</p>
@@ -131,21 +123,21 @@ function MusicBar({ nowPlaying, onPause, onPrev, onNext }: MusicBarProps) {
             className="text-white/40 hover:text-white/80 transition-colors bg-transparent border-0 cursor-pointer p-0 text-base leading-none"
             aria-label="Previous"
           >
-            ⏮
+            <FastRewindIcon/>
           </button>
           <button
             onClick={stop(onPause)}
             className="text-white/40 hover:text-white/80 transition-colors bg-transparent border-0 cursor-pointer p-0 text-base leading-none"
             aria-label="Pause"
           >
-            ⏸
+            <PauseIcon/>
           </button>
           <button
             onClick={stop(onNext)}
             className="text-white/40 hover:text-white/80 transition-colors bg-transparent border-0 cursor-pointer p-0 text-base leading-none"
             aria-label="Next"
           >
-            ⏭
+            <FastForwardIcon/>
           </button>
         </div>
       </div>

@@ -10,16 +10,16 @@ import { useDevices } from '@/hooks/useDevices';
 export default function Home() {
   const [activeTab, setActiveTab] = useState<SmartAreaTab>('Pictures');
 
-  const devices = useDevices();
+  const { nowPlaying: deviceNowPlaying } = useDevices();
 
   // Wire these up to your Google Calendar + Jellyfin integrations when ready.
   // The sleep overlay handles empty/null gracefully in the meantime.
-  const browserPlayback = devices.playback.browser;
+  const browserPlayback = deviceNowPlaying;
 
   const nowPlaying: NowPlaying | null = browserPlayback
   ? {
-      title: 'Unknown Track',
-      artist: 'Unknown Artist',
+      title: browserPlayback.title ?? 'Unknown Track',
+      artist: browserPlayback.artist ?? 'Unknown Artist',
       playing: browserPlayback.playing,
       position: browserPlayback.position,
       duration: browserPlayback.duration,

@@ -1,3 +1,4 @@
+import { metadata } from '@/app/layout';
 import { NowPlaying } from '@/components/kiosk/types';
 import { useState, useCallback, useEffect, useRef } from 'react';
 
@@ -171,6 +172,10 @@ export function useDevices() {
         duration,
         positionFetchedAt,
         volume: e.attributes.volume_level ?? 1,
+
+        title: e.attributes.media_title ?? prev?.title,
+        artist: e.attributes.media_artist ?? prev?.artist,
+        album: e.attributes.media_album_name ?? prev?.album,
       });
     } catch { /* ignore */ }
   }, [patchPlayback]);
@@ -187,6 +192,11 @@ export function useDevices() {
     itemId: string,
     durationSecs?: number,
     seekToSeconds = 0,
+    metadata?: {
+      title?: string;
+      artist?: string;
+      album?: string;
+    }
   ) => {
     if (durationSecs) {
       durationCacheRef.current[itemId] = durationSecs;
@@ -201,7 +211,14 @@ export function useDevices() {
       audio.load();
 
       // Set position in state immediately so UI doesn't flicker to 0
-      patchPlayback('browser', { position: seekToSeconds });
+      patchPlayback('browser', {
+        playing: true,
+        position: seekToSeconds,
+        itemId,
+        title: metadata?.title,
+        artist: metadata?.artist,
+        album: metadata?.album,
+      });
 
       const onCanPlay = () => {
         audio.removeEventListener('canplay', onCanPlay);
@@ -310,24 +327,41 @@ export function useDevices() {
   }, []);
 
   const playUrl = useCallback(async (url: string) => {
-    const audio = getAudio();
-    audio.pause();
-    audio.src = url;
-    audio.load();
-    patchPlayback('browser', { position: 0 });
-    try { await audio.play(); } catch (e: any) {
-      if (e.name !== 'AbortError') console.error('Play failed:', e);
-    }
-  }, [getAudio, patchPlayback]);
+  const audio = getAudio();
+
+  audio.pause();
+  audio.src = url;
+  audio.load();
+
+  const decoded = decodeURIComponent(url);
+  const file = decoded.split('/').pop()?.replace('.mp3', '') ?? '';
+
+  const [artist, title] = file.includes(' - ')
+    ? file.split(' - ')
+    : ['', file];
+
+  patchPlayback('browser', {
+    playing: true,
+    position: 0,
+    itemId: url,
+    title,
+    artist,
+  });
+
+  try {
+    await audio.play();
+  } catch (e: any) {
+    if (e.name !== 'AbortError') console.error(e);
+  }
+}, [getAudio, patchPlayback]);
 
   const nowPlaying: NowPlaying | null = (() => {
     const state = playback['browser'];
-
     if (!state) return null;
-
-    return {
-      title: 'Unknown Track',
-      artist: 'Unknown Artist',
+    
+    return {  
+      title: state.title ?? 'sds Track',
+      artist: state.artist ?? 'Unknown Artist',
       playing: state.playing,
       position: state.position,
       duration: state.duration,
