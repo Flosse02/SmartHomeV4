@@ -2,14 +2,14 @@
 
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
-import Slideshow from './smarthome/Slideshow';
-import MusicPlayer from './smarthome/MusicPlayer';
-import SmartHome from './smarthome/SmartHome';
+import Slideshow from '../pages/Slideshow';
+import MusicPlayer from '../pages/MusicPlayer';
+import SmartHome from '../pages/SmartHome';
 import Clock from './Clock';
 import { SmartDevice, useDevices } from '@/hooks/useDevices';
 import { Weather } from './Weather';
-const Notes = dynamic(() => import('./smarthome/Notes'), { ssr: false });
-const Camera = dynamic(() => import('./smarthome/Camera'), { ssr: false });
+const Notes = dynamic(() => import('../pages/Notes'), { ssr: false });
+const Camera = dynamic(() => import('../pages/Camera'), { ssr: false });
 
 const TABS = ['Pictures', 'Music', 'Home', 'Notes', 'Camera'] as const;
 type Tab = typeof TABS[number];
