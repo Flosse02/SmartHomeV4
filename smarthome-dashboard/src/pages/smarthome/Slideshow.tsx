@@ -3,7 +3,10 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 
-const INTERVAL = 5 * 60 * 1000
+if (!process.env.NEXT_PUBLIC_PHOTOS_TIMER) {
+  console.warn('PHOTOS_TIMER environment variable is not set. Defaulting to 5 minutes.');
+}
+const INTERVAL = parseInt(process.env.NEXT_PUBLIC_PHOTOS_TIMER || '5') * 60 * 1000;
 
 const GRADIENTS = [
   'linear-gradient(135deg, #1a2a3a 0%, #0d1f2d 50%, #162030 100%)',
