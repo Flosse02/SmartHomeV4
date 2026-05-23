@@ -8,17 +8,22 @@ import SmartHome from '../pages/SmartHome';
 import Clock from './Clock';
 import { SmartDevice, useDevices } from '@/hooks/useDevices';
 import { Weather } from './Weather';
+
 const Notes = dynamic(() => import('../pages/Notes'), { ssr: false });
 const Camera = dynamic(() => import('../pages/Camera'), { ssr: false });
 
-const TABS = ['Pictures', 'Music', 'Home', 'Notes', 'Camera'] as const;
-type Tab = typeof TABS[number];
+export type SmartAreaTab = 'Pictures' | 'Music' | 'Home' | 'Notes' | 'Camera';
 
-export default function SmartArea() {
-  const [activeTab, setActiveTab] = useState<Tab>('Pictures');
+const TABS: SmartAreaTab[] = ['Pictures', 'Music', 'Home', 'Notes', 'Camera'];
+
+interface SmartAreaProps {
+  activeTab: SmartAreaTab;
+  onTabChange: (tab: SmartAreaTab) => void;
+}
+
+export default function SmartArea({ activeTab, onTabChange }: SmartAreaProps) {
   const devices = useDevices();
   const [selectedDevice, setSelectedDevice] = useState<SmartDevice | null>(null);
-
 
   return (
     <div className="smart-area">
@@ -34,7 +39,7 @@ export default function SmartArea() {
             <button
               key={tab}
               className={`smart-tab ${activeTab === tab ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => onTabChange(tab)}
             >
               {tab}
             </button>
@@ -44,22 +49,23 @@ export default function SmartArea() {
 
       {/* Content */}
       {activeTab === 'Pictures' && <Slideshow />}
-        <div style={{ display: activeTab === 'Music' ? 'contents' : 'none' }}>
-          <MusicPlayer/>
-        </div>
-        <div style={{ display: activeTab === 'Home' ? 'contents' : 'none' }}>
-          <SmartHome
-            selectedDevice={selectedDevice}
-            onSelectDevice={setSelectedDevice}
-            devices={devices}
-          />
-        </div>
-        <div style={{ display: activeTab === 'Notes' ? 'contents' : 'none' }}>
-          <Notes/>
-        </div>
-        <div style={{ display: activeTab === 'Camera' ? 'contents' : 'none' }}>
-          <Camera/>
-        </div>
+
+      <div style={{ display: activeTab === 'Music' ? 'contents' : 'none' }}>
+        <MusicPlayer />
+      </div>
+      <div style={{ display: activeTab === 'Home' ? 'contents' : 'none' }}>
+        <SmartHome
+          selectedDevice={selectedDevice}
+          onSelectDevice={setSelectedDevice}
+          devices={devices}
+        />
+      </div>
+      <div style={{ display: activeTab === 'Notes' ? 'contents' : 'none' }}>
+        <Notes />
+      </div>
+      <div style={{ display: activeTab === 'Camera' ? 'contents' : 'none' }}>
+        <Camera />
+      </div>
     </div>
   );
 }

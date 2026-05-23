@@ -1,3 +1,4 @@
+import { NowPlaying } from '@/components/kiosk/types';
 import { useState, useCallback, useEffect, useRef } from 'react';
 
 export interface SmartDevice {
@@ -15,6 +16,11 @@ export type PlaybackState = {
   updatedAt: number;
   positionFetchedAt: number;
   volume: number;
+
+  itemId?: string;
+  title?: string;
+  artist?: string;
+  album?: string;
 };
 
 const HA_URL   = process.env.NEXT_PUBLIC_HA_URL   ?? '';
@@ -314,6 +320,20 @@ export function useDevices() {
     }
   }, [getAudio, patchPlayback]);
 
+  const nowPlaying: NowPlaying | null = (() => {
+    const state = playback['browser'];
+
+    if (!state) return null;
+
+    return {
+      title: 'Unknown Track',
+      artist: 'Unknown Artist',
+      playing: state.playing,
+      position: state.position,
+      duration: state.duration,
+    };
+  })();
+
   return {
     devices,
     discovering,
@@ -330,5 +350,6 @@ export function useDevices() {
     seekDevice,
     stopBrowser,
     playUrl,
+    nowPlaying,
   };
 }
