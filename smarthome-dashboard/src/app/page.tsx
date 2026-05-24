@@ -10,59 +10,53 @@ import { useDevices } from '@/hooks/useDevices';
 export default function Home() {
   const [activeTab, setActiveTab] = useState<SmartAreaTab>('Pictures');
 
-  const { nowPlaying: deviceNowPlaying } = useDevices();
+  const devicesResult = useDevices();
+  const { playback } = devicesResult;
 
-  // Wire these up to your Google Calendar + Jellyfin integrations when ready.
-  // The sleep overlay handles empty/null gracefully in the meantime.
-  const browserPlayback = deviceNowPlaying;
-
-  const nowPlaying: NowPlaying | null = browserPlayback
-  ? {
-      title: browserPlayback.title ?? 'Unknown Track',
-      artist: browserPlayback.artist ?? 'Unknown Artist',
-      playing: browserPlayback.playing,
-      position: browserPlayback.position,
-      duration: browserPlayback.duration,
-    }
-  : null;
+  const nowPlaying: NowPlaying | null = (() => {
+    const active = Object.values(playback).find(s => s.playing && s.title);
+    if (!active) return null;
+    return {
+      title:    active.title    ?? 'Unknown Track',
+      artist:   active.artist   ?? 'Unknown Artist',
+      playing:  active.playing,
+      position: active.position,
+      duration: active.duration,
+    };
+  })();
 
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('/api/calendar'); // 👈 your route
+        const res = await fetch('/api/calendar');
         const data = await res.json();
         setEvents(data);
       } catch (e) {
         console.error('Failed to load calendar', e);
-      } finally {
-        setLoading(false);
       }
     };
-
     load();
   }, []);
-
-  // console.log('Calendar events:', events);
 
   return (
     <KioskSleepMode
       events={events}
       nowPlaying={nowPlaying}
-      onWake={() => console.log('Woke up from sleep')}
+      onWake={() => {console.log('Waking up from sleep mode')}}
     >
       <main className="dashboard-root">
-        {/* TOP HALF */}
         <section className="top-half">
-          <SmartArea activeTab={activeTab} onTabChange={setActiveTab} />
+          <SmartArea
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            devicesResult={devicesResult}
+          />
         </section>
 
-        {/* DIVIDER */}
         <div className="panel-divider" />
 
-        {/* BOTTOM HALF */}
         <section className="bottom-half">
           <CalendarPanel />
         </section>

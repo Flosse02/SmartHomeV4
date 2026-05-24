@@ -1,4 +1,3 @@
-import { metadata } from '@/app/layout';
 import { NowPlaying } from '@/components/kiosk/types';
 import { useState, useCallback, useEffect, useRef } from 'react';
 
@@ -24,10 +23,12 @@ export type PlaybackState = {
   album?: string;
 };
 
-const HA_URL   = process.env.NEXT_PUBLIC_HA_URL   ?? '';
-const HA_TOKEN = process.env.NEXT_PUBLIC_HA_TOKEN ?? '';
-const JF_URL   = process.env.NEXT_PUBLIC_JELLYFIN_URL     ?? '';
-const JF_KEY   = process.env.NEXT_PUBLIC_JELLYFIN_API_KEY ?? '';
+export type UseDevicesResult = ReturnType<typeof useDevices>
+
+const HA_URL   = process.env.NEXT_PUBLIC_HA_URL            ?? '';
+const HA_TOKEN = process.env.NEXT_PUBLIC_HA_TOKEN          ?? '';
+const JF_URL   = process.env.NEXT_PUBLIC_JELLYFIN_URL      ?? '';
+const JF_KEY   = process.env.NEXT_PUBLIC_JELLYFIN_API_KEY  ?? '';
 
 export const BROWSER_DEVICE: SmartDevice = {
   id:       'browser',
@@ -55,7 +56,6 @@ export function useDevices() {
     browser: INITIAL_BROWSER_STATE,
   });
 
-  // Mirror of playback kept in sync so callbacks never have stale closures
   const playbackRef = useRef<Record<string, PlaybackState>>({
     browser: INITIAL_BROWSER_STATE,
   });
@@ -64,14 +64,12 @@ export function useDevices() {
 
   const patchPlayback = useCallback((location: string, patch: Partial<PlaybackState>) => {
     setPlayback(prev => {
-      const next = {
-        ...prev,
-        [location]: { ...prev[location], ...patch, updatedAt: Date.now() },
-      };
-      playbackRef.current = next; // always in sync
+      const next = { ...prev, [location]: { ...prev[location], ...patch, updatedAt: Date.now() } };
+      playbackRef.current = next;
       return next;
     });
   }, []);
+
 
   // ── Browser audio element ───────────────────────────────────────────
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -153,11 +151,10 @@ export function useDevices() {
       const match    = contentId.match(/\/Audio\/([a-f0-9]+)\/stream/i);
       const duration = match ? (durationCacheRef.current[match[1]] ?? 0) : 0;
 
-      const newPosition = e.attributes.media_position ?? 0;
-      const prev        = playbackRef.current[entityId];
+      const newPosition  = e.attributes.media_position ?? 0;
+      const prev         = playbackRef.current[entityId];
       const prevPosition = prev?.position ?? 0;
 
-      // Ignore HA reporting 0 while the Chromecast is still loading the track
       const useNewPosition    = newPosition > 1 || (newPosition > 0 && prevPosition < 1);
       const position          = useNewPosition ? newPosition : prevPosition;
       const positionFetchedAt = useNewPosition
@@ -172,10 +169,9 @@ export function useDevices() {
         duration,
         positionFetchedAt,
         volume: e.attributes.volume_level ?? 1,
-
-        title: e.attributes.media_title ?? prev?.title,
-        artist: e.attributes.media_artist ?? prev?.artist,
-        album: e.attributes.media_album_name ?? prev?.album,
+        title:  e.attributes.media_title       ?? prev?.title,
+        artist: e.attributes.media_artist      ?? prev?.artist,
+        album:  e.attributes.media_album_name  ?? prev?.album,
       });
     } catch { /* ignore */ }
   }, [patchPlayback]);
@@ -192,15 +188,9 @@ export function useDevices() {
     itemId: string,
     durationSecs?: number,
     seekToSeconds = 0,
-    metadata?: {
-      title?: string;
-      artist?: string;
-      album?: string;
-    }
+    metadata?: { title?: string; artist?: string; album?: string }
   ) => {
-    if (durationSecs) {
-      durationCacheRef.current[itemId] = durationSecs;
-    }
+    if (durationSecs) durationCacheRef.current[itemId] = durationSecs;
 
     if (device.type === 'browser') {
       const url   = `${JF_URL}/Audio/${itemId}/stream.mp3?api_key=${JF_KEY}`;
@@ -210,14 +200,13 @@ export function useDevices() {
       audio.src = url;
       audio.load();
 
-      // Set position in state immediately so UI doesn't flicker to 0
       patchPlayback('browser', {
         playing: true,
         position: seekToSeconds,
         itemId,
-        title: metadata?.title,
+        title:  metadata?.title,
         artist: metadata?.artist,
-        album: metadata?.album,
+        album:  metadata?.album,
       });
 
       const onCanPlay = () => {
@@ -236,7 +225,6 @@ export function useDevices() {
       return;
     }
 
-    // HA renderer — embed start position directly in the stream URL
     const streamUrl = `${JF_URL}/Audio/${itemId}/stream.mp3?api_key=${JF_KEY}`
       + (seekToSeconds > 0 ? `&StartTimeTicks=${Math.floor(seekToSeconds * 10_000_000)}` : '');
 
@@ -251,23 +239,18 @@ export function useDevices() {
       }),
     });
 
-    // Patch immediately so livePosition interpolates from the right starting point
     patchPlayback(device.location, {
       playing:           true,
       position:          seekToSeconds,
       positionFetchedAt: Date.now(),
     });
 
-    // Give Chromecast time to start before syncing
     setTimeout(() => syncHaDevice(device.location), 2000);
   }, [getAudio, patchPlayback, syncHaDevice]);
 
   // ── Pause ────────────────────────────────────────────────────────────
   const pauseDevice = useCallback(async (device: SmartDevice) => {
-    if (device.type === 'browser') {
-      getAudio().pause();
-      return;
-    }
+    if (device.type === 'browser') { getAudio().pause(); return; }
     await fetch(`${HA_URL}/api/services/media_player/media_pause`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${HA_TOKEN}`, 'Content-Type': 'application/json' },
@@ -278,10 +261,7 @@ export function useDevices() {
 
   // ── Resume ───────────────────────────────────────────────────────────
   const resumeDevice = useCallback(async (device: SmartDevice) => {
-    if (device.type === 'browser') {
-      await getAudio().play();
-      return;
-    }
+    if (device.type === 'browser') { await getAudio().play(); return; }
     await fetch(`${HA_URL}/api/services/media_player/media_play`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${HA_TOKEN}`, 'Content-Type': 'application/json' },
@@ -295,11 +275,7 @@ export function useDevices() {
     const state = playback[device.location];
     if (!state?.duration) return;
     const position = ratio * state.duration;
-
-    if (device.type === 'browser') {
-      getAudio().currentTime = position;
-      return;
-    }
+    if (device.type === 'browser') { getAudio().currentTime = position; return; }
     await fetch(`${HA_URL}/api/services/media_player/media_seek`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${HA_TOKEN}`, 'Content-Type': 'application/json' },
@@ -314,11 +290,9 @@ export function useDevices() {
     patchPlayback('browser', { playing: false, position: 0, duration: 0 });
   }, [getAudio, patchPlayback]);
 
+  // ── Volume ───────────────────────────────────────────────────────────
   const setVolume = useCallback(async (device: SmartDevice, volume: number) => {
-    if (device.type === 'browser') {
-      // handled in MusicPlayer directly via audioRef
-      return;
-    }
+    if (device.type === 'browser') return; // handled via audioRef in MusicPlayer
     await fetch(`${HA_URL}/api/services/media_player/volume_set`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${HA_TOKEN}`, 'Content-Type': 'application/json' },
@@ -326,43 +300,43 @@ export function useDevices() {
     });
   }, []);
 
+  // ── Play local URL ───────────────────────────────────────────────────
   const playUrl = useCallback(async (url: string) => {
-  const audio = getAudio();
+    const audio = getAudio();
+    audio.pause();
+    audio.src = url;
+    audio.load();
 
-  audio.pause();
-  audio.src = url;
-  audio.load();
+    const decoded = decodeURIComponent(url);
+    const file    = decoded.split('/').pop()?.replace('.mp3', '') ?? '';
+    const [artist, title] = file.includes(' - ') ? file.split(' - ') : ['', file];
 
-  const decoded = decodeURIComponent(url);
-  const file = decoded.split('/').pop()?.replace('.mp3', '') ?? '';
+    patchPlayback('browser', { playing: true, position: 0, itemId: url, title, artist });
 
-  const [artist, title] = file.includes(' - ')
-    ? file.split(' - ')
-    : ['', file];
+    try {
+      await audio.play();
+    } catch (e: any) {
+      if (e.name !== 'AbortError') console.error(e);
+    }
+  }, [getAudio, patchPlayback]);
 
-  patchPlayback('browser', {
-    playing: true,
-    position: 0,
-    itemId: url,
-    title,
-    artist,
-  });
-
-  try {
-    await audio.play();
-  } catch (e: any) {
-    if (e.name !== 'AbortError') console.error(e);
-  }
-}, [getAudio, patchPlayback]);
-
+  
   const nowPlaying: NowPlaying | null = (() => {
-    const state = playback['browser'];
-    if (!state) return null;
-    
-    return {  
-      title: state.title ?? 'sds Track',
-      artist: state.artist ?? 'Unknown Artist',
-      playing: state.playing,
+    // Check HA renderer devices first (they're the non-browser ones)
+    const activeRenderer = Object.entries(playback).find(
+      ([location, state]) => location !== 'browser' && state.playing
+    );
+
+    const state = activeRenderer
+      ? activeRenderer[1]
+      : playback['browser'];
+
+    if (!state?.playing) return null;
+
+    return {
+      title:    state.title  ?? 'Unknown Track',
+      artist:   state.artist ?? 'Unknown Artist',
+      playing:  state.playing,
       position: state.position,
       duration: state.duration,
     };

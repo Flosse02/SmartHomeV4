@@ -56,7 +56,6 @@ interface CalendarStripProps {
 function CalendarStrip({ events }: CalendarStripProps) {
   const groups = groupUpcomingEvents(events)
   const entries = Object.entries(groups)
-  console.log('Grouped events:', groups)
 
   return (
     <div className="flex-1 px-4 pb-2 overflow-hidden flex flex-col min-h-0">

@@ -6,7 +6,7 @@ import Slideshow from '../pages/Slideshow';
 import MusicPlayer from '../pages/MusicPlayer';
 import SmartHome from '../pages/SmartHome';
 import Clock from './Clock';
-import { SmartDevice, useDevices } from '@/hooks/useDevices';
+import { SmartDevice, useDevices, UseDevicesResult } from '@/hooks/useDevices';
 import { Weather } from './Weather';
 
 const Notes = dynamic(() => import('../pages/Notes'), { ssr: false });
@@ -19,10 +19,12 @@ const TABS: SmartAreaTab[] = ['Pictures', 'Music', 'Home', 'Notes', 'Camera'];
 interface SmartAreaProps {
   activeTab: SmartAreaTab;
   onTabChange: (tab: SmartAreaTab) => void;
+  // Passed from page.tsx so MusicPlayer shares the same device state
+  // as the sleep overlay — no duplicate polling, no stale data.
+  devicesResult: UseDevicesResult;
 }
 
-export default function SmartArea({ activeTab, onTabChange }: SmartAreaProps) {
-  const devices = useDevices();
+export default function SmartArea({ activeTab, onTabChange, devicesResult }: SmartAreaProps) {
   const [selectedDevice, setSelectedDevice] = useState<SmartDevice | null>(null);
 
   return (
@@ -47,17 +49,17 @@ export default function SmartArea({ activeTab, onTabChange }: SmartAreaProps) {
         </div>
       </div>
 
-      {/* Content */}
       {activeTab === 'Pictures' && <Slideshow />}
 
       <div style={{ display: activeTab === 'Music' ? 'contents' : 'none' }}>
-        <MusicPlayer />
+        {/* MusicPlayer now receives the shared devices instance */}
+        <MusicPlayer devicesResult={devicesResult} />
       </div>
       <div style={{ display: activeTab === 'Home' ? 'contents' : 'none' }}>
         <SmartHome
           selectedDevice={selectedDevice}
           onSelectDevice={setSelectedDevice}
-          devices={devices}
+          devices={devicesResult.devices}
         />
       </div>
       <div style={{ display: activeTab === 'Notes' ? 'contents' : 'none' }}>

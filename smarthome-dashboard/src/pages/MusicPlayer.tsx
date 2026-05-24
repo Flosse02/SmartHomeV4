@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useJellyfinLibrary, JellyfinItem } from '@/hooks/useJellyFinLibrary';
 import { useQueue } from '@/hooks/useQueue';
-import { SmartDevice, useDevices, BROWSER_DEVICE } from '@/hooks/useDevices';
+import { SmartDevice, useDevices, BROWSER_DEVICE, UseDevicesResult } from '@/hooks/useDevices';
 import { CastIcon, PlayIcon, PauseIcon, FastForwardIcon, FastRewindIcon, ShuffleIcon, StopIcon, RefreshIcon, VolumeHighIcon, VolumeMuteIcon, VolumeVeryLowIcon, VolumeLowIcon } from '@/lib/icons';
 import Select from 'react-select';
 import { Picker } from '@/components/form/picker';
@@ -393,53 +393,71 @@ function BrowsePanel({ open, onClose, lib, queue }: {
   );
 }
 
-export default function MusicPlayer() {
+interface MusicPlayerProps {
+  devicesResult: UseDevicesResult;
+}
+ 
+export default function MusicPlayer({ devicesResult }: MusicPlayerProps) {
+  const {
+    nowPlaying,
+    audioRef,
+    stopBrowser,
+    playUrl,
+    playOnDevice,
+    pauseDevice,
+    resumeDevice,
+    seekDevice,
+    setVolume: setDeviceVolume,
+    discover,
+  } = devicesResult;
+ 
+  const playback = devicesResult.playback;
+  const playbackRef = devicesResult.playbackRef; 
   const [, forceRender] = useState(0);
   useEffect(() => {
     const id = setInterval(() => forceRender(n => n + 1), 1000);
     return () => clearInterval(id);
   }, []);
-
+ 
   const queueRef = useRef<typeof queue | null>(null);
-
-  const devices = useDevices();
-  const lib     = useJellyfinLibrary();
-
+ 
+  const lib = useJellyfinLibrary();
+ 
   const [selectedDevice,   setSelectedDevice]   = useState<SmartDevice>(BROWSER_DEVICE);
   const [showPanel,        setShowPanel]        = useState(false);
   const [showDevices,      setShowDevices]      = useState(false);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [volume,           setVolume]           = useState(1);
   const [shuffleActive,    setShuffleActive]    = useState(false);
-
+ 
   const musicSourceOptions = [
-    {value: "file", label: "Files"},
-    {value: "jellyfin", label: "Jellyfin"},
-    {value: "spotify", label: "Spotify"},
+    { value: 'file',     label: 'Files'    },
+    { value: 'jellyfin', label: 'Jellyfin' },
+    { value: 'spotify',  label: 'Spotify'  },
   ];
-  const [musicSource,      setMusicSource]      = useState("file")
-  const [musicPickerOpen,  setMusicPickerOpen]  = useState(false)
-  const [localFiles, setLocalFiles] = useState<JellyfinItem[]>([]);
-
-
+  const [musicSource,     setMusicSource]     = useState('file');
+  const [musicPickerOpen, setMusicPickerOpen] = useState(false);
+  const [localFiles,      setLocalFiles]      = useState<JellyfinItem[]>([]);
+ 
   const SHUFFLE_AHEAD  = 10;
   const shufflePoolRef = useRef<JellyfinItem[]>([]);
   const shuffleModeRef = useRef(false);
   const pendingAddRef  = useRef(0);
-
+ 
   const selectedDeviceRef = useRef(selectedDevice);
   useEffect(() => { selectedDeviceRef.current = selectedDevice; }, [selectedDevice]);
-
+ 
   // Sync volume state when switching devices
   useEffect(() => {
     if (selectedDevice.type === 'browser') {
-      setVolume(devices.audioRef.current?.volume ?? 1);
+      setVolume(audioRef.current?.volume ?? 1);
     } else {
-      const pb = devices.playback[selectedDevice.location];
+      const pb = playback[selectedDevice.location];
       setVolume(pb?.volume ?? 1);
     }
   }, [selectedDevice]);
-
+ 
+  // Load local files when source is 'file'
   useEffect(() => {
     if (musicSource !== 'file') return;
     fetch('/api/music')
@@ -454,59 +472,68 @@ export default function MusicPlayer() {
         setLocalFiles(files);
       });
   }, [musicSource]);
-
-
+ 
+  // Clear queue + stop when switching source
   useEffect(() => {
     queue.clearQueue();
-    devices.stopBrowser();
+    stopBrowser();
   }, [musicSource]);
-
+ 
   const handleVolume = useCallback((v: number) => {
     setVolume(v);
     if (selectedDevice.type === 'browser') {
-      if (devices.audioRef.current) devices.audioRef.current.volume = v;
+      if (audioRef.current) audioRef.current.volume = v;
     } else {
-      devices.setVolume(selectedDevice, v);
+      setDeviceVolume(selectedDevice, v);
     }
-  }, [selectedDevice, devices]);
-
+  }, [selectedDevice, audioRef, setDeviceVolume]);
+ 
   const playTrack = useCallback(async (itemId: string) => {
     if (musicSource === 'file') {
-      await devices.playUrl(itemId); // itemId is the /api/music/stream?file=... URL
+      await playUrl(itemId);
       return;
     }
     const item = queueRef.current?.queue.find(t => t.Id === itemId);
+    
     const duration = item?.RunTimeTicks ? item.RunTimeTicks / 10_000_000 : undefined;
-    await devices.playOnDevice(selectedDeviceRef.current, itemId, duration);
-  }, [devices, musicSource]);
+    await playOnDevice(selectedDeviceRef.current, itemId, duration, 0, {
+      title:  item?.Name                              ?? undefined,
+      artist: item?.AlbumArtist ?? item?.Artists?.[0] ?? undefined,
+      album:  item?.Album                             ?? undefined,
+    });
 
+  }, [playUrl, playOnDevice, musicSource]);
+
+
+ 
   const stopAll = useCallback(() => {
-    devices.stopBrowser();
-  }, [devices]);
-
+    stopBrowser();
+  }, [stopBrowser]);
+ 
   const queue = useQueue(playTrack, undefined, stopAll);
   useEffect(() => { queueRef.current = queue; }, [queue]);
-
+ 
   const prevDeviceRef = useRef<SmartDevice>(BROWSER_DEVICE);
-
+ 
+  // Transfer playback when switching devices
   useEffect(() => {
     const prev = prevDeviceRef.current;
     prevDeviceRef.current = selectedDevice;
-
+ 
     const current = queueRef.current?.queue[queueRef.current?.currentIndex];
     if (!current) return;
     if (prev.id === selectedDevice.id) return;
-
+ 
     const position = prev.type === 'browser'
-      ? devices.audioRef.current?.currentTime ?? 0
+      ? audioRef.current?.currentTime ?? 0
       : livePosition;
-
+ 
     const duration = current.RunTimeTicks ? current.RunTimeTicks / 10_000_000 : undefined;
-
-    devices.pauseDevice(prev);
-    devices.playOnDevice(selectedDevice, current.Id, duration, position);
+ 
+    pauseDevice(prev);
+    playOnDevice(selectedDevice, current.Id, duration, position);
   }, [selectedDevice]);
-
+ 
   const topUpQueue = useCallback(() => {
     if (!shuffleModeRef.current) return;
     const ahead  = (queue.queue.length + pendingAddRef.current) - (queue.currentIndex + 1);
@@ -517,15 +544,14 @@ export default function MusicPlayer() {
     pendingAddRef.current += toAdd.length;
     queue.addManyToQueue(toAdd);
   }, [queue]);
-
+ 
   useEffect(() => { pendingAddRef.current = 0; }, [queue.queue.length]);
   useEffect(() => { topUpQueue(); }, [queue.currentIndex, topUpQueue]);
-
+ 
   const handleShuffle = async () => {
     let tracks: JellyfinItem[];
-
+ 
     if (musicSource === 'file') {
-      // Shuffle from already-loaded local files, or fetch them if not yet loaded
       const pool = localFiles.length > 0 ? localFiles : await fetch('/api/music')
         .then(r => r.json())
         .then(d => (d.files ?? []).map((f: { name: string; path: string }) => ({
@@ -536,19 +562,19 @@ export default function MusicPlayer() {
         })));
       tracks = [...pool].sort(() => Math.random() - 0.5);
     } else {
-      const res = await fetch(`${BASE}/Items?IncludeItemTypes=Audio&Recursive=true&Limit=50&SortBy=Random&api_key=${API_KEY}`);
+      const res  = await fetch(`${BASE}/Items?IncludeItemTypes=Audio&Recursive=true&Limit=50&SortBy=Random&api_key=${API_KEY}`);
       const data = await res.json();
       tracks = (data.Items ?? []).sort(() => Math.random() - 0.5);
     }
-
+ 
     if (!tracks.length) return;
-
+ 
     const shuffled = tracks.map(t => ({ ...t, queueId: `${t.Id}-${Date.now()}-${Math.random()}` }));
-
+ 
     shufflePoolRef.current = shuffled.slice(SHUFFLE_AHEAD);
     shuffleModeRef.current = true;
     pendingAddRef.current  = 0;
-
+ 
     queue.clearQueue();
     requestAnimationFrame(() => {
       queue.addManyToQueue(shuffled.slice(0, SHUFFLE_AHEAD));
@@ -556,45 +582,41 @@ export default function MusicPlayer() {
     });
     setShuffleActive(true);
   };
-
-  const pb          = devices.playback[selectedDevice.location] ?? { playing: false, position: 0, duration: 0, updatedAt: 0, positionFetchedAt: 0 };
+ 
+  const pb          = playback[selectedDevice.location] ?? { playing: false, position: 0, duration: 0, updatedAt: 0, positionFetchedAt: 0 };
   const isPlaying   = pb.playing;
   const activeTrack = queue.currentIndex >= 0 ? queue.queue[queue.currentIndex] : null;
-
+ 
   const livePosition = pb.playing && selectedDevice.type === 'renderer'
     ? pb.position + (Date.now() - pb.positionFetchedAt) / 1000
     : pb.playing && selectedDevice.type === 'browser'
     ? pb.position + (Date.now() - pb.updatedAt) / 1000
     : pb.position;
-
+ 
   const progress = pb.duration > 0 ? Math.min(livePosition / pb.duration, 1) : 0;
-
+ 
   const handlePlayPause = async () => {
-    isPlaying ? await devices.pauseDevice(selectedDevice) : await devices.resumeDevice(selectedDevice);
+    isPlaying ? await pauseDevice(selectedDevice) : await resumeDevice(selectedDevice);
   };
-
+ 
   return (
     <>
-      <BrowsePanel open={showPanel} onClose={() => setShowPanel(false)} lib={lib} queue={queue} />
-
       {musicSource === 'jellyfin'
-        ? <BrowsePanel open={showPanel} onClose={() => setShowPanel(false)} lib={lib} queue={queue} />
+        ? <BrowsePanel      open={showPanel} onClose={() => setShowPanel(false)} lib={lib} queue={queue} />
         : <LocalBrowsePanel open={showPanel} onClose={() => setShowPanel(false)} files={localFiles} queue={queue} />
       }
-
+ 
       <div style={{ display: 'flex', width: '100%', height: '100%' }}>
-
+ 
         {/* ── PLAYER ── */}
         <div style={{ flex: 1, padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {/* Music Selector */}
-          <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+ 
+          {/* Music source selector */}
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <div>Music Source: </div>
-            <Picker
-              options={musicSourceOptions}
-              value={musicSource}
-              onChange={setMusicSource}
-            />
+            <Picker options={musicSourceOptions} value={musicSource} onChange={setMusicSource} />
           </div>
+ 
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <button onClick={() => setShowPanel(true)} style={{ fontSize: 11, background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: 6, padding: '3px 8px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
@@ -607,37 +629,36 @@ export default function MusicPlayer() {
               borderRadius: 6, padding: '3px 8px',
               color: shuffleActive ? 'var(--accent)' : 'var(--text-secondary)',
               cursor: 'pointer', transition: 'all 0.15s',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 2,
-            }}><ShuffleIcon/>Shuffle</button>
+              display: 'flex', alignItems: 'center', gap: 2,
+            }}>
+              <ShuffleIcon />Shuffle
+            </button>
           </div>
-
+ 
           {/* Track info */}
           <div>
             <div style={{ fontSize: 13, fontWeight: 500 }}>{activeTrack?.Name ?? 'Nothing playing'}</div>
             <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{activeTrack?.AlbumArtist ?? activeTrack?.Artists?.[0] ?? ''}</div>
           </div>
-
+ 
           {/* Progress */}
-          <ProgressBar progress={progress} onSeek={ratio => devices.seekDevice(selectedDevice, ratio)} />
+          <ProgressBar progress={progress} onSeek={ratio => seekDevice(selectedDevice, ratio)} />
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>{formatTime(livePosition)}</span>
             <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>{formatTime(pb.duration)}</span>
           </div>
-
+ 
           {/* Controls */}
           <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-            <CtrlButton onClick={() => queue.playPrev()}><FastRewindIcon/></CtrlButton>
-            <CtrlButton onClick={handlePlayPause} accent>{isPlaying ? <PauseIcon/> : <PlayIcon/>}</CtrlButton>
-            <CtrlButton onClick={() => queue.playNext()}><FastForwardIcon/></CtrlButton>
+            <CtrlButton onClick={() => queue.playPrev()}><FastRewindIcon /></CtrlButton>
+            <CtrlButton onClick={handlePlayPause} accent>{isPlaying ? <PauseIcon /> : <PlayIcon />}</CtrlButton>
+            <CtrlButton onClick={() => queue.playNext()}><FastForwardIcon /></CtrlButton>
             {selectedDevice.type === 'browser' && (
-              <CtrlButton onClick={devices.stopBrowser}><StopIcon/></CtrlButton>
+              <CtrlButton onClick={stopBrowser}><StopIcon /></CtrlButton>
             )}
-
-            {/* Volume + Device picker */}
+ 
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
-
+ 
               {/* Device picker */}
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}>
                 {selectedDevice.id !== 'browser' && (
@@ -645,12 +666,12 @@ export default function MusicPlayer() {
                     {selectedDevice.name}
                   </span>
                 )}
-                <CtrlButton onClick={() => { setShowDevices(v => !v); devices.discover(); }}><CastIcon/></CtrlButton>
+                <CtrlButton onClick={() => { setShowDevices(v => !v); discover(); }}><CastIcon /></CtrlButton>
                 {showDevices && (
                   <>
                     <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowDevices(false)} />
                     <DevicePicker
-                      devices={devices}
+                      devices={devicesResult}
                       selectedDevice={selectedDevice}
                       onSelect={setSelectedDevice}
                       onClose={() => setShowDevices(false)}
@@ -658,10 +679,15 @@ export default function MusicPlayer() {
                   </>
                 )}
               </div>
-
+ 
               {/* Volume */}
               <div style={{ position: 'relative' }}>
-                <CtrlButton onClick={() => setShowVolumeSlider(v => !v)}>{volume > 0 && volume <= 0.1 ? <VolumeVeryLowIcon /> : volume > 0.1 && volume < 0.5 ? <VolumeLowIcon /> : volume > 0.5 ? <VolumeHighIcon/> : <VolumeMuteIcon />}</CtrlButton>
+                <CtrlButton onClick={() => setShowVolumeSlider(v => !v)}>
+                  {volume > 0 && volume <= 0.1 ? <VolumeVeryLowIcon />
+                    : volume > 0.1 && volume < 0.5 ? <VolumeLowIcon />
+                    : volume > 0.5 ? <VolumeHighIcon />
+                    : <VolumeMuteIcon />}
+                </CtrlButton>
                 {showVolumeSlider && (
                   <>
                     <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowVolumeSlider(false)} />
@@ -672,7 +698,7 @@ export default function MusicPlayer() {
             </div>
           </div>
         </div>
-
+ 
         {/* ── QUEUE ── */}
         {queue.queue.length > 0 && (
           <div style={{ width: 320 }}>
