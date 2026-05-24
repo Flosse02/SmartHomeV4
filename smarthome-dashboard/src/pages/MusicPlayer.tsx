@@ -488,21 +488,22 @@ export default function MusicPlayer({ devicesResult }: MusicPlayerProps) {
     }
   }, [selectedDevice, audioRef, setDeviceVolume]);
  
+  const musicSourceRef = useRef(musicSource);
+  useEffect(() => { musicSourceRef.current = musicSource; }, [musicSource]);
+
   const playTrack = useCallback(async (itemId: string) => {
-    if (musicSource === 'file') {
+    if (musicSourceRef.current === 'file') {  // ← ref, not closure value
       await playUrl(itemId);
       return;
     }
     const item = queueRef.current?.queue.find(t => t.Id === itemId);
-    
     const duration = item?.RunTimeTicks ? item.RunTimeTicks / 10_000_000 : undefined;
     await playOnDevice(selectedDeviceRef.current, itemId, duration, 0, {
       title:  item?.Name                              ?? undefined,
       artist: item?.AlbumArtist ?? item?.Artists?.[0] ?? undefined,
       album:  item?.Album                             ?? undefined,
     });
-
-  }, [playUrl, playOnDevice, musicSource]);
+  }, [playUrl, playOnDevice]); 
 
 
  
