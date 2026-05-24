@@ -394,10 +394,11 @@ function BrowsePanel({ open, onClose, lib, queue }: {
 }
 
 interface MusicPlayerProps {
-  devicesResult: UseDevicesResult;
+  devicesResult:    UseDevicesResult;
+  controlsRef?:     React.RefObject<{ pause: () => void; prev: () => void; next: () => void } | null>;
 }
  
-export default function MusicPlayer({ devicesResult }: MusicPlayerProps) {
+export default function MusicPlayer({ devicesResult, controlsRef }: MusicPlayerProps) {
   const {
     nowPlaying,
     audioRef,
@@ -512,8 +513,16 @@ export default function MusicPlayer({ devicesResult }: MusicPlayerProps) {
   }, [stopBrowser]);
  
   const queue = useQueue(playTrack, undefined, stopAll);
-  useEffect(() => { queueRef.current = queue; }, [queue]);
- 
+  queueRef.current = queue;
+
+  if (controlsRef) {
+    controlsRef.current = {
+      pause: () => pauseDevice(selectedDeviceRef.current),
+      prev:  () => queue.playPrev(),
+      next:  () => queue.playNext(),
+    };
+  }
+
   const prevDeviceRef = useRef<SmartDevice>(BROWSER_DEVICE);
  
   // Transfer playback when switching devices

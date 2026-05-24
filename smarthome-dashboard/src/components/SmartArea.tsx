@@ -17,14 +17,13 @@ export type SmartAreaTab = 'Pictures' | 'Music' | 'Home' | 'Notes' | 'Camera';
 const TABS: SmartAreaTab[] = ['Pictures', 'Music', 'Home', 'Notes', 'Camera'];
 
 interface SmartAreaProps {
-  activeTab: SmartAreaTab;
-  onTabChange: (tab: SmartAreaTab) => void;
-  // Passed from page.tsx so MusicPlayer shares the same device state
-  // as the sleep overlay — no duplicate polling, no stale data.
+  activeTab:     SmartAreaTab;
+  onTabChange:   (tab: SmartAreaTab) => void;
   devicesResult: UseDevicesResult;
+  controlsRef?:  React.RefObject<{ pause: () => void; prev: () => void; next: () => void } | null>;
 }
 
-export default function SmartArea({ activeTab, onTabChange, devicesResult }: SmartAreaProps) {
+export default function SmartArea({ activeTab, onTabChange, devicesResult, controlsRef }: SmartAreaProps) {
   const [selectedDevice, setSelectedDevice] = useState<SmartDevice | null>(null);
 
   return (
@@ -53,7 +52,7 @@ export default function SmartArea({ activeTab, onTabChange, devicesResult }: Sma
 
       <div style={{ display: activeTab === 'Music' ? 'contents' : 'none' }}>
         {/* MusicPlayer now receives the shared devices instance */}
-        <MusicPlayer devicesResult={devicesResult} />
+        <MusicPlayer devicesResult={devicesResult} controlsRef={controlsRef} />
       </div>
       <div style={{ display: activeTab === 'Home' ? 'contents' : 'none' }}>
         <SmartHome

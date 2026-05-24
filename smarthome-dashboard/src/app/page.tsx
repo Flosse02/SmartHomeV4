@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import CalendarPanel from '@/components/CalendarPanel';
 import SmartArea, { type SmartAreaTab } from '@/components/SmartArea';
 import { KioskSleepMode } from '@/components/kiosk';
@@ -9,6 +9,7 @@ import { useDevices } from '@/hooks/useDevices';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<SmartAreaTab>('Pictures');
+  const controlsRef = useRef<{ pause: () => void; prev: () => void; next: () => void } | null>(null);
 
   const devicesResult = useDevices();
   const { playback } = devicesResult;
@@ -45,6 +46,9 @@ export default function Home() {
       events={events}
       nowPlaying={nowPlaying}
       onWake={() => {console.log('Waking up from sleep mode')}}
+      onPause={() => controlsRef.current?.pause()}
+      onPrev={()  => controlsRef.current?.prev()}
+      onNext={()  => controlsRef.current?.next()}
     >
       <main className="dashboard-root">
         <section className="top-half">
@@ -52,6 +56,7 @@ export default function Home() {
             activeTab={activeTab}
             onTabChange={setActiveTab}
             devicesResult={devicesResult}
+            controlsRef={controlsRef}
           />
         </section>
 
