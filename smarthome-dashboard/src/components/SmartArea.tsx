@@ -58,7 +58,7 @@ export default function SmartArea({ activeTab, onTabChange, devicesResult, contr
         <SmartHome
           selectedDevice={selectedDevice}
           onSelectDevice={setSelectedDevice}
-          devices={devicesResult.devices}
+          devices={devicesResult}
         />
       </div>
       <div style={{ display: activeTab === 'Notes' ? 'contents' : 'none' }}>

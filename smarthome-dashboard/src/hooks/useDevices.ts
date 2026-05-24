@@ -1,5 +1,6 @@
 import { NowPlaying } from '@/components/kiosk/types';
 import { useState, useCallback, useEffect, useRef } from 'react';
+import * as mm from 'music-metadata-browser';
 
 export interface SmartDevice {
   id: string;
@@ -301,24 +302,39 @@ export function useDevices() {
   }, []);
 
   // ── Play local URL ───────────────────────────────────────────────────
-  const playUrl = useCallback(async (url: string) => {
-    const audio = getAudio();
-    audio.pause();
-    audio.src = url;
-    audio.load();
+const playUrl = useCallback(async (url: string) => {
+  const audio = getAudio();
+  audio.pause();
+  audio.src = url;
+  audio.load();
 
+  // Try to read ID3 tags from the file
+  let title = url.split('/').pop()?.replace(/\.[^.]+$/, '') ?? url;
+  let artist = '';
+  let album  = '';
+
+  try {
+    const metadata = await mm.fetchFromUrl(url);
+    title  = metadata.common.title  ?? title;
+    artist = metadata.common.artist ?? '';
+    album  = metadata.common.album  ?? '';
+  } catch {
+    // Fall back to filename parsing if tags aren't available
     const decoded = decodeURIComponent(url);
-    const file    = decoded.split('/').pop()?.replace('.mp3', '') ?? '';
-    const [artist, title] = file.includes(' - ') ? file.split(' - ') : ['', file];
+    const file    = decoded.split('/').pop()?.replace(/\.[^.]+$/, '') ?? '';
+    const [a, t]  = file.includes(' - ') ? file.split(' - ') : ['', file];
+    artist = a;
+    title  = t || title;
+  }
 
-    patchPlayback('browser', { playing: true, position: 0, itemId: url, title, artist });
+  patchPlayback('browser', { playing: true, position: 0, itemId: url, title, artist, album });
 
-    try {
-      await audio.play();
-    } catch (e: any) {
-      if (e.name !== 'AbortError') console.error(e);
-    }
-  }, [getAudio, patchPlayback]);
+  try {
+    await audio.play();
+  } catch (e: any) {
+    if (e.name !== 'AbortError') console.error(e);
+  }
+}, [getAudio, patchPlayback]);
 
   
   const nowPlaying: NowPlaying | null = (() => {

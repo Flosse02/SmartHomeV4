@@ -647,8 +647,12 @@ export default function MusicPlayer({ devicesResult, controlsRef }: MusicPlayerP
  
           {/* Track info */}
           <div>
-            <div style={{ fontSize: 13, fontWeight: 500 }}>{activeTrack?.Name ?? 'Nothing playing'}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{activeTrack?.AlbumArtist ?? activeTrack?.Artists?.[0] ?? ''}</div>
+            <div style={{ fontSize: 13, fontWeight: 500 }}>
+              {pb.title ?? activeTrack?.Name ?? 'Nothing playing'}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+              {pb.artist ?? activeTrack?.AlbumArtist ?? activeTrack?.Artists?.[0] ?? ''}
+            </div>
           </div>
  
           {/* Progress */}
