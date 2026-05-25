@@ -96,7 +96,7 @@ export default function Settings() {
             <span className="settings-hint">Used for weather</span>
           </div>
           <div className="settings-right settings-control">
-            <InputBar placeholder="Enter City" value={location} onChange={change(setLocation)} />
+            <InputBar placeholder="Enter City, I.E. New York" value={location} onChange={change(setLocation)} />
           </div>
         </div>
       </div>
