@@ -22,12 +22,14 @@ This is being created to work on a raspberry pi, my current setup has a raspberr
     - Camera Tab - Intergrates with your cameras connected to Home Assistant and plays them for you to see. (Cannot verify as I do not have any)
     - Settings Tab - Can control mutiple settings like locations and time related stuff.
 
-# To be added
+### To be added
 - Weather tab, more indepth weather
 - Clock tab, will have things like timers alarms ect,
 - Transport tab - Will connect to  public transport api.
 - Monitor screen - Will have monitoring for both the pi this is run on and the jellyfin pi.
 
+### To Be fixed
+- The music folder and photos folder do not worked when picked through the settings tab
 
 ## Getting Started
 ### Setting Up Google Acocunt For Testing
