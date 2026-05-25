@@ -15,9 +15,9 @@ const Settings = dynamic(() => import('../pages/Settings'), { ssr: false });
 // const Weather = dynamic(() => import('../pages/Weather'), { ssr: false });
 // const Clock = dynamic(() => import('../pages/Clock'), { ssr: false });
 
-export type SmartAreaTab = 'Pictures' | 'Music' | 'Home' | 'Notes' | 'Camera' | 'Weather' | 'Clock' | 'Settings';
+export type SmartAreaTab = 'Pictures' | 'Music' | 'Home' | 'Notes' | 'Camera' | 'Weather' | 'Clock' | 'Monitor' | 'Settings';
 
-const TABS: SmartAreaTab[] = ['Pictures', 'Music', 'Home', 'Notes', 'Camera', 'Weather', 'Clock', 'Settings'];
+const TABS: SmartAreaTab[] = ['Pictures', 'Music', 'Home', 'Notes', 'Camera', 'Weather', 'Clock', 'Monitor', 'Settings'];
 
 interface SmartAreaProps {
   activeTab:     SmartAreaTab;
@@ -32,23 +32,24 @@ export default function SmartArea({ activeTab, onTabChange, devicesResult, contr
   return (
     <div className="smart-area">
       <div className="smart-topbar">
-        <div className="weather-overlay">
-          <Weather />
-        </div>
         <div className="clock-overlay">
           <Clock />
         </div>
-        <div className="smart-tabs">
-          {TABS.map(tab => (
-            <button
-              key={tab}
-              className={`smart-tab ${activeTab === tab ? 'active' : ''}`}
-              onClick={() => onTabChange(tab)}
-            >
-              {tab}
-            </button>
-          ))}
+        <div className="weather-overlay">
+          <Weather />
         </div>
+      </div>
+
+      <div className="smart-tabs">
+        {TABS.map(tab => (
+          <button
+            key={tab}
+            className={`smart-tab ${activeTab === tab ? 'active' : ''}`}
+            onClick={() => onTabChange(tab)}
+          >
+            {tab}
+          </button>
+        ))}
       </div>
 
       {activeTab === 'Pictures' && <Slideshow />}
@@ -75,6 +76,9 @@ export default function SmartArea({ activeTab, onTabChange, devicesResult, contr
       </div>
       <div style={{ display: activeTab === 'Clock' ? 'contents' : 'none' }}>
         <Clock />
+      </div> */}
+      {/* <div style={{ display: activeTab === 'Monitor' ? 'contents' : 'none' }}>
+        <Monitor />
       </div> */}
       <div style={{ display: activeTab === 'Settings' ? 'contents' : 'none' }}>
         <Settings />

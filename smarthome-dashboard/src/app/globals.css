@@ -101,7 +101,10 @@ body {
    ============================================ */
 .smart-tabs {
   display: flex;
+  justify-content: center;
+  background: var(--bg-overlay);
   gap: 6px;
+  padding-bottom: 4px;
 }
 
 .smart-tab {
@@ -112,7 +115,6 @@ body {
   padding: 4px 10px;
   border-radius: 4px;
   border: 1px solid var(--border-default);
-  background: rgba(0,0,0,0.4);
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;

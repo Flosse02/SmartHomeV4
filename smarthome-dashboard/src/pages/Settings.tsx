@@ -64,8 +64,8 @@ export default function Settings() {
   };
 
   const themeOptions = [
-    { value: 'Light', label: 'Light' },
     { value: 'Dark',  label: 'Dark'  },
+    { value: 'Light', label: 'Light' },
     { value: 'Auto',  label: 'Auto'  },
   ];
 

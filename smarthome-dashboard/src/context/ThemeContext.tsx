@@ -12,6 +12,14 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+const isNightTime = (): boolean => {
+  const now = new Date();
+  const hours = now.getHours();
+  return hours >= 18 || hours < 6;
+};
+
+
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>('Dark');
   const [resolvedTheme, setResolvedTheme] = useState<'Light' | 'Dark'>('Dark');
@@ -29,8 +37,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Resolve actual theme based on system preference
   useEffect(() => {
     if (theme === 'Auto') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setResolvedTheme(prefersDark ? 'Dark' : 'Light');
+      setResolvedTheme(isNightTime() ? 'Dark' : 'Light');
 
       const handler = (e: MediaQueryListEvent) => {
         setResolvedTheme(e.matches ? 'Dark' : 'Light');
