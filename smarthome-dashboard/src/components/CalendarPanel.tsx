@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { LogoutIcon } from '@/lib/icons';
+import GoogleAuthButton from '@/components/form/GoogleAuthButton';
+
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -386,22 +388,31 @@ function EventModal({ event, onClose, onEdit, onDelete }: {
   );
 }
 
-
 export default function CalendarPanel() {
   const { data: session } = useSession();
   const today = new Date();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [viewed, setViewed] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selected, setSelected] = useState<CalendarEvent | null>(null);
-  const [addDate, setAddDate] = useState<Date | null>(null); // null = closed, Date = open with pre-filled date
+  const [addDate, setAddDate] = useState<Date | null>(null);
 
+  // Fetch events when logged in or month changes
   useEffect(() => {
-    if (!session) return;
+    if (!session) {
+      setEvents([]); // Clear events when not logged in
+      return;
+    }
+    
     const start = new Date(viewed.getFullYear(), viewed.getMonth(), 1).toISOString();
-    const end   = new Date(viewed.getFullYear(), viewed.getMonth() + 1, 0, 23, 59, 59).toISOString();
+    const end = new Date(viewed.getFullYear(), viewed.getMonth() + 1, 0, 23, 59, 59).toISOString();
+    
     fetch(`/api/calendar?start=${start}&end=${end}`)
       .then(r => r.json())
-      .then(data => setEvents(Array.isArray(data) ? data : []));
+      .then(data => {
+        console.log('Fetched events:', data); // Debug log
+        setEvents(Array.isArray(data) ? data : []);
+      })
+      .catch(err => console.error('Failed to fetch events:', err));
   }, [session, viewed]);
 
   useEffect(() => {
@@ -416,17 +427,11 @@ export default function CalendarPanel() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  if (!session) return (
-    <div className="calendar-login">
-      <button onClick={() => signIn('google')}>Sign in with Google</button>
-    </div>
-  );
-
-  const year  = viewed.getFullYear();
+  const year = viewed.getFullYear();
   const month = viewed.getMonth();
-  const firstDay    = new Date(year, month, 1).getDay();
+  const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const daysInPrev  = new Date(year, month, 0).getDate();
+  const daysInPrev = new Date(year, month, 0).getDate();
 
   const cells: { day: number; type: 'prev' | 'current' | 'next' }[] = [];
   for (let i = firstDay - 1; i >= 0; i--)
@@ -454,6 +459,8 @@ export default function CalendarPanel() {
     setSelected(null);
   };
 
+  // Don't blur when logged in
+  const isLoggedIn = !!session;
 
   return (
     <>
@@ -494,6 +501,7 @@ export default function CalendarPanel() {
             });
 
             const handleCellClick = () => {
+              if (!isLoggedIn) return;
               if (cell.type === 'prev') {
                 setAddDate(new Date(year, month - 1, cell.day));
               } else if (cell.type === 'next') {
@@ -521,7 +529,7 @@ export default function CalendarPanel() {
                     <div
                       key={j}
                       className="cal-event"
-                      onClick={ev => { ev.stopPropagation(); setSelected(e); }} // ← stop propagation so cell click doesn't fire
+                      onClick={ev => { ev.stopPropagation(); setSelected(e); }}
                       role="button"
                       tabIndex={0}
                       onKeyDown={ev => ev.key === 'Enter' && setSelected(e)}
@@ -535,28 +543,38 @@ export default function CalendarPanel() {
             );
           })}
         </div>
+
+        {/* Login Overlay - only show when not logged in */}
+        {!isLoggedIn && (
+          <div className="calendar-login-btn">
+            <GoogleAuthButton />
+          </div>
+        )}
       </div>
 
-      {/* Floating add button */}
-      <button
-        className="cal-fab"
-        onClick={() => setAddDate(new Date())}
-        aria-label="Add event"
-      >
-        +
-      </button>
-
-      <button
-        onClick={() => signOut()}
-        className="cal-logout"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <LogoutIcon size={24}/>
-      </button>
+      {/* Only show FAB buttons when logged in */}
+      {isLoggedIn && (
+        <>
+          <button
+            className="cal-fab"
+            onClick={() => setAddDate(new Date())}
+            aria-label="Add event"
+          >
+            +
+          </button>
+          <button
+            onClick={() => signOut()}
+            className="cal-logout"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <LogoutIcon size={24}/>
+          </button>
+        </>
+      )}
     </>
   );
 }

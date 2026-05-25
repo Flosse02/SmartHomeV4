@@ -15,9 +15,9 @@ export function Picker({ options, value, onChange }: PickerProps) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="settings-select-wrapper">
+    <div className="select-wrapper">
       <div
-        className="settings-select"
+        className="select"
         onClick={() => setOpen(o => !o)}
       >
         {options.find(o => o.value === value)?.label ?? value}
@@ -25,11 +25,11 @@ export function Picker({ options, value, onChange }: PickerProps) {
       </div>
 
       {open && (
-        <div className="settings-select-dropdown">
+        <div className="select-dropdown">
           {options.map(opt => (
             <div
               key={opt.value}
-              className="settings-select-option"
+              className="select-option"
               onClick={() => {
                 onChange(opt.value);
                 setOpen(false);

@@ -5,6 +5,7 @@ import { Picker } from '@/components/form/picker';
 import { SaveIcon } from '@/lib/icons';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
+import GoogleAuthButton from '@/components/form/GoogleAuthButton';
 
 type Theme = 'Light' | 'Dark' | 'Auto';
 
@@ -142,6 +143,19 @@ export default function Settings() {
           </div>
           <div className="settings-right settings-control">
             <InputBar placeholder="Minutes" type="number" value={idleTimeout} suffix="min" onChange={change(setIdleTimeout)} />
+          </div>
+        </div>
+      </div>
+
+      {/* Login */}
+      <div className="settings-section">
+        <h2 className="settings-section-label">Connected Accounts</h2>
+        <div className="settings-row">
+          <div className="settings-label-wrapper">
+            <span className="settings-label">Google Account</span>
+          </div>
+          <div className="settings-right settings-control" >
+            <GoogleAuthButton />
           </div>
         </div>
       </div>
