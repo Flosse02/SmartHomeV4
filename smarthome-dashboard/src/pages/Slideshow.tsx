@@ -3,11 +3,6 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 
-if (!process.env.NEXT_PUBLIC_PHOTOS_TIMER) {
-  console.warn('PHOTOS_TIMER environment variable is not set. Defaulting to 5 minutes.');
-}
-const INTERVAL = parseInt(process.env.NEXT_PUBLIC_PHOTOS_TIMER || '5') * 60 * 1000;
-
 const GRADIENTS = [
   'linear-gradient(135deg, #1a2a3a 0%, #0d1f2d 50%, #162030 100%)',
   'linear-gradient(135deg, #1a1f2e 0%, #0f1a28 50%, #1e1530 100%)',
@@ -15,9 +10,21 @@ const GRADIENTS = [
 ];
 
 export default function Slideshow() {
-  const [photos, setPhotos] = useState<{ src: string; caption?: string }[]>([]);
-  const [current, setCurrent] = useState(0);
-  const [fading, setFading] = useState(false);
+  const [photos,     setPhotos]     = useState<{ src: string; caption?: string }[]>([]);
+  const [current,    setCurrent]    = useState(0);
+  const [fading,     setFading]     = useState(false);
+  const [intervalMs, setIntervalMs] = useState(5 * 60 * 1000); // default 5 min
+
+  // Load slideshow timer from settings API
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(s => {
+        const mins = parseInt(s.slideshowTimer ?? '5');
+        if (!s.slideshowTimer) console.warn('slideshowTimer not set in settings, defaulting to 5 minutes');
+        setIntervalMs((isNaN(mins) ? 5 : mins) * 60 * 1000);
+      });
+  }, []);
 
   useEffect(() => {
     fetch('/api/photos')
@@ -26,7 +33,7 @@ export default function Slideshow() {
   }, []);
 
   const hasPhotos = photos.length > 0;
-  const total = hasPhotos ? photos.length : GRADIENTS.length;
+  const total     = hasPhotos ? photos.length : GRADIENTS.length;
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -35,9 +42,9 @@ export default function Slideshow() {
         setCurrent(prev => (prev + 1) % total);
         setFading(false);
       }, 600);
-    }, INTERVAL);
+    }, intervalMs);
     return () => clearInterval(id);
-  }, [total]);
+  }, [total, intervalMs]);
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden', background: '#0d0f14' }}>

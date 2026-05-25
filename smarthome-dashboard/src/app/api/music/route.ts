@@ -1,9 +1,8 @@
-// src/app/api/music/route.ts
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { readSettings } from '@/lib/settings';
 
-const MUSIC_DIR = process.env.MUSIC_LOCATION ?? '';
 const AUDIO_EXTS = new Set(['.mp3', '.flac', '.ogg', '.wav', '.m4a', '.aac']);
 
 function scan(dir: string, base: string): { name: string; path: string }[] {
@@ -23,9 +22,10 @@ function scan(dir: string, base: string): { name: string; path: string }[] {
 }
 
 export async function GET() {
-  if (!MUSIC_DIR) return NextResponse.json({ files: [] });
+  const { musicLocation } = readSettings();
+  if (!musicLocation) return NextResponse.json({ files: [] });
   try {
-    return NextResponse.json({ files: scan(MUSIC_DIR, MUSIC_DIR) });
+    return NextResponse.json({ files: scan(musicLocation, musicLocation) });
   } catch {
     return NextResponse.json({ files: [], error: 'Cannot read music directory' });
   }
