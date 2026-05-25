@@ -781,6 +781,12 @@ body {
   flex-direction: column;
 }
 
+.settings-input--readonly {
+  opacity: 0.5;
+  cursor: default;
+  user-select: none;
+}
+
 .settings::-webkit-scrollbar {
   width: 6px;
 }

@@ -4,5 +4,6 @@
   "slideshowTimer": "5",
   "idleTimeout": "10",
   "location": "Perth",
-  "theme": "Dark"
+  "theme": "Dark",
+  "timeZone": "Australia/Perth"
 }

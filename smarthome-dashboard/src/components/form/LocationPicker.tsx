@@ -6,12 +6,13 @@ interface GeoResult {
   admin1?: string;
   latitude: number;
   longitude: number;
+  timezone: string;
 }
 
 export function LocationPicker({ value, placeHolder, onChange }: { 
   value: string; 
   placeHolder?: string;
-  onChange: (v: string | null) => void; // null = invalid/unconfirmed
+  onChange: (v: string | null, timezone?: string) => void; // null = invalid/unconfirmed
 }) {
   const [query,    setQuery]    = useState(value);
   const [results,  setResults]  = useState<GeoResult[]>([]);
@@ -58,8 +59,9 @@ export function LocationPicker({ value, placeHolder, onChange }: {
     setValid(true);
     setOpen(false);
     setResults([]);
-    onChange(r.name);
+    onChange(r.name, r.timezone); // pass both
   };
+
 
   return (
     <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>

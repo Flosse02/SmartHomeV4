@@ -3,7 +3,22 @@
 import { useEffect, useState } from 'react';
 
 export default function Clock() {
-  const [time, setTime] = useState<Date | null>(null);
+  const [time,     setTime]     = useState<Date | null>(null);
+  const [timezone, setTimezone] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const load = () => {
+      fetch('/api/settings', { cache: 'no-store' })
+        .then(r => r.json())
+        .then(s => {
+          console.log('settings:', s);
+          setTimezone(s.timeZone || undefined); // ← capital Z to match settings.json
+        });
+    };
+    load();
+    window.addEventListener('settings-changed', load);
+    return () => window.removeEventListener('settings-changed', load);
+  }, []);
 
   useEffect(() => {
     setTime(new Date());
@@ -13,20 +28,23 @@ export default function Clock() {
 
   if (!time) return null;
 
-  const timeStr = time.toLocaleTimeString('en-AU', {
-    hour: '2-digit',
-    minute: '2-digit',
+  const timeOptions = {
+    hour:   '2-digit' as const,
+    minute: '2-digit' as const,
     hour12: true,
-  });
+    ...(timezone ? { timeZone: timezone } : {}),
+  };
 
+  const timeStr = time.toLocaleTimeString('en-AU', timeOptions);
   const dateStr = time.toLocaleDateString('en-AU', {
     weekday: 'short',
-    day: 'numeric',
-    month: 'short',
+    day:     'numeric',
+    month:   'short',
+    ...(timezone ? { timeZone: timezone } : {}),
   });
 
   return (
-    <div style={{ textAlign: 'center'}}>
+    <div style={{ textAlign: 'center' }}>
       <div style={{
         fontFamily: 'var(--font-mono)',
         fontSize: '28px',

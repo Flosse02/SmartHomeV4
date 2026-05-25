@@ -7,6 +7,7 @@ import { SaveIcon } from '@/lib/icons';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import GoogleAuthButton from '@/components/form/GoogleAuthButton';
+import { formatTimezone } from '@/lib/utils/FormatTimeZone';
 
 type Theme = 'Light' | 'Dark' | 'Auto';
 
@@ -17,9 +18,11 @@ export default function Settings() {
   const [photoLocation,  setPhotoLocation]  = useState('');
   const [slideshowTimer, setSlideshowTimer] = useState('5');
   const [idleTimeout,    setIdleTimeout]    = useState('10');
+  const [timeZone,       setTimeZone]          = useState('');
   const [dirty,          setDirty]          = useState(false);
   const [saving,         setSaving]         = useState(false);
   const [saved,          setSaved]          = useState(false);
+
 
   useEffect(() => {
     fetch('/api/settings')
@@ -31,6 +34,7 @@ export default function Settings() {
         setSlideshowTimer(s.slideshowTimer ?? '5');
         setIdleTimeout(s.idleTimeout ?? '10');
         if (s.theme) setThemeContext(s.theme);
+        setTimeZone(s.timeZone ?? '');
       });
   }, [setThemeContext]);
 
@@ -45,12 +49,14 @@ export default function Settings() {
         photoLocation, 
         slideshowTimer, 
         idleTimeout,
-        theme  // Save theme to backend
+        theme,
+        timeZone
       }),
     });
     setSaving(false);
     setDirty(false);
     setSaved(true);
+    window.dispatchEvent(new CustomEvent('settings-changed'));
     setTimeout(() => setSaved(false), 3000);
   };
 
@@ -97,14 +103,31 @@ export default function Settings() {
             <span className="settings-hint">Used for weather</span>
           </div>
           <div className="settings-right settings-control">
-            <LocationPicker value={location} placeHolder={location} onChange={(v) => {  
-              if (v === null) {setDirty(false); // block save until valid city picked
+            <LocationPicker
+            value={location}
+            placeHolder={location}
+            onChange={(city, tz) => {
+              if (city === null) {
+                setDirty(false);
               } else {
-                setLocation(v);
+                setLocation(city);
+                if (tz) setTimeZone(tz);
                 setDirty(true);
                 setSaved(false);
               }
-             }} />
+            }}
+          />
+          </div>
+        </div>
+        <div className="settings-row">
+          <div className="settings-label-wrapper">
+            <span className="settings-label">Timezone</span>
+            <span className="settings-hint">Auto-set from city</span>
+          </div>
+          <div className="settings-right settings-control">
+            <div className="settings-input settings-input--readonly">
+              {formatTimezone(timeZone)}
+            </div>
           </div>
         </div>
       </div>
