@@ -31,6 +31,7 @@ import {
   MdCamera,
   MdRemove,
   MdLibraryMusic,
+  MdSave,
 } from 'react-icons/md';
 
 
@@ -134,6 +135,10 @@ export function MinusIcon({ size = 14, color = 'currentColor' }: { size?: number
 
 export function MusicIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
   return <MdLibraryMusic size={size} color={color} />;
+}
+
+export function SaveIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdSave size={size} color={color} />;
 }
 
 export function WeatherIcon({code, size = 18,color = 'currentColor'}: {code: number; size?: number; color?: string;}) {

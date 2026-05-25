@@ -1,22 +1,27 @@
-import { useState } from "react";
-
 interface InputBarProps {
   placeholder?: string;
   value: string;
+  type?: string;
+  suffix?: string;
   onChange: (value: string) => void;
 }
 
-export function InputBar({ placeholder, value, onChange }: InputBarProps) {
-    return (
-    <div style={{ position: 'relative' }}>
+export function InputBar({
+  placeholder,
+  value,
+  type,
+  suffix,
+  onChange,
+}: InputBarProps) {
+  return (
+    <div className="input-wrapper">
       <input
-        type="text"
+        type={type}
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        style={{ padding: '2px', borderRadius: 4, border: '1px solid #ccc', width: '100%' }}
       />
-      
+      {suffix && <span className="input-suffix">{suffix}</span>}
     </div>
   );
 }

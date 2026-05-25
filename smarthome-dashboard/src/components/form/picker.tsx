@@ -14,20 +14,27 @@ interface PickerProps {
 export function Picker({ options, value, onChange }: PickerProps) {
   const [open, setOpen] = useState(false);
 
-    return (
-    <div style={{ position: 'relative' }}>
+  return (
+    <div className="settings-select-wrapper">
       <div
+        className="settings-select"
         onClick={() => setOpen(o => !o)}
-        style={{ fontSize: 11, background: 'rgba(255,255,255,0.06)', borderRadius: 6, padding: '3px 8px', color: 'var(--text-secondary)', cursor: 'pointer', userSelect: 'none' }}>
-        {options.find(o => o.value === value)?.label ?? value} ▾
+      >
+        {options.find(o => o.value === value)?.label ?? value}
+        <span>▾</span>
       </div>
+
       {open && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, background: '#1e1e1e', borderRadius: 6, overflow: 'hidden', zIndex: 10, minWidth: '100%' }}>
+        <div className="settings-select-dropdown">
           {options.map(opt => (
             <div
               key={opt.value}
-              onClick={() => { onChange(opt.value); setOpen(false); }}
-              style={{ padding: '4px 12px', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 11, background: value === opt.value ? 'rgba(255,255,255,0.1)' : 'transparent' }}>
+              className="settings-select-option"
+              onClick={() => {
+                onChange(opt.value);
+                setOpen(false);
+              }}
+            >
               {opt.label}
             </div>
           ))}

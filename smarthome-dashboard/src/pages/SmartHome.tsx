@@ -79,7 +79,7 @@ function DeviceCard({ device, smarthome }: { device: SmartHomeDevice; smarthome:
             gap: 4,
             background: isOff ? 'var(--error)' : 'var(--success)',
             border: 'none', borderRadius: 6, padding: '4px 8px',
-            color: isOff ? 'var(--text-muted)' : 'var(--text)',
+            color: isOff ? 'var(--text-primary)' : 'var(--text-primary)',
             cursor: 'pointer', fontSize: 11,
           }}
         >
