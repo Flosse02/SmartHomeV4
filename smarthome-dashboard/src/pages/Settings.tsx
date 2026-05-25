@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import GoogleAuthButton from '@/components/form/GoogleAuthButton';
 import { formatTimezone } from '@/lib/utils/FormatTimeZone';
+import { Toggle } from '@/components/form/ToggleSwitch';
 
 type Theme = 'Light' | 'Dark' | 'Auto';
 
@@ -18,7 +19,8 @@ export default function Settings() {
   const [photoLocation,  setPhotoLocation]  = useState('');
   const [slideshowTimer, setSlideshowTimer] = useState('5');
   const [idleTimeout,    setIdleTimeout]    = useState('10');
-  const [timeZone,       setTimeZone]          = useState('');
+  const [timeZone,       setTimeZone]       = useState('');
+  const [hour24,         setHour24]         = useState(false);
   const [dirty,          setDirty]          = useState(false);
   const [saving,         setSaving]         = useState(false);
   const [saved,          setSaved]          = useState(false);
@@ -35,6 +37,7 @@ export default function Settings() {
         setIdleTimeout(s.idleTimeout ?? '10');
         if (s.theme) setThemeContext(s.theme);
         setTimeZone(s.timeZone ?? '');
+        setHour24(s.hour24 ?? false);
       });
   }, [setThemeContext]);
 
@@ -50,7 +53,8 @@ export default function Settings() {
         slideshowTimer, 
         idleTimeout,
         theme,
-        timeZone
+        timeZone,
+        hour24,
       }),
     });
     setSaving(false);
@@ -94,9 +98,9 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Location */}
+      {/* Time / Location */}
       <div className="settings-section">
-        <h2 className="settings-section-label">Location</h2>
+        <h2 className="settings-section-label">Location / Time</h2>
         <div className="settings-row">
           <div className="settings-label-wrapper">
             <span className="settings-label">City</span>
@@ -128,6 +132,18 @@ export default function Settings() {
             <div className="settings-input settings-input--readonly">
               {formatTimezone(timeZone)}
             </div>
+          </div>
+        </div>
+        <div className="settings-row">
+          <div className="settings-label-wrapper">
+            <span className="settings-label">Clock format</span>
+          </div>
+          <div className="settings-right">
+            <Toggle
+              value={hour24}
+              onChange={(v) => { setHour24(v); setDirty(true); }}
+              label={hour24 ? '24-hour' : '12-hour'}
+            />
           </div>
         </div>
       </div>

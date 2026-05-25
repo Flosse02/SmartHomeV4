@@ -2,9 +2,15 @@
 
 import { useEffect, useState } from 'react';
 
-export default function Clock() {
+interface ClockProps {
+  monoChrome?: boolean;
+  fontSize?: number;
+}
+
+export default function Clock({ monoChrome=false, fontSize }: ClockProps) {
   const [time,     setTime]     = useState<Date | null>(null);
   const [timezone, setTimezone] = useState<string | undefined>(undefined);
+  const [hour24, setHour24] = useState(false);
 
   useEffect(() => {
     const load = () => {
@@ -12,7 +18,8 @@ export default function Clock() {
         .then(r => r.json())
         .then(s => {
           console.log('settings:', s);
-          setTimezone(s.timeZone || undefined); // ← capital Z to match settings.json
+          setTimezone(s.timeZone || undefined);
+          setHour24(s.hour24 ?? false);
         });
     };
     load();
@@ -31,7 +38,7 @@ export default function Clock() {
   const timeOptions = {
     hour:   '2-digit' as const,
     minute: '2-digit' as const,
-    hour12: true,
+    hour12: !hour24,
     ...(timezone ? { timeZone: timezone } : {}),
   };
 
@@ -47,9 +54,9 @@ export default function Clock() {
     <div style={{ textAlign: 'center' }}>
       <div style={{
         fontFamily: 'var(--font-mono)',
-        fontSize: '28px',
+        fontSize: `${fontSize || 28}px`,
         fontWeight: 700,
-        color: 'var(--text-primary)',
+        color: monoChrome ? 'var(--text-primary)' : 'var(--text-primary)',
         lineHeight: 1,
         textShadow: '0 2px 12px rgba(0,0,0,0.6)',
       }}>
@@ -58,7 +65,7 @@ export default function Clock() {
       <div style={{
         fontFamily: 'var(--font-mono)',
         fontSize: '11px',
-        color: 'var(--accent)',
+        color: monoChrome ? 'var(--text-primary)' : 'var(--accent)',
         marginTop: '4px',
         letterSpacing: '1.5px',
         textTransform: 'uppercase',

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import type { CalendarEvent, NowPlaying } from './types'
 import { groupUpcomingEvents, formatEventTime } from './calendarUtils'
 import { FastForwardIcon, FastRewindIcon, MusicIcon, PauseIcon } from '@/lib/icons'
+import Clock from '../Clock'
 
 // ─── Clock ────────────────────────────────────────────────────────────────────
 
@@ -18,33 +19,6 @@ function useClock() {
 
 interface ClockProps {
   onTap: () => void
-}
-
-function Clock({ onTap }: ClockProps) {
-  const now = useClock()
-  const time = now.toLocaleTimeString('en-AU', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  })
-  const date = now.toLocaleDateString('en-AU', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  })
-
-  return (
-    <button
-      onClick={onTap}
-      className="sleep-clock"
-      aria-label="Clock — tap 5 times quickly to exit kiosk"
-    >
-      <p className="sleep-time">
-        {time}
-      </p>
-      <p className="sleep-date">{date}</p>
-    </button>
-  )
 }
 
 // ─── Calendar strip ───────────────────────────────────────────────────────────
@@ -175,7 +149,7 @@ export default function SleepOverlay({
       tabIndex={0}
       aria-label="Tap to wake"
     >
-      <Clock onTap={onClockTap} />
+      <Clock fontSize={72} monoChrome={true} />
 
       <div className="divider" />
 

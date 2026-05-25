@@ -5,5 +5,6 @@
   "idleTimeout": "10",
   "location": "Perth",
   "theme": "Dark",
-  "timeZone": "Australia/Perth"
+  "timeZone": "Australia/Perth",
+  "hour24": false
 }

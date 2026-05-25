@@ -33,7 +33,7 @@ export default function SmartArea({ activeTab, onTabChange, devicesResult, contr
     <div className="smart-area">
       <div className="smart-topbar">
         <div className="clock-overlay">
-          <Clock />
+          <Clock monoChrome={false} />
         </div>
         <div className="weather-overlay">
           <Weather />
