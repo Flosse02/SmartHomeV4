@@ -5,6 +5,7 @@ This is being created to work on a raspberry pi, my current setup has a raspberr
 
 ## Current Features
 - Split Screen made in a 9:16 ratio.
+- Dark and light themes.
 - Top Infomation Screen
     - Weather - Temprature, wind and weathercodes (shown as icons like ☁️ and ☀️)
     - Time and date.
@@ -19,6 +20,13 @@ This is being created to work on a raspberry pi, my current setup has a raspberr
     - Home Tab - Used to display and control your devices connected to your Home Assistant.
     - Notes Tab - Allows you to store and write notes, was initially meant to be intergrated with google keep but that is reserved for "Buisness Customers" only :(
     - Camera Tab - Intergrates with your cameras connected to Home Assistant and plays them for you to see. (Cannot verify as I do not have any)
+    - Settings Tab - Can control mutiple settings like locations and time related stuff.
+
+# To be added
+- Weather tab, more indepth weather
+- Clock tab, will have things like timers alarms ect,
+- Transport tab - Will connect to  public transport api.
+- Monitor screen - Will have monitoring for both the pi this is run on and the jellyfin pi.
 
 
 ## Getting Started
@@ -41,8 +49,6 @@ This is being created to work on a raspberry pi, my current setup has a raspberr
 9. Go to **APIs & Services** → **OAuth consent screen**.
 10. Under **Test users**, click **+ Add Users** and add your Google account email.
 
-
-
 ### Production
 To run using the production server: `npm run prod`
 
@@ -52,6 +58,3 @@ When using WSL it wont automatically open the browser so simply open [http://loc
 To run using development server: `npm run dev`
 
 When using WSL it wont automatically open the browser so simply open [http://localhost:3000](http://localhost:3000) to see the result.
-
-
-## To Do
