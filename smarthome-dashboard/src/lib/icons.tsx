@@ -36,6 +36,10 @@ import {
   MdFilePresent,
   MdFolder,
   MdArrowUpward,
+  MdArrowForward,
+  MdArrowBack,
+  MdChevronLeft,
+  MdChevronRight,
 } from 'react-icons/md';
 
 import { FcGoogle } from 'react-icons/fc';
@@ -156,6 +160,22 @@ export function FolderIcon({ size = 14, color = 'currentColor' }: { size?: numbe
 
 export function UpArrowIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
   return <MdArrowUpward size={size} color={color} />;
+}
+
+export function RightArrowIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdArrowForward size={size} color={color} />;
+}
+
+export function LeftArrowIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdArrowBack size={size} color={color} />;
+}
+
+export function LeftCalendarArrowIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdChevronLeft size={size} color={color} />;
+}
+
+export function RightCalendarArrowIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdChevronRight size={size} color={color} />;
 }
 
 export function WeatherIcon({code, size = 18,color = 'currentColor'}: {code: number; size?: number; color?: string;}) {

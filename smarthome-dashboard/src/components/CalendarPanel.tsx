@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { LogoutIcon } from '@/lib/icons';
+import { LeftCalendarArrowIcon, LogoutIcon, RightCalendarArrowIcon } from '@/lib/icons';
 import GoogleAuthButton from '@/components/form/GoogleAuthButton';
 
 
@@ -415,6 +415,11 @@ export default function CalendarPanel() {
       .catch(err => console.error('Failed to fetch events:', err));
   }, [session, viewed]);
 
+  const goToToday = () => {
+    const now = new Date();
+    setViewed(new Date(now.getFullYear(), now.getMonth(), 1));
+  };
+
   useEffect(() => {
     if ((session as any)?.error === 'RefreshAccessTokenError') signIn('google');
   }, [session]);
@@ -483,10 +488,14 @@ export default function CalendarPanel() {
 
       <div className="calendar">
         <div className="calendar-header">
-          <button className="cal-nav" onClick={() => setViewed(new Date(year, month - 1, 1))}>‹</button>
+          <button className="cal-nav" onClick={() => setViewed(new Date(year, month - 1, 1))}><LeftCalendarArrowIcon /></button>
           <span className="cal-title">{MONTHS[month]} {year}</span>
-          <button className="cal-nav" onClick={() => setViewed(new Date(year, month + 1, 1))}>›</button>
+          <button className="cal-nav" onClick={() => setViewed(new Date(year, month + 1, 1))}><RightCalendarArrowIcon /></button>
         </div>
+
+        {month !== today.getMonth() && (
+          <button className="cal-today" onClick={goToToday}>Today</button>
+        )}
 
         <div className="calendar-grid">
           {DAYS.map(d => <div key={d} className="cal-day-label">{d}</div>)}
