@@ -32,6 +32,10 @@ import {
   MdRemove,
   MdLibraryMusic,
   MdSave,
+  MdFileOpen,
+  MdFilePresent,
+  MdFolder,
+  MdArrowUpward,
 } from 'react-icons/md';
 
 import { FcGoogle } from 'react-icons/fc';
@@ -144,6 +148,14 @@ export function SaveIcon({ size = 14, color = 'currentColor' }: { size?: number;
 
 export function GoogleIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
   return <FcGoogle size={size} color={color} />;
+}
+
+export function FolderIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdFolder size={size} color={color} />;
+}
+
+export function UpArrowIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdArrowUpward size={size} color={color} />;
 }
 
 export function WeatherIcon({code, size = 18,color = 'currentColor'}: {code: number; size?: number; color?: string;}) {

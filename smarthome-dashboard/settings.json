@@ -2,7 +2,7 @@
   "musicLocation": "",
   "photoLocation": "",
   "slideshowTimer": "5",
-  "idleTimeout": "1",
+  "idleTimeout": "10",
   "location": "Perth",
   "theme": "Dark"
 }

@@ -2,6 +2,7 @@
 
 import { InputBar } from '@/components/form/inputBar';
 import { Picker } from '@/components/form/picker';
+import { LocationPicker } from '@/components/form/LocationPicker';
 import { SaveIcon } from '@/lib/icons';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
@@ -96,7 +97,14 @@ export default function Settings() {
             <span className="settings-hint">Used for weather</span>
           </div>
           <div className="settings-right settings-control">
-            <InputBar placeholder="Enter City, I.E. New York" value={location} onChange={change(setLocation)} />
+            <LocationPicker value={location} placeHolder={location} onChange={(v) => {  
+              if (v === null) {setDirty(false); // block save until valid city picked
+              } else {
+                setLocation(v);
+                setDirty(true);
+                setSaved(false);
+              }
+             }} />
           </div>
         </div>
       </div>
@@ -110,7 +118,7 @@ export default function Settings() {
             <span className="settings-hint">Absolute path on server</span>
           </div>
           <div className="settings-right settings-control">
-            <InputBar placeholder="/c/Users/Username/Music" type="text" value={musicLocation} onChange={change(setMusicLocation)} />
+            <InputBar fileExplorer={true} placeholder="/c/Users/Username/Music" type="text" value={musicLocation} onChange={change(setMusicLocation)} />
           </div>
         </div>
         <div className="settings-row">
@@ -119,7 +127,7 @@ export default function Settings() {
             <span className="settings-hint">Absolute path on server</span>
           </div>
           <div className="settings-right settings-control">
-            <InputBar placeholder="/c/Users/Username/Pictures" type="text" value={photoLocation} onChange={change(setPhotoLocation)} />
+            <InputBar fileExplorer={true} placeholder="/c/Users/Username/Pictures" type="text" value={photoLocation} onChange={change(setPhotoLocation)} />
           </div>
         </div>
       </div>
