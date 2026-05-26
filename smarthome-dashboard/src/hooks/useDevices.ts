@@ -302,38 +302,43 @@ export function useDevices() {
   }, []);
 
   // ── Play local URL ───────────────────────────────────────────────────
-const playUrl = useCallback(async (url: string) => {
-  const audio = getAudio();
-  audio.pause();
-  audio.src = url;
-  audio.load();
+  const playUrl = useCallback(async (url: string, onTagsResolved?: (tags: { title?: string; artist?: string; album?: string }) => void) => {
+    const audio = getAudio();
+    audio.pause();
+    audio.src = url;
+    audio.load();
 
-  // Try to read ID3 tags from the file
-  let title = url.split('/').pop()?.replace(/\.[^.]+$/, '') ?? url;
-  let artist = '';
-  let album  = '';
-
-  try {
-    const metadata = await mm.fetchFromUrl(url);
-    title  = metadata.common.title  ?? title;
-    artist = metadata.common.artist ?? '';
-    album  = metadata.common.album  ?? '';
-  } catch {
-    // Fall back to filename parsing if tags aren't available
+    // Optimistic metadata from filename so UI shows something immediately
     const decoded = decodeURIComponent(url);
     const file    = decoded.split('/').pop()?.replace(/\.[^.]+$/, '') ?? '';
     const [a, t]  = file.includes(' - ') ? file.split(' - ') : ['', file];
-    artist = a;
-    title  = t || title;
-  }
 
-  patchPlayback('browser', { playing: true, position: 0, itemId: url, title, artist, album });
+    patchPlayback('browser', {
+      playing: true,
+      position: 0,
+      itemId: url,
+      title:  t || file || url,
+      artist: a,
+      album:  '',
+    });
 
-  try {
-    await audio.play();
-  } catch (e: any) {
-    if (e.name !== 'AbortError') console.error(e);
-  }
+    // Start playback immediately — don't wait for tags
+    try {
+      await audio.play();
+    } catch (e: any) {
+      if (e.name !== 'AbortError') console.error(e);
+    }
+
+    // Fetch ID3 tags in the background and patch if we get something better
+    mm.fetchFromUrl(url).then(metadata => {
+    const title  = metadata.common.title;
+    const artist = metadata.common.artist;
+    const album  = metadata.common.album;
+    if (title || artist || album) {
+      patchPlayback('browser', { title, artist, album });
+      onTagsResolved?.({ title, artist, album }); // ← notify caller
+    }
+  }).catch(() => {});
 }, [getAudio, patchPlayback]);
 
   

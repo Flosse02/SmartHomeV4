@@ -20,7 +20,9 @@ type Action =
   | { type: 'MOVE'; from: number; to: number }
   | { type: 'SET_INDEX'; index: number }
   | { type: 'NEXT' }
-  | { type: 'PREV' };
+  | { type: 'PREV' }
+  | { type: 'UPDATE_TRACK'; id: string; patch: Partial<JellyfinItem> };
+
 
 function wrap(item: JellyfinItem): QueueTrack {
   return {
@@ -133,6 +135,16 @@ function reducer(state: State, action: Action): State {
     case 'CLEAR':
       return initialState;
 
+    case 'UPDATE_TRACK': {
+      return {
+        ...state,
+        queue: state.queue.map(t =>
+          t.Id === action.id ? { ...t, ...action.patch } : t
+        ),
+      };
+    }
+
+
     default:
       return state;
   }
@@ -150,7 +162,6 @@ export function useQueue(
   queueRef.current = state.queue;
   indexRef.current = state.currentIndex;
 
-  // ← Mirror all callbacks into refs so internal functions never go stale
   const playInBrowserRef = useRef(playInBrowser);
   const onTrackChangeRef = useRef(onTrackChange);
   const onStopRef = useRef(onStop);
@@ -160,7 +171,11 @@ export function useQueue(
 
   const emit = useCallback((track: QueueTrack | null) => {
     onTrackChangeRef.current?.(track);
-  }, []); // ← no deps needed, reads ref at call time
+  }, []);
+
+  const updateTrack = useCallback((id: string, patch: Partial<JellyfinItem>) => {
+  dispatch({ type: 'UPDATE_TRACK', id, patch });
+}, []);
 
   const playIndex = useCallback(async (index: number) => {
     const clamped = Math.max(0, Math.min(index, queueRef.current.length - 1));
@@ -169,7 +184,7 @@ export function useQueue(
     dispatch({ type: 'SET_INDEX', index: clamped });
     emit(track);
     await playInBrowserRef.current(track.Id);
-  }, [emit]); // ← no playInBrowser dep needed
+  }, [emit]); 
 
   const playFirst = useCallback(async () => {
     if (queueRef.current.length === 0) return;
@@ -245,5 +260,6 @@ export function useQueue(
     playPrev,
     playIndex,
     playFirst,
+    updateTrack,
   };
 }

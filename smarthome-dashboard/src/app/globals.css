@@ -530,6 +530,55 @@ body {
 .delete-confirm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ============================================
+   Music
+   ============================================ */
+.shuffle-btn {
+  font-size: 11px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 3px 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  gap: 2px;
+
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    transform 0.08s,
+    filter 0.15s;
+
+  user-select: none;
+}
+
+.shuffle-btn:hover {
+  background: rgba(var(--accent-rgb,99,102,241),0.3);
+  border-color: var(--accent);
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+.shuffle-btn:active {
+  transform: scale(0.95);
+  filter: brightness(0.9);
+}
+
+.shuffle-btn.active {
+  background: rgba(var(--accent-rgb,99,102,241),0.2);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.shuffle-btn.active:hover {
+  background: rgba(var(--accent-rgb,99,102,241),0.35);
+}
+
+
+/* ============================================
    NOTES
    ============================================ */
 .notes {

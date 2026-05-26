@@ -7,6 +7,7 @@ import { SmartDevice, useDevices, BROWSER_DEVICE, UseDevicesResult } from '@/hoo
 import { CastIcon, PlayIcon, PauseIcon, FastForwardIcon, FastRewindIcon, ShuffleIcon, StopIcon, RefreshIcon, VolumeHighIcon, VolumeMuteIcon, VolumeVeryLowIcon, VolumeLowIcon } from '@/lib/icons';
 import Select from 'react-select';
 import { Picker } from '@/components/form/picker';
+import * as mm from 'music-metadata-browser';
 
 const BASE    = process.env.NEXT_PUBLIC_JELLYFIN_URL     ?? '';
 const API_KEY = process.env.NEXT_PUBLIC_JELLYFIN_API_KEY ?? '';
@@ -493,8 +494,14 @@ export default function MusicPlayer({ devicesResult, controlsRef }: MusicPlayerP
   useEffect(() => { musicSourceRef.current = musicSource; }, [musicSource]);
 
   const playTrack = useCallback(async (itemId: string) => {
-    if (musicSourceRef.current === 'file') {  // ← ref, not closure value
-      await playUrl(itemId);
+    if (musicSourceRef.current === 'file') {
+      await playUrl(itemId, (tags) => {
+        queueRef.current?.updateTrack(itemId, {
+          Name:   tags.title  ?? undefined,
+          Artists: tags.artist != null ? [tags.artist] : undefined,
+          Album:  tags.album  ?? undefined,
+        });
+      });
       return;
     }
     const item = queueRef.current?.queue.find(t => t.Id === itemId);
@@ -504,7 +511,8 @@ export default function MusicPlayer({ devicesResult, controlsRef }: MusicPlayerP
       artist: item?.AlbumArtist ?? item?.Artists?.[0] ?? undefined,
       album:  item?.Album                             ?? undefined,
     });
-  }, [playUrl, playOnDevice]); 
+  }, [playUrl, playOnDevice]);
+
 
 
  
@@ -544,23 +552,9 @@ export default function MusicPlayer({ devicesResult, controlsRef }: MusicPlayerP
     playOnDevice(selectedDevice, current.Id, duration, position);
   }, [selectedDevice]);
  
-  const topUpQueue = useCallback(() => {
-    if (!shuffleModeRef.current) return;
-    const ahead  = (queue.queue.length + pendingAddRef.current) - (queue.currentIndex + 1);
-    const needed = SHUFFLE_AHEAD - ahead;
-    if (needed <= 0) return;
-    const toAdd = shufflePoolRef.current.splice(0, needed);
-    if (!toAdd.length) return;
-    pendingAddRef.current += toAdd.length;
-    queue.addManyToQueue(toAdd);
-  }, [queue]);
- 
-  useEffect(() => { pendingAddRef.current = 0; }, [queue.queue.length]);
-  useEffect(() => { topUpQueue(); }, [queue.currentIndex, topUpQueue]);
- 
   const handleShuffle = async () => {
     let tracks: JellyfinItem[];
- 
+
     if (musicSource === 'file') {
       const pool = localFiles.length > 0 ? localFiles : await fetch('/api/music')
         .then(r => r.json())
@@ -570,29 +564,83 @@ export default function MusicPlayer({ devicesResult, controlsRef }: MusicPlayerP
           Type: 'Audio',
           Album: f.name.includes('/') ? f.name.split('/').slice(0, -1).join(' / ') : undefined,
         })));
-      tracks = [...pool].sort(() => Math.random() - 0.5);
+
+      const shuffleFirst = [...pool].sort(() => Math.random() - 0.5);
+      const rest = shuffleFirst.slice(SHUFFLE_AHEAD);
+
+      const first10WithTags = await Promise.all(
+        shuffleFirst.slice(0, SHUFFLE_AHEAD).map(async track => {
+          try {
+            const metadata = await mm.fetchFromUrl(track.Id);
+            return {
+              ...track,
+              Name:    metadata.common.title  ?? track.Name,
+              Artists: metadata.common.artist ? [metadata.common.artist] : track.Artists,
+              Album:   metadata.common.album  ?? track.Album,
+            };
+          } catch {
+            return track;
+          }
+        })
+      );
+
+      tracks = [...first10WithTags, ...rest];
     } else {
       const res  = await fetch(`${BASE}/Items?IncludeItemTypes=Audio&Recursive=true&Limit=50&SortBy=Random&api_key=${API_KEY}`);
       const data = await res.json();
       tracks = (data.Items ?? []).sort(() => Math.random() - 0.5);
     }
- 
+
     if (!tracks.length) return;
- 
+
     const shuffled = tracks.map(t => ({ ...t, queueId: `${t.Id}-${Date.now()}-${Math.random()}` }));
- 
+
     shufflePoolRef.current = shuffled.slice(SHUFFLE_AHEAD);
     shuffleModeRef.current = true;
     pendingAddRef.current  = 0;
- 
+
     queue.clearQueue();
     requestAnimationFrame(() => {
+      shuffleModeRef.current = true;
       queue.addManyToQueue(shuffled.slice(0, SHUFFLE_AHEAD));
       requestAnimationFrame(() => { queue.playIndex(0); });
     });
     setShuffleActive(true);
+
   };
- 
+
+  const topUpQueue = useCallback(() => {
+    if (!shuffleModeRef.current) return;
+    const ahead  = (queue.queue.length + pendingAddRef.current) - (queue.currentIndex + 1);
+    const needed = SHUFFLE_AHEAD - ahead;
+    if (needed <= 0) return;
+    const toAdd = shufflePoolRef.current.splice(0, needed);
+    if (!toAdd.length) return;
+    pendingAddRef.current += toAdd.length;
+    queue.addManyToQueue(toAdd);
+
+    // Fetch tags for newly added tracks in the background
+    if (musicSourceRef.current === 'file') {
+      toAdd.forEach(track => {
+        mm.fetchFromUrl(track.Id).then(metadata => {
+          const title  = metadata.common.title;
+          const artist = metadata.common.artist;
+          const album  = metadata.common.album;
+          if (title || artist || album) {
+            queueRef.current?.updateTrack(track.Id, {
+              Name:    title              ?? undefined,
+              Artists: artist != null ? [artist] : undefined,
+              Album:   album             ?? undefined,
+            });
+          }
+        }).catch(() => {});
+      });
+    }
+  }, [queue]);
+
+  useEffect(() => { pendingAddRef.current = 0; }, [queue.queue.length]);
+  useEffect(() => { topUpQueue(); }, [queue.currentIndex]);
+
   const pb          = playback[selectedDevice.location] ?? { playing: false, position: 0, duration: 0, updatedAt: 0, positionFetchedAt: 0 };
   const isPlaying   = pb.playing;
   const activeTrack = queue.currentIndex >= 0 ? queue.queue[queue.currentIndex] : null;
@@ -629,19 +677,15 @@ export default function MusicPlayer({ devicesResult, controlsRef }: MusicPlayerP
  
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <button onClick={() => setShowPanel(true)} style={{ fontSize: 11, background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: 6, padding: '3px 8px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+            <button onClick={() => setShowPanel(true)} className="shuffle-btn">
               Browse
             </button>
-            <button onClick={handleShuffle} style={{
-              fontSize: 11,
-              background: shuffleActive ? 'rgba(var(--accent-rgb,99,102,241),0.2)' : 'rgba(255,255,255,0.06)',
-              border: shuffleActive ? '1px solid var(--accent)' : 'none',
-              borderRadius: 6, padding: '3px 8px',
-              color: shuffleActive ? 'var(--accent)' : 'var(--text-secondary)',
-              cursor: 'pointer', transition: 'all 0.15s',
-              display: 'flex', alignItems: 'center', gap: 2,
-            }}>
-              <ShuffleIcon />Shuffle
+            <button
+              onClick={handleShuffle}
+              className={`shuffle-btn ${shuffleActive ? 'active' : ''}`}
+            >
+              <ShuffleIcon />
+              Shuffle
             </button>
           </div>
  
