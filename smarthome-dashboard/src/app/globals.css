@@ -1092,6 +1092,15 @@ body {
   overflow: visible
 }
 
+.input-wrapper-muti {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  overflow: visible
+}
+
 .input-wrapper input {
   flex: 1;
   border: none;
@@ -1101,7 +1110,6 @@ body {
   font-size: 13px;
   font-family: var(--font-mono);
   min-width: 0;
-  padding-right: 30px;
 }
 
 .input-suffix {
@@ -1501,6 +1509,85 @@ body {
   align-items: center;
   justify-content: center;
   gap: 4px;
+}
+
+/* ============================================
+   CLOCK PAGE
+   ============================================ */
+
+.clock-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  overflow-y: auto;
+}
+
+/* Hero time display */
+.clock-hero {
+  text-align: center;
+  padding: 28px 24px 20px;
+  flex-shrink: 0;
+}
+
+.clock-hero-time {
+  font-family: var(--font-mono);
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -2px;
+  color: var(--text-primary);
+}
+
+.clock-hero-date {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+  margin-top: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* Three-column grid */
+.clock-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  padding: 20px 24px 24px;
+  flex: 1;
+  min-height: 0;
+  align-items: start;
+}
+
+/* Reusable card inside clock sections */
+.clock-card {
+  background: var(--border-subtle);
+  border: 0.5px solid var(--border-default);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.clock-card--row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.clock-page::-webkit-scrollbar {
+  width: 6px;
+}
+
+.clock-page::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 8px 0;
+}
+
+.clock-page::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 10px;
+}
+
+.clock-page::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
 }
 
 @keyframes fadeOut {

@@ -13,7 +13,7 @@ const Notes = dynamic(() => import('../pages/Notes'), { ssr: false });
 const Camera = dynamic(() => import('../pages/Camera'), { ssr: false });
 const Settings = dynamic(() => import('../pages/Settings'), { ssr: false });
 // const Weather = dynamic(() => import('../pages/Weather'), { ssr: false });
-// const Clock = dynamic(() => import('../pages/Clock'), { ssr: false });
+const ClockTab = dynamic(() => import('../pages/ClockTab'), { ssr: false });
 
 export type SmartAreaTab = 'Pictures' | 'Music' | 'Home' | 'Notes' | 'Camera' | 'Weather' | 'Clock' | 'Monitor' | 'Settings';
 
@@ -73,10 +73,10 @@ export default function SmartArea({ activeTab, onTabChange, devicesResult, contr
       </div>
       {/* <div style={{ display: activeTab === 'Weather' ? 'contents' : 'none' }}>
         <Weather />
-      </div>
-      <div style={{ display: activeTab === 'Clock' ? 'contents' : 'none' }}>
-        <Clock />
       </div> */}
+      <div style={{ display: activeTab === 'Clock' ? 'contents' : 'none' }}>
+        <ClockTab />
+      </div>
       {/* <div style={{ display: activeTab === 'Monitor' ? 'contents' : 'none' }}>
         <Monitor />
       </div> */}

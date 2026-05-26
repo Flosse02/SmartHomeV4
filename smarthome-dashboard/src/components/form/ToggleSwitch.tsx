@@ -4,7 +4,7 @@ interface ToggleProps {
   label?: string;
 }
 
-export function Toggle({ value, onChange, label }: ToggleProps) {
+export function ToggleSwitch({ value, onChange, label }: ToggleProps) {
   return (
     <div className="toggle-wrap">
       <label className="toggle">

@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import GoogleAuthButton from '@/components/form/GoogleAuthButton';
 import { formatTimezone } from '@/lib/utils/FormatTimeZone';
-import { Toggle } from '@/components/form/ToggleSwitch';
+import { ToggleSwitch } from '@/components/form/ToggleSwitch';
 
 type Theme = 'Light' | 'Dark' | 'Auto';
 
@@ -139,7 +139,7 @@ export default function Settings() {
             <span className="settings-label">Clock format</span>
           </div>
           <div className="settings-right">
-            <Toggle
+            <ToggleSwitch
               value={hour24}
               onChange={(v) => { setHour24(v); setDirty(true); }}
               label={hour24 ? '24-hour' : '12-hour'}

@@ -58,22 +58,30 @@ function FolderBrowser({ onSelect, onClose }: { onSelect: (p: string) => void; o
 interface InputBarProps {
   placeholder?: string;
   fileExplorer?: boolean;
-  value: string;
+  value: string | number;
   type?: string;
   suffix?: string;
+  min?: number;
+  max?: number;
   onChange: (value: string) => void;
+  style?: React.CSSProperties;
 }
 
-export function InputBar({ placeholder, fileExplorer, value, type, suffix, onChange }: InputBarProps) {
+export function InputBar({ placeholder, fileExplorer, value, type, suffix, min, max, onChange, style }: InputBarProps) {
   const [showBrowser, setShowBrowser] = useState(false);
-
+  let extraPadding='4px'
+  if (suffix) {
+    extraPadding = '40px'
+  }
   return (
     <>
-      <div className="input-wrapper">
+      <div className="input-wrapper" style={{ paddingRight: extraPadding, ...style }}>
         <input
           type={type}
           value={value}
           placeholder={placeholder}
+          min={min}
+          max={max}
           onChange={(e) => onChange(e.target.value)}
         />
         {suffix && <span className="input-suffix">{suffix}</span>}
