@@ -1590,6 +1590,41 @@ body {
   background: var(--accent);
 }
 
+.alarm-background {
+  position: fixed;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  inset: 0;
+}
+
+.alarm-wrapper {
+  background: var(--bg-base);
+  border-radius: 16;
+  padding: 32px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16;
+  box-shadow: 0 4px 20px var(--bg-overlay);
+}
+
+.alarm-time {
+  font-family: var(--font-mono);
+  font-size: 48px;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.alarm-label {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--text-secondary);
+}
+
 @keyframes fadeOut {
   0% { opacity: 1; }
   70% { opacity: 1; }

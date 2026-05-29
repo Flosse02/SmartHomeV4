@@ -2,8 +2,9 @@
 
 import { InputBar } from '@/components/form/inputBar';
 import { ToggleSwitch } from '@/components/form/ToggleSwitch';
-import { AddIcon, CloseIcon } from '@/lib/icons';
+import { AddIcon, AlarmIcon, CloseIcon } from '@/lib/icons';
 import { useEffect, useState, useRef, useCallback } from 'react';
+import * as Tone from 'tone';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -49,15 +50,6 @@ function fmtStopwatch(ms: number) {
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const DAY_FULL   = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-const getAudioContext = (() => {
-  let ctx: AudioContext | null = null;
-  return () => {
-    if (!ctx) ctx = new AudioContext();
-    if (ctx.state === 'suspended') ctx.resume();
-    return ctx;
-  };
-})();
-
 // ── Section header ────────────────────────────────────────────────────────────
 
 function SectionHeader({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
@@ -67,6 +59,88 @@ function SectionHeader({ children, action }: { children: React.ReactNode; action
         {children}
       </div>
       {action}
+    </div>
+  );
+}
+
+// ── Beeping ───────────────────────────────────────────────────────────────────
+
+async function playBeep() {
+  await Tone.start();
+  const synth = new Tone.Synth({
+    oscillator: { type: 'sine' },
+    envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.1 },
+  }).toDestination();
+  synth.triggerAttackRelease('A5', '0.3');
+}
+
+async function startAlarmLoop(): Promise<() => void> {
+  await Tone.start();
+  const synth = new Tone.Synth({
+    oscillator: { type: 'sine' },
+    envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.1 },
+  }).toDestination();
+
+  const loop = new Tone.Loop(time => {
+    synth.triggerAttackRelease('A5', '0.2', time);
+  }, '0.8'); // every 0.8 seconds
+
+  Tone.getTransport().start();
+  loop.start(0);
+
+  return () => {
+    loop.stop();
+    loop.dispose();
+    synth.dispose();
+    Tone.getTransport().stop();
+  };
+}
+
+function useBeeping() {
+  const stopRef = useRef<(() => void) | null>(null);
+
+  const start = useCallback(async () => {
+    stopRef.current?.(); // stop any existing
+    stopRef.current = await startAlarmLoop();
+  }, []);
+
+  const stop = useCallback(() => {
+    stopRef.current?.();
+    stopRef.current = null;
+  }, []);
+
+  useEffect(() => () => stop(), []);
+
+  return { startBeeping: start, stopBeeping: stop };
+}
+
+function AlarmNotification({ hour, min, sec, label, onDismiss }: {
+  hour: number;
+  min: number;
+  sec?: number
+  label: string;
+  onDismiss: () => void;
+}) {
+  return (
+    <div className='alarm-background'>
+      <div className='alarm-wrapper'>
+        <div><AlarmIcon size={72} /></div>
+        {sec ? (
+          <div className='alarm-time'>{pad(hour)}:{pad(min)}:{pad(sec)}</div>
+        ) : (
+          <div className='alarm-time'>
+            {pad(hour)}:{pad(min)}
+          </div>
+        )}
+        {label && (
+          <div className='alarm-label'>
+            {label}
+          </div>
+        )}
+        <button className="edit-save" style={{ fontSize: 16, padding: '12px 40px', marginTop: 8 }} onClick={onDismiss}>
+          Dismiss
+        </button>
+      </div>
     </div>
   );
 }
@@ -82,17 +156,10 @@ function AlarmsSection({ timezone }: { timezone?: string }) {
   const [adding,  setAdding]  = useState(false);
   const [draft,   setDraft]   = useState<Omit<Alarm, 'id'>>({ hour: 7, minute: 0, label: '', enabled: true, days: [] });
   const firingRef = useRef<Set<string>>(new Set());
-
-  const startBeeping = (alarm: Alarm) => {
-    setFiringAlarm(alarm);
-    startBeeping(alarm);
-    beepIntervalRef.current = setInterval(() => {
-      startBeeping(alarm);
-    }, 3000);
-  };
+  const { startBeeping, stopBeeping } = useBeeping();
 
   const dismissAlarm = () => {
-    if (beepIntervalRef.current) clearInterval(beepIntervalRef.current);
+    stopBeeping();
     setFiringAlarm(null);
   };
 
@@ -115,7 +182,8 @@ function AlarmsSection({ timezone }: { timezone?: string }) {
         if (alarm.days.length > 0 && !alarm.days.includes(day)) return;
         if (firingRef.current.has(alarm.id)) return;
         firingRef.current.add(alarm.id);
-        startBeeping(alarm);
+        setFiringAlarm(alarm);
+        startBeeping();
         if ('Notification' in window && Notification.permission === 'granted')
           new Notification(`⏰ ${alarm.label || 'Alarm'}`, { body: `${pad(alarm.hour)}:${pad(alarm.minute)}` });
         setTimeout(() => firingRef.current.delete(alarm.id), 60_000);
@@ -125,7 +193,7 @@ function AlarmsSection({ timezone }: { timezone?: string }) {
     };
     const id = setInterval(check, 1000);
     return () => clearInterval(id);
-  }, [alarms, timezone]);
+  }, [alarms, timezone, startBeeping]);
 
   const save = () => {
     setAlarms(prev => [...prev, { ...draft, id: crypto.randomUUID() }]);
@@ -216,25 +284,12 @@ function AlarmsSection({ timezone }: { timezone?: string }) {
         ))}
       </div>
       {firingAlarm && (
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 9999,
-        background: 'rgba(0,0,0,0.85)',
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', gap: 16,
-      }}>
-        <div style={{ fontSize: 64 }}>⏰</div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 48, fontWeight: 700, color: 'var(--text-primary)' }}>
-          {pad(firingAlarm.hour)}:{pad(firingAlarm.minute)}
-        </div>
-        {firingAlarm.label && (
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--text-secondary)' }}>
-            {firingAlarm.label}
-          </div>
-        )}
-        <button className="edit-save" style={{ fontSize: 16, padding: '12px 40px', marginTop: 8 }} onClick={dismissAlarm}>
-          Dismiss
-        </button>
-      </div>
+        <AlarmNotification
+          hour={firingAlarm.hour}
+          min={firingAlarm.minute}
+          label={firingAlarm.label}
+          onDismiss={dismissAlarm}
+        />
       )}
     </div>
   );
@@ -247,21 +302,13 @@ function TimersSection() {
   const beepIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [timers, setTimers] = useState<TimerEntry[]>([]);
   const [h, setH] = useState(0);
-  const [m, setM] = useState(5);
-  const [s, setS] = useState(0);
+  const [m, setM] = useState(0);
+  const [s, setS] = useState(5);
   const [label, setLabel] = useState('');
-
-  const startBeeping = (timer: TimerEntry) => {
-    setFiringTimer(timer);
-    startBeeping(timer);
-    beepIntervalRef.current = setInterval(() => {
-      startBeeping(timer);
-
-    }, 3000);
-  };
+  const { startBeeping, stopBeeping } = useBeeping();
 
   const dismissTimer = () => {
-    if (beepIntervalRef.current) clearInterval(beepIntervalRef.current);
+    stopBeeping();
     setFiringTimer(null);
   };
 
@@ -270,12 +317,16 @@ function TimersSection() {
       setTimers(prev => prev.map(t => {
         if (!t.running || t.done) return t;
         const next = t.remaining - 1;
-        if (next <= 0) { startBeeping(t); return { ...t, remaining: 0, running: false, done: true }; }
+        if (next <= 0) {
+          setFiringTimer(t);
+          startBeeping();
+          return { ...t, remaining: 0, running: false, done: true };
+        }
         return { ...t, remaining: next };
       }));
     }, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [startBeeping]);
 
   const add = () => {
     const total = h * 3600 + m * 60 + s;
@@ -354,30 +405,17 @@ function TimersSection() {
       </div>
 
       {firingTimer && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 9999,
-          background: 'rgba(0,0,0,0.85)',
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', gap: 16,
-        }}>
-          <div style={{ fontSize: 64 }}>⏰</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 48, fontWeight: 700, color: 'var(--text-primary)' }}>
-            {/* {pad(firingTimer.id)}:{pad(firingTimer.minute)} */}
-          </div>
-          {firingTimer.label && (
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--text-secondary)' }}>
-              {firingTimer.label}
-            </div>
-          )}
-          <button className="edit-save" style={{ fontSize: 16, padding: '12px 40px', marginTop: 8 }} onClick={dismissTimer}>
-            Dismiss
-          </button>
-        </div>
+        <AlarmNotification
+          hour={h}
+          min={m}
+          sec={s}
+          label={firingTimer.label || 'Timer done!'}
+          onDismiss={dismissTimer}
+        />
       )}
     </div>
   );
 }
-
 // ── Stopwatch ─────────────────────────────────────────────────────────────────
 
 function StopwatchSection() {

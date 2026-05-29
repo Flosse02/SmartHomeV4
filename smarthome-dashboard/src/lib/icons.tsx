@@ -40,11 +40,10 @@ import {
   MdArrowBack,
   MdChevronLeft,
   MdChevronRight,
+  MdAlarm,
 } from 'react-icons/md';
 
 import { FcGoogle } from 'react-icons/fc';
-
-
 
 export function CastIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
   return <MdCast size={size} color={color} />;
@@ -176,6 +175,10 @@ export function LeftCalendarArrowIcon({ size = 14, color = 'currentColor' }: { s
 
 export function RightCalendarArrowIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
   return <MdChevronRight size={size} color={color} />;
+}
+
+export function AlarmIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdAlarm size={size} color={color} />;
 }
 
 export function WeatherIcon({code, size = 18,color = 'currentColor'}: {code: number; size?: number; color?: string;}) {
