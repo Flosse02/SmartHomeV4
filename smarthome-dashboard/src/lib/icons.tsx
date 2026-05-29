@@ -37,9 +37,14 @@ import {
   MdThermostat,
   MdWaterDrop,
   MdAir,
+  MdMemory,
+  MdStorage,
+  MdSpeed,
+  MdAccessTime,
+  MdComputer,
 } from 'react-icons/md';
 
-import { TbLeaf } from 'react-icons/tb';
+import { TbCpu, TbLeaf } from 'react-icons/tb';
 import { FcGoogle } from 'react-icons/fc';
 import {
   WiDaySunny, 
@@ -60,6 +65,7 @@ import {
   WiWindDeg,
   WiBarometer,
 } from 'react-icons/wi';
+import { SiJellyfin } from 'react-icons/si';
 
 export function CastIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
   return <MdCast size={size} color={color} />;
@@ -227,6 +233,34 @@ export function UVIndexIcon({ size = 14, color = 'currentColor' }: { size?: numb
 
 export function AQIIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
   return <TbLeaf size={size} color={color} />;
+}
+
+export function MemoryIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdMemory size={size} color={color} />;
+}
+
+export function StorageIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdStorage size={size} color={color} />;
+}
+
+export function AccessTimeIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdAccessTime size={size} color={color} />;
+}
+
+export function SpeedIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdSpeed size={size} color={color} />;
+}
+
+export function ComputerIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdComputer size={size} color={color} />;
+}
+
+export function JellyfinIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <SiJellyfin size={size} color={color} />;
+}
+
+export function CPUIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <TbCpu size={size} color={color} />;
 }
 
 export function WeatherIcon({ code, size = 18, color = 'currentColor' }: { code: number; size?: number; color?: string }) {

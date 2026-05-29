@@ -1,12 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
-import {
-  MdComputer, MdMemory, MdStorage, MdThermostat,
-  MdAccessTime, MdSpeed, MdPlayArrow, MdPause,
-} from 'react-icons/md';
-import { TbCpu } from 'react-icons/tb';
-import { SiJellyfin } from 'react-icons/si';
+import { AccessTimeIcon, ComputerIcon, CPUIcon, JellyfinIcon, MemoryIcon, PauseIcon, PlayIcon, SpeedIcon, StorageIcon, ThermometerIcon } from '@/lib/icons';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
@@ -51,7 +46,7 @@ function SessionCard({ session }: { session: any }) {
         </div>
         <div className="monitor-session-progress">
           <span className="monitor-session-status">
-            {session.isPaused ? <MdPause size={12} /> : <MdPlayArrow size={12} />}
+            {session.isPaused ? <PauseIcon size={12} /> : <PlayIcon size={12} />}
             {session.isPaused ? 'Paused' : 'Playing'}
           </span>
           <GaugeBar pct={session.progress} color="#5b8dee" />
@@ -77,13 +72,13 @@ export default function Monitor() {
 
       {/* ── Local machine ── */}
       <div className="monitor-section-label">
-        <MdComputer size={14} />
+        <ComputerIcon size={14} />
         {sys?.hostname ?? 'System'} · {sys?.platform} {sys?.arch}
       </div>
 
       <div className="monitor-grid">
         <StatCard
-          icon={<TbCpu size={20} />}
+          icon={<CPUIcon size={20} />}
           label="CPU"
           value={`${sys?.cpu.usage ?? '—'}%`}
           sub={`${sys?.cpu.cores} cores · ${sys?.cpu.model?.split(' ').slice(-2).join(' ')}`}
@@ -91,7 +86,7 @@ export default function Monitor() {
         />
         {sys?.cpu.temp != null && (
           <StatCard
-            icon={<MdThermostat size={20} />}
+            icon={<ThermometerIcon size={20} />}
             label="CPU Temp"
             value={`${sys.cpu.temp}°C`}
             sub={sys.cpu.temp > 80 ? 'Hot' : sys.cpu.temp > 60 ? 'Warm' : 'Normal'}
@@ -99,7 +94,7 @@ export default function Monitor() {
           />
         )}
         <StatCard
-          icon={<MdMemory size={20} />}
+          icon={<MemoryIcon size={20} />}
           label="Memory"
           value={`${sys?.mem.used ?? '—'} / ${sys?.mem.total ?? '—'} GB`}
           sub={`${sys?.mem.free ?? '—'} GB free`}
@@ -107,7 +102,7 @@ export default function Monitor() {
         />
         {sys?.disk && (
           <StatCard
-            icon={<MdStorage size={20} />}
+            icon={<StorageIcon size={20} />}
             label="Disk"
             value={`${sys.disk.used} / ${sys.disk.total} GB`}
             sub={`${sys.disk.free} GB free`}
@@ -115,13 +110,13 @@ export default function Monitor() {
           />
         )}
         <StatCard
-          icon={<MdAccessTime size={20} />}
+          icon={<AccessTimeIcon size={20} />}
           label="Uptime"
           value={uptimeStr}
           sub={`Load: ${sys?.loadAvg?.join(' / ') ?? '—'}`}
         />
         <StatCard
-          icon={<MdSpeed size={20} />}
+          icon={<SpeedIcon size={20} />}
           label="Load avg"
           value={String(sys?.loadAvg?.[0] ?? '—')}
           sub="1 / 5 / 15 min"
@@ -133,7 +128,7 @@ export default function Monitor() {
       {jf && !jf.error && (
         <>
           <div className="monitor-section-label" style={{ marginTop: 24 }}>
-            <SiJellyfin size={14} />
+            <JellyfinIcon size={14} />
             {jf.serverName} · v{jf.version} · {jf.operatingSystem} {jf.systemArch}
           </div>
 
@@ -143,7 +138,7 @@ export default function Monitor() {
               {jf.storage.map((d: any) => (
                 <StatCard
                   key={d.path}
-                  icon={<MdStorage size={20} />}
+                  icon={<StorageIcon size={20} />}
                   label={d.name ?? d.path}
                   value={`${d.used} / ${d.total} GB`}
                   sub={`${d.free} GB free`}
