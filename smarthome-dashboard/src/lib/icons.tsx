@@ -65,7 +65,7 @@ import {
   WiWindDeg,
   WiBarometer,
 } from 'react-icons/wi';
-import { SiJellyfin } from 'react-icons/si';
+import { SiJellyfin, SiRaspberrypi } from 'react-icons/si';
 
 export function CastIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
   return <MdCast size={size} color={color} />;
@@ -257,6 +257,10 @@ export function ComputerIcon({ size = 14, color = 'currentColor' }: { size?: num
 
 export function JellyfinIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
   return <SiJellyfin size={size} color={color} />;
+}
+
+export function RaspberryPiIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <SiRaspberrypi size={size} color={color} />;
 }
 
 export function CPUIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {

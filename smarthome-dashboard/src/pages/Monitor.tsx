@@ -1,76 +1,31 @@
 'use client';
 
 import useSWR from 'swr';
-import { AccessTimeIcon, ComputerIcon, CPUIcon, JellyfinIcon, MemoryIcon, PauseIcon, PlayIcon, SpeedIcon, StorageIcon, ThermometerIcon } from '@/lib/icons';
+import { AccessTimeIcon, ComputerIcon, CPUIcon, JellyfinIcon, MemoryIcon, PauseIcon, PlayIcon, RaspberryPiIcon, SpeedIcon, StorageIcon, ThermometerIcon } from '@/lib/icons';
+import { StatCard } from '@/components/cards/StatCard';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
-function GaugeBar({ pct, color }: { pct: number; color?: string }) {
-  const c = color ?? (pct > 85 ? '#e02424' : pct > 60 ? '#f39c12' : '#5b8dee');
-  return (
-    <div style={{ width: '100%', height: 4, background: 'var(--border-subtle)', borderRadius: 2, overflow: 'hidden' }}>
-      <div style={{ width: `${pct}%`, height: '100%', background: c, borderRadius: 2, transition: 'width 0.5s ease' }} />
-    </div>
-  );
-}
-
-function StatCard({ icon, label, value, sub, pct }: {
-  icon: React.ReactNode; label: string; value: string; sub?: string; pct?: number;
-}) {
-  return (
-    <div className="monitor-card">
-      <div className="monitor-card-header">
-        <span className="monitor-card-icon">{icon}</span>
-        <span className="monitor-card-label">{label}</span>
-      </div>
-      <div className="monitor-card-value">{value}</div>
-      {sub   && <div className="monitor-card-sub">{sub}</div>}
-      {pct != null && <GaugeBar pct={pct} />}
-    </div>
-  );
-}
-
-function SessionCard({ session }: { session: any }) {
-  return (
-    <div className="monitor-session">
-      {session.thumbUrl && (
-        <div className="monitor-session-thumb"
-          style={{ backgroundImage: `url(${session.thumbUrl})` }} />
-      )}
-      <div className="monitor-session-info">
-        <div className="monitor-session-title">
-          {session.seriesName ? `${session.seriesName} — ` : ''}{session.title}
-        </div>
-        <div className="monitor-session-meta">
-          {session.user} · {session.client} · {session.device}
-        </div>
-        <div className="monitor-session-progress">
-          <span className="monitor-session-status">
-            {session.isPaused ? <PauseIcon size={12} /> : <PlayIcon size={12} />}
-            {session.isPaused ? 'Paused' : 'Playing'}
-          </span>
-          <GaugeBar pct={session.progress} color="#5b8dee" />
-          <span className="monitor-session-pct">{session.progress}%</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function Monitor() {
-  const { data: sys } = useSWR('/api/system',   fetcher, { refreshInterval: 3000  });
-  const { data: jf  } = useSWR('/api/jellyfin', fetcher, { refreshInterval: 10000 });
-    console.log("JEllyfin: " + JSON.stringify(jf))
+  const { data: sys, error: sysError } = useSWR('/api/system', fetcher, { refreshInterval: 3000 });
+  const { data: piStats, error: piError } = useSWR('/api/jellyfin-pi', fetcher, { refreshInterval: 3000 });
+  
   const uptimeStr = sys ? [
-    sys.uptime.days  > 0 ? `${sys.uptime.days}d`  : '',
-    sys.uptime.hours > 0 ? `${sys.uptime.hours}h` : '',
-    `${sys.uptime.minutes}m`,
+    sys.uptime?.days  > 0 ? `${sys.uptime.days}d`  : '',
+    sys.uptime?.hours > 0 ? `${sys.uptime.hours}h` : '',
+    `${sys.uptime?.minutes || 0}m`,
+  ].filter(Boolean).join(' ') : '—';
+
+  const piUptimeStr = piStats ? [
+    piStats.uptime?.days  > 0 ? `${piStats.uptime.days}d`  : '',
+    piStats.uptime?.hours > 0 ? `${piStats.uptime.hours}h` : '',
+    `${piStats.uptime?.minutes || 0}m`,
   ].filter(Boolean).join(' ') : '—';
 
   return (
-    <div className="monitor-page">
+    <div className="monitor-tab">
 
-      {/* ── Local machine ── */}
+      {/* ── Local Machine (Main PC) ── */}
       <div className="monitor-section-label">
         <ComputerIcon size={14} />
         {sys?.hostname ?? 'System'} · {sys?.platform} {sys?.arch}
@@ -80,11 +35,11 @@ export default function Monitor() {
         <StatCard
           icon={<CPUIcon size={20} />}
           label="CPU"
-          value={`${sys?.cpu.usage ?? '—'}%`}
-          sub={`${sys?.cpu.cores} cores · ${sys?.cpu.model?.split(' ').slice(-2).join(' ')}`}
-          pct={sys?.cpu.usage}
+          value={`${sys?.cpu?.usage ?? '—'}%`}
+          sub={`${sys?.cpu?.cores || '?'} cores · ${sys?.cpu?.model?.split(' ').slice(-2).join(' ') || 'Unknown'}`}
+          pct={sys?.cpu?.usage}
         />
-        {sys?.cpu.temp != null && (
+        {sys?.cpu?.temp != null && sys.cpu.temp > 0 && (
           <StatCard
             icon={<ThermometerIcon size={20} />}
             label="CPU Temp"
@@ -96,9 +51,9 @@ export default function Monitor() {
         <StatCard
           icon={<MemoryIcon size={20} />}
           label="Memory"
-          value={`${sys?.mem.used ?? '—'} / ${sys?.mem.total ?? '—'} GB`}
-          sub={`${sys?.mem.free ?? '—'} GB free`}
-          pct={sys?.mem.pct}
+          value={`${sys?.mem?.used ?? '—'} / ${sys?.mem?.total ?? '—'} GB`}
+          sub={`${sys?.mem?.free ?? '—'} GB free`}
+          pct={sys?.mem?.pct}
         />
         {sys?.disk && (
           <StatCard
@@ -124,64 +79,68 @@ export default function Monitor() {
         />
       </div>
 
-      {/* ── Jellyfin ── */}
-      {jf && !jf.error && (
+      {/* ── Raspberry Pi ── */}
+      {piStats && !piError && (
         <>
           <div className="monitor-section-label" style={{ marginTop: 24 }}>
-            <JellyfinIcon size={14} />
-            {jf.serverName} · v{jf.version} · {jf.operatingSystem} {jf.systemArch}
+            <RaspberryPiIcon size={14} />
+            {piStats.hostname} · {piStats.platform} {piStats.arch}
           </div>
 
-          {/* Jellyfin storage drives */}
-          {jf.storage?.length > 0 && (
-            <div className="monitor-grid">
-              {jf.storage.map((d: any) => (
-                <StatCard
-                  key={d.path}
-                  icon={<StorageIcon size={20} />}
-                  label={d.name ?? d.path}
-                  value={`${d.used} / ${d.total} GB`}
-                  sub={`${d.free} GB free`}
-                  pct={d.pct}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Active streams */}
-          <div className="monitor-subsection-label">
-            {jf.activeSessions.length === 0
-              ? 'No active streams'
-              : `${jf.activeSessions.length} active stream${jf.activeSessions.length > 1 ? 's' : ''}`}
+          <div className="monitor-grid">
+            <StatCard
+              icon={<CPUIcon size={20} />}
+              label="Pi CPU"
+              value={`${Math.round(piStats.cpu?.usage || 0)}%`}
+              sub={`${piStats.cpu?.cores || 4} cores · ${piStats.cpu?.model || 'Raspberry Pi'}`}
+              pct={Math.round(piStats.cpu?.usage || 0)}
+            />
+            {piStats.cpu?.temp != null && piStats.cpu.temp > 0 && (
+              <StatCard
+                icon={<ThermometerIcon size={20} />}
+                label="Pi CPU Temp"
+                value={`${piStats.cpu.temp}°C`}
+                sub={piStats.cpu.temp > 80 ? 'Hot' : piStats.cpu.temp > 60 ? 'Warm' : 'Normal'}
+                pct={Math.min(100, piStats.cpu.temp)}
+              />
+            )}
+            <StatCard
+              icon={<MemoryIcon size={20} />}
+              label="Pi Memory"
+              value={`${piStats.mem?.used || 0} / ${piStats.mem?.total || 0} GB`}
+              sub={`${piStats.mem?.free || 0} GB free`}
+              pct={piStats.mem?.pct || 0}
+            />
+            {piStats.disk && piStats.disk.total > 0 && (
+              <StatCard
+                icon={<StorageIcon size={20} />}
+                label="Pi Disk"
+                value={`${piStats.disk.used} / ${piStats.disk.total} GB`}
+                sub={`${piStats.disk.free} GB free`}
+                pct={piStats.disk.pct}
+              />
+            )}
+            <StatCard
+              icon={<AccessTimeIcon size={20} />}
+              label="Pi Uptime"
+              value={piUptimeStr}
+              sub={`Load: ${piStats.cpu?.loadAvg?.join(' / ') || '—'}`}
+            />
+            <StatCard
+              icon={<SpeedIcon size={20} />}
+              label="Pi Load avg"
+              value={String(piStats.cpu?.loadAvg?.[0]?.toFixed(2) || '—')}
+              sub="1 / 5 / 15 min"
+              pct={piStats.cpu?.loadAvg ? Math.min(100, Math.round((piStats.cpu.loadAvg[0] / piStats.cpu.cores) * 100)) : undefined}
+            />
           </div>
-
-          {jf.activeSessions.length > 0 && (
-            <div className="monitor-sessions">
-              {jf.activeSessions.map((s: any, i: number) => (
-                <SessionCard key={i} session={s} />
-              ))}
-            </div>
-          )}
-
-          {/* Libraries */}
-          {jf.libraries?.length > 0 && (
-            <>
-              <div className="monitor-subsection-label">Libraries</div>
-              <div className="monitor-libraries">
-                {jf.libraries.map((l: any) => (
-                  <div key={l.name} className="monitor-library">
-                    <span className="monitor-library-name">{l.name}</span>
-                    <span className="monitor-library-type">{l.type}</span>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
         </>
       )}
 
-      {jf?.error && (
-        <div className="monitor-empty">Jellyfin unavailable — {jf.error}</div>
+      {piError && (
+        <div className="monitor-empty" style={{ marginTop: 24 }}>
+          ⚠️ Raspberry Pi unavailable — {piError.message || 'Connection failed'}
+        </div>
       )}
     </div>
   );

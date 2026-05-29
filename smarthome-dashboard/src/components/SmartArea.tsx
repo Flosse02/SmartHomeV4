@@ -8,6 +8,7 @@ import SmartHome from '../pages/SmartHome';
 import Clock from './Clock';
 import { SmartDevice, useDevices, UseDevicesResult } from '@/hooks/useDevices';
 import { Weather } from './Weather';
+import { env } from 'process';
 
 const Notes = dynamic(() => import('../pages/Notes'), { ssr: false });
 const Camera = dynamic(() => import('../pages/Camera'), { ssr: false });
@@ -15,10 +16,11 @@ const Settings = dynamic(() => import('../pages/Settings'), { ssr: false });
 const WeatherTab = dynamic(() => import('../pages/Weather'), { ssr: false });
 const ClockTab = dynamic(() => import('../pages/ClockTab'), { ssr: false });
 const Monitor = dynamic(() => import('../pages/Monitor'), { ssr: false });
+const Jellyfin = dynamic(() => import('../pages/Jellyfin'), { ssr: false });
 
-export type SmartAreaTab = 'Pictures' | 'Music' | 'Home' | 'Notes' | 'Camera' | 'Weather' | 'Clock' | 'Monitor' | 'Settings';
+export type SmartAreaTab = 'Pictures' | 'Music' | 'Home' | 'Notes' | 'Camera' | 'Weather' | 'Clock' | 'Monitor' | 'Jellyfin' | 'Settings';
 
-const TABS: SmartAreaTab[] = ['Pictures', 'Music', 'Home', 'Notes', 'Camera', 'Weather', 'Clock', 'Monitor', 'Settings'];
+const TABS: SmartAreaTab[] = ['Pictures', 'Music', 'Home', 'Notes', 'Camera', 'Weather', 'Clock', 'Monitor', 'Jellyfin', 'Settings'];
 
 interface SmartAreaProps {
   activeTab:     SmartAreaTab;
@@ -29,6 +31,11 @@ interface SmartAreaProps {
 
 export default function SmartArea({ activeTab, onTabChange, devicesResult, controlsRef }: SmartAreaProps) {
   const [selectedDevice, setSelectedDevice] = useState<SmartDevice | null>(null);
+  const isJellyfinConfigured = process.env.NEXT_PUBLIC_JELLYFIN_URL && 
+                             process.env.NEXT_PUBLIC_JELLYFIN_URL !== '' &&
+                             process.env.NEXT_PUBLIC_JELLYFIN_API_KEY &&
+                             process.env.NEXT_PUBLIC_JELLYFIN_API_KEY !== '';
+ 
 
   return (
     <div className="smart-area">
@@ -81,6 +88,17 @@ export default function SmartArea({ activeTab, onTabChange, devicesResult, contr
       <div style={{ display: activeTab === 'Monitor' ? 'contents' : 'none' }}>
         <Monitor />
       </div>
+      {isJellyfinConfigured ? (
+        <div style={{ display: activeTab === 'Jellyfin' ? 'contents' : 'none' }}>
+          <Jellyfin />
+        </div>
+      ) : (
+        <div style={{ display: activeTab === 'Jellyfin' ? 'contents' : 'none' }}>
+          <div className="monitor-empty">
+            💡 Jellyfin not configured — add environment variables to .env.local
+          </div>
+        </div>
+      )}
       <div style={{ display: activeTab === 'Settings' ? 'contents' : 'none' }}>
         <Settings />
       </div>
