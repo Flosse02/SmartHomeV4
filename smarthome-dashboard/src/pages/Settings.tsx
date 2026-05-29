@@ -14,6 +14,8 @@ type Theme = 'Light' | 'Dark' | 'Auto';
 
 export default function Settings() {
   const { theme, setTheme: setThemeContext, resolvedTheme } = useTheme();
+  const [tempUnits,      setTempUnits]      = useState('');
+  const [speedUnits,     setSpeedUnits]    = useState('');
   const [location,       setLocation]       = useState('');
   const [musicLocation,  setMusicLocation]  = useState('');
   const [photoLocation,  setPhotoLocation]  = useState('');
@@ -35,6 +37,8 @@ export default function Settings() {
         setPhotoLocation(s.photoLocation ?? '');
         setSlideshowTimer(s.slideshowTimer ?? '5');
         setIdleTimeout(s.idleTimeout ?? '10');
+        setTempUnits(s.tempUnits ?? '°C');
+        setSpeedUnits(s.speedUnits ?? 'km/h');
         if (s.theme) setThemeContext(s.theme);
         setTimeZone(s.timeZone ?? '');
         setHour24(s.hour24 ?? false);
@@ -48,6 +52,8 @@ export default function Settings() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         location, 
+        tempUnits,
+        speedUnits,
         musicLocation, 
         photoLocation, 
         slideshowTimer, 
@@ -79,6 +85,16 @@ export default function Settings() {
     { value: 'Dark',  label: 'Dark'  },
     { value: 'Light', label: 'Light' },
     { value: 'Auto',  label: 'Auto'  },
+  ];
+
+  const tempUnitOptions = [
+    { value: '°C',  label: '°C'  },
+    { value: '°F', label: '°F' },
+  ];
+
+  const weatherSpeedOptions = [
+    { value: 'km/h',  label: 'km/h'  },
+    { value: 'mph', label: 'mph' },
   ];
 
   return (
@@ -144,6 +160,27 @@ export default function Settings() {
               onChange={(v) => { setHour24(v); setDirty(true); }}
               label={hour24 ? '24-hour' : '12-hour'}
             />
+          </div>
+        </div>
+      </div>
+
+      {/* Weather */}
+      <div className="settings-section">
+        <h2 className="settings-section-label">Weather</h2>
+        <div className="settings-row">
+          <div className="settings-label-wrapper">
+            <span className="settings-label">Units</span>
+          </div>
+          <div className="settings-right">
+            <Picker value={tempUnits} options={tempUnitOptions} onChange={change(setTempUnits)} />
+          </div>
+        </div>
+        <div className="settings-row">
+          <div className="settings-label-wrapper">
+            <span className="settings-label">Speed</span>
+          </div>
+          <div className="settings-right">
+            <Picker value={speedUnits} options={weatherSpeedOptions} onChange={change(setSpeedUnits)} />
           </div>
         </div>
       </div>

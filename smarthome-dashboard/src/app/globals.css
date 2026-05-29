@@ -1603,12 +1603,12 @@ body {
 
 .alarm-wrapper {
   background: var(--bg-base);
-  border-radius: 16;
+  border-radius: 16px;
   padding: 32px 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16;
+  gap: 16px;
   box-shadow: 0 4px 20px var(--bg-overlay);
 }
 
@@ -1623,6 +1623,244 @@ body {
   font-family: var(--font-mono);
   font-size: 18px;
   color: var(--text-secondary);
+}
+
+/* ============================================
+   WEATHER PAGE
+   ============================================ */
+.weather-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  padding-bottom: 24px;
+  overflow-y: auto;
+}
+
+.weather-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+
+/* Hero */
+.weather-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 24px 20px;
+  gap: 4px;
+}
+
+.weather-hero-emoji  { font-size: 56px; line-height: 1; margin-bottom: 8px; }
+.weather-hero-temp   { font-family: var(--font-mono); font-size: 72px; font-weight: 700; line-height: 1; letter-spacing: -2px; color: var(--text-primary); }
+.weather-hero-label  { font-family: var(--font-mono); font-size: 14px; color: var(--text-secondary); letter-spacing: 2px; text-transform: uppercase; margin-top: 6px; }
+.weather-hero-location { font-family: var(--font-mono); font-size: 11px; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+
+/* Stat pills */
+.weather-stats {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 24px 20px;
+}
+
+.weather-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: var(--border-subtle);
+  border: 0.5px solid var(--border-default);
+  border-radius: 10px;
+  padding: 12px 20px;
+  min-width: 80px;
+}
+
+.weather-stat-icon  { font-size: 18px; }
+.weather-stat-value { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--text-primary); }
+.weather-stat-label { font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
+
+/* 7-day forecast */
+.weather-forecast {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 24px 0;
+  gap: 2px;
+}
+
+.weather-forecast-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.weather-forecast-row--today {
+  background: var(--border-subtle);
+  border: 0.5px solid var(--border-default);
+}
+
+.weather-forecast-day   { width: 36px; color: var(--text-primary); font-weight: 600; flex-shrink: 0; }
+.weather-forecast-emoji { width: 30px; flex-shrink: 0; }
+.weather-forecast-label { width: 140px; color: var(--text-secondary); flex-shrink: 0; }
+
+.weather-forecast-rain {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--accent);
+  flex-shrink: 0;
+  width: 90px;
+}
+
+.weather-forecast-rain span {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.weather-forecast-uv {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.weather-forecast-range {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.weather-forecast-min { color: var(--text-muted); width: 28px; text-align: right; }
+.weather-forecast-max { color: var(--text-primary); width: 28px; }
+
+.weather-forecast-bar-wrap {
+  width: 60px;
+  height: 4px;
+  background: var(--border-subtle);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.weather-forecast-bar {
+  position: absolute;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+  left: calc((var(--min) - var(--abs-min)) / (var(--abs-max) - var(--abs-min)) * 100%);
+  width: calc((var(--max) - var(--min)) / (var(--abs-max) - var(--abs-min)) * 100%);
+}
+
+.weather-hourly {
+  display: flex;
+  overflow-x: auto;
+  gap: 4px;
+  padding: 12px 24px;
+  scrollbar-width: none;
+}
+.weather-hourly::-webkit-scrollbar { display: none; }
+
+.weather-hourly-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  min-width: 52px;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+}
+
+.weather-hourly-time { font-size: 10px; color: var(--text-muted); }
+.weather-hourly-icon { font-size: 18px; }
+.weather-hourly-temp { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.weather-hourly-pop  { font-size: 10px; color: var(--accent); }
+
+/* Forecast extras */
+.weather-forecast-extras {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+  width: 40px;
+}
+
+.weather-forecast-pop {
+  font-size: 10px;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.weather-forecast-uv {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.weather-forecast-sun {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  width: 200px;
+}
+
+.weather-forecast-sun svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.stat-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-elevated);
+  border: 0.5px solid var(--border-default);
+  border-radius: 8px;
+  padding: 10px 14px;
+  min-width: 180px;
+  z-index: 50;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.stat-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 2px 0;
+  color: var(--text-secondary);
+}
+
+.stat-tooltip-row span:last-child {
+  color: var(--text-primary);
+}
+
+.tooltip-title {
+  display: flex;
+  justify-content: center;
+  border-bottom: 0.5px solid var(--border-subtle);
+  padding-bottom: 6px;
+  margin-bottom: 2px;
 }
 
 @keyframes fadeOut {

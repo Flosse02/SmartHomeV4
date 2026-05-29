@@ -19,12 +19,7 @@ import {
   MdTablet,
   MdOutlinePowerSettingsNew, 
   MdDeviceUnknown,
-  MdSunny,
   MdCloud,
-  MdFoggy,
-  MdGrain,
-  MdThunderstorm,
-  MdAcUnit,
   MdLogout,
   MdClose,
   MdAdd,
@@ -32,8 +27,6 @@ import {
   MdRemove,
   MdLibraryMusic,
   MdSave,
-  MdFileOpen,
-  MdFilePresent,
   MdFolder,
   MdArrowUpward,
   MdArrowForward,
@@ -41,9 +34,32 @@ import {
   MdChevronLeft,
   MdChevronRight,
   MdAlarm,
+  MdThermostat,
+  MdWaterDrop,
+  MdAir,
 } from 'react-icons/md';
 
+import { TbLeaf } from 'react-icons/tb';
 import { FcGoogle } from 'react-icons/fc';
+import {
+  WiDaySunny, 
+  WiDayCloudy, 
+  WiFog, 
+  WiSprinkle,
+  WiRain, 
+  WiSnow, 
+  WiSnowWind, 
+  WiSleet,
+  WiShowers, 
+  WiStormShowers, 
+  WiThunderstorm, 
+  WiHail,
+  WiDaySunnyOvercast,
+  WiSunrise,
+  WiSunset,
+  WiWindDeg,
+  WiBarometer,
+} from 'react-icons/wi';
 
 export function CastIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
   return <MdCast size={size} color={color} />;
@@ -181,22 +197,80 @@ export function AlarmIcon({ size = 14, color = 'currentColor' }: { size?: number
   return <MdAlarm size={size} color={color} />;
 }
 
-export function WeatherIcon({code, size = 18,color = 'currentColor'}: {code: number; size?: number; color?: string;}) {
-  if (code === 0) return <MdSunny size={size} color={color} />;
+export function ThermometerIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdThermostat size={size} color={color} />;
+}
 
-  if (code >= 1 && code <= 3) return <MdCloud size={size} color={color} />;
+export function RaindropIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdWaterDrop size={size} color={color} />;
+}
 
-  if (code === 45 || code === 48)
-    return <MdFoggy size={size} color={color} />;
+export function WindIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdAir size={size} color={color} />;
+}
 
-  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82))
-    return <MdGrain size={size} color={color} />;
+export function SunriseIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <WiSunrise size={size} color={color} />;
+}
 
-  if (code >= 71 && code <= 77)
-    return <MdAcUnit size={size} color={color} />;
+export function SunsetIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <WiSunset size={size} color={color} />;
+}
 
-  if (code >= 95)
-    return <MdThunderstorm size={size} color={color} />;
+export function WindDirectionIcon({ size = 14, color = 'currentColor', degrees = 0 }: { size?: number; color?: string; degrees?: number }) {
+  return <WiWindDeg size={size} color={color} style={{ transform: `rotate(${degrees}deg)` }} />;
+}
 
-  return <MdCloud size={size} color={color} />;
+export function UVIndexIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <WiBarometer size={size} color={color} />;
+}
+
+export function AQIIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <TbLeaf size={size} color={color} />;
+}
+
+export function WeatherIcon({ code, size = 18, color = 'currentColor' }: { code: number; size?: number; color?: string }) {
+  if (code === 0)  return { icon: <WiDaySunny size={size} color={color} />,        label: 'Clear sky' };
+  if (code === 1)  return { icon: <WiDaySunny size={size} color={color} />,        label: 'Mainly clear' };
+  if (code === 2)  return { icon: <WiDayCloudy size={size} color={color} />,       label: 'Partly cloudy' };
+  if (code === 3)  return { icon: <WiDaySunnyOvercast size={size} color={color} />,label: 'Overcast' };
+  if (code === 45) return { icon: <WiFog size={size} color={color} />,             label: 'Fog' };
+  if (code === 48) return { icon: <WiFog size={size} color={color} />,             label: 'Rime fog' };
+  if (code === 51) return { icon: <WiSprinkle size={size} color={color} />,        label: 'Light drizzle' };
+  if (code === 53) return { icon: <WiSprinkle size={size} color={color} />,        label: 'Moderate drizzle' };
+  if (code === 55) return { icon: <WiSprinkle size={size} color={color} />,        label: 'Dense drizzle' };
+  if (code === 56) return { icon: <WiSleet size={size} color={color} />,           label: 'Light freezing drizzle' };
+  if (code === 57) return { icon: <WiSleet size={size} color={color} />,           label: 'Dense freezing drizzle' };
+  if (code === 61) return { icon: <WiRain size={size} color={color} />,            label: 'Slight rain' };
+  if (code === 63) return { icon: <WiRain size={size} color={color} />,            label: 'Moderate rain' };
+  if (code === 65) return { icon: <WiRain size={size} color={color} />,            label: 'Heavy rain' };
+  if (code === 66) return { icon: <WiRain size={size} color={color} />,            label: 'Light freezing rain' };
+  if (code === 67) return { icon: <WiRain size={size} color={color} />,            label: 'Heavy freezing rain' };
+  if (code === 71) return { icon: <WiSnow size={size} color={color} />,            label: 'Slight snowfall' };
+  if (code === 73) return { icon: <WiSnow size={size} color={color} />,            label: 'Moderate snowfall' };
+  if (code === 75) return { icon: <WiSnow size={size} color={color} />,            label: 'Heavy snowfall' };
+  if (code === 77) return { icon: <WiSnowWind size={size} color={color} />,        label: 'Snow grains' };
+  if (code === 80) return { icon: <WiShowers size={size} color={color} />,         label: 'Slight rain showers' };
+  if (code === 81) return { icon: <WiShowers size={size} color={color} />,         label: 'Moderate rain showers' };
+  if (code === 82) return { icon: <WiStormShowers size={size} color={color} />,    label: 'Violent rain showers' };
+  if (code === 85) return { icon: <WiSnowWind size={size} color={color} />,        label: 'Slight snow showers' };
+  if (code === 86) return { icon: <WiSnowWind size={size} color={color} />,        label: 'Heavy snow showers' };
+  if (code === 95) return { icon: <WiThunderstorm size={size} color={color} />,    label: 'Thunderstorm' };
+  if (code === 96) return { icon: <WiHail size={size} color={color} />,            label: 'Thunderstorm with slight hail' };
+  if (code === 99) return { icon: <WiHail size={size} color={color} />,            label: 'Thunderstorm with heavy hail' };
+  return { icon: <MdCloud size={size} color={color} />, label: 'Cloudy' };
+}
+
+export function windDirLabel(deg: number): string {
+  const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  return dirs[Math.round(deg / 45) % 8];
+}
+
+export function aqiLabel(aqi: number): { label: string; color: string } {
+  if (aqi <= 50)  return { label: 'Good',             color: '#27ae60' };
+  if (aqi <= 100) return { label: 'Moderate',         color: '#f39c12' };
+  if (aqi <= 150) return { label: 'Unhealthy (sen)',  color: '#e67e22' };
+  if (aqi <= 200) return { label: 'Unhealthy',        color: '#e02424' };
+  if (aqi <= 300) return { label: 'Very unhealthy',   color: '#8e44ad' };
+  return           { label: 'Hazardous',              color: '#7f1d1d' };
 }

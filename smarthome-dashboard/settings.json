@@ -6,5 +6,7 @@
   "location": "Perth",
   "theme": "Dark",
   "timeZone": "Australia/Perth",
-  "hour24": false
+  "hour24": false,
+  "tempUnits": "°C",
+  "speedUnits": "km/h"
 }
