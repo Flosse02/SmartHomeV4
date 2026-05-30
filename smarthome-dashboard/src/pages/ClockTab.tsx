@@ -1,10 +1,12 @@
 'use client';
 
+import { TimePicker } from '@/components/form/TimePicker';
 import { InputBar } from '@/components/form/inputBar';
 import { ToggleSwitch } from '@/components/form/ToggleSwitch';
 import { AddIcon, AlarmIcon, CloseIcon } from '@/lib/icons';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import * as Tone from 'tone';
+import { StyledButton } from '@/components/form/styledButton';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -203,32 +205,27 @@ function AlarmsSection({ timezone }: { timezone?: string }) {
 
   return (
     <div>
-      <SectionHeader action={
-        <button className="button" style={{ fontSize: 11, padding: '3px 10px' }} onClick={() => setAdding(v => !v)}>
-          <div style={{display: 'flex', alignItems: 'center'}}><AddIcon/> Add</div>
-        </button>
+     <SectionHeader action={
+        <StyledButton
+          placeholder={<div style={{display: 'flex', alignItems: 'center', fontSize: 10}}><AddIcon/> Add</div>}
+          onPress={() => setAdding(v => !v)}>
+        </StyledButton>
       }>Alarms</SectionHeader>
 
       {adding && (
         <div className="clock-card" style={{ marginBottom: 8 }}>
+          <button
+            className='close-button'
+            onClick={() => setAdding(false)}
+          >
+          <CloseIcon /></button>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <div className="input-wrapper-muti" style={{ padding: '6px 8px', width: 'auto' }}>
-              <InputBar
-                type="number"
-                min={0}
-                max={23}
-                value={draft.hour}
-                onChange={v => setDraft(p => ({ ...p, hour: Math.min(23, Math.max(0, +v)) }))}
-                style={{ width: 50, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 16 }}
-              />
-              <span style={{ color: 'var(--text-muted)', padding: '0 2px' }}>:</span>
-              <InputBar
-                type="number"
-                min={0}
-                max={59}
-                value={draft.minute}
-                onChange={v => setDraft(p => ({ ...p, minute: Math.min(59, Math.max(0, +v)) }))}
-                style={{ width: 50, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 16 }}
+              <TimePicker
+                hour={draft.hour}
+                minute={draft.minute}
+                onHourChange={h => setDraft(p => ({ ...p, hour: h }))}
+                onMinuteChange={m => setDraft(p => ({ ...p, minute: m }))}
               />
             </div>
             <div style={{ flex: 1 }}>
@@ -253,7 +250,6 @@ function AlarmsSection({ timezone }: { timezone?: string }) {
           </div>
           <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
             <button className="edit-save" onClick={save}>Save</button>
-            <button className="edit-cancel" onClick={() => setAdding(false)}>Cancel</button>
           </div>
         </div>
       )}
@@ -300,12 +296,14 @@ function AlarmsSection({ timezone }: { timezone?: string }) {
 function TimersSection() {
   const [firingTimer, setFiringTimer] = useState<TimerEntry | null>(null);
   const beepIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [adding,  setAdding]  = useState(false);
   const [timers, setTimers] = useState<TimerEntry[]>([]);
   const [h, setH] = useState(0);
   const [m, setM] = useState(0);
   const [s, setS] = useState(5);
   const [label, setLabel] = useState('');
   const { startBeeping, stopBeeping } = useBeeping();
+  
 
   const dismissTimer = () => {
     stopBeeping();
@@ -330,6 +328,7 @@ function TimersSection() {
 
   const add = () => {
     const total = h * 3600 + m * 60 + s;
+    setAdding(false);
     if (total <= 0) return;
     setTimers(prev => [...prev, { id: crypto.randomUUID(), label, totalSeconds: total, remaining: total, running: false, done: false }]);
     setLabel('');
@@ -340,37 +339,41 @@ function TimersSection() {
 
   return (
     <div>
-      <SectionHeader>Timers</SectionHeader>
+      <SectionHeader action={
+        <StyledButton
+          placeholder={<div style={{display: 'flex', alignItems: 'center', fontSize: 10}}><AddIcon/> Add</div>}
+          onPress={() => setAdding(v => !v)}>
+        </StyledButton>
+      }>Timers</SectionHeader>
 
-      {/* Add row */}
-      <div className="clock-card" style={{ marginBottom: 8 }}>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-          {([['h', h, setH, 23], ['m', m, setM, 59], ['s', s, setS, 59]] as const).map(([lbl, val, setter, max]) => (
-            <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <div style={{ width: 'auto' }}>
-                <InputBar
-                  type="number"
-                  min={0}
-                  max={max}
-                  value={val}
-                  onChange={v => setter(Math.min(max, Math.max(0, +v)))}
-                  style={{ width: 40, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 15 }}
-                />
-              </div>
-              <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{lbl}</span>
-            </div>
-          ))}
-          <div style={{ flex: 1 }}>
-            <InputBar placeholder="Label" value={label}
-              onChange={v => setLabel(v)}
+      {adding && (
+        <div className="clock-card" style={{ marginBottom: 8 }}>
+          <button
+            className='close-button'
+            onClick={() => setAdding(false)}
+          >
+          <CloseIcon /></button>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+            <TimePicker
+              hour={h}
+              minute={m}
+              second={s}
+              onHourChange={setH}
+              onMinuteChange={setM}
+              onSecondChange={setS}
             />
+            <div style={{ flex: 1 }}>
+              <InputBar placeholder="Label" value={label}
+                onChange={v => setLabel(v)}
+              />
+            </div>
+            <button className="edit-save" onClick={add}>Add</button>
           </div>
-          <button className="edit-save" onClick={add}>Add</button>
         </div>
-      </div>
+      )}
 
-      {timers.length === 0 && (
-        <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 12, padding: '16px 0' }}>No timers running</div>
+      {timers.length === 0 && !adding && (
+        <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 12, padding: '16px 0' }}>No timers set</div>
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

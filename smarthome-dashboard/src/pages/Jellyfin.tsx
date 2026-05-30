@@ -1,4 +1,3 @@
-import { GaugeBar } from "@/components/cards/GaugeBar";
 import { SessionCard } from "@/components/cards/SessionCard";
 import { StatCard } from "@/components/cards/StatCard";
 import { JellyfinIcon, PauseIcon, PlayIcon, StorageIcon } from "@/lib/icons";

@@ -1,7 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
-import { AccessTimeIcon, ComputerIcon, CPUIcon, JellyfinIcon, MemoryIcon, PauseIcon, PlayIcon, RaspberryPiIcon, SpeedIcon, StorageIcon, ThermometerIcon } from '@/lib/icons';
+import { AccessTimeIcon, ComputerIcon, CPUIcon, MemoryIcon, RaspberryPiIcon, SpeedIcon, StorageIcon, ThermometerIcon } from '@/lib/icons';
 import { StatCard } from '@/components/cards/StatCard';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
