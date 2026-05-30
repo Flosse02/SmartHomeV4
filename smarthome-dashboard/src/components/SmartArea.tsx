@@ -8,7 +8,6 @@ import SmartHome from '../pages/SmartHome';
 import Clock from './Clock';
 import { SmartDevice, useDevices, UseDevicesResult } from '@/hooks/useDevices';
 import { Weather } from './Weather';
-import { env } from 'process';
 
 const Notes = dynamic(() => import('../pages/Notes'), { ssr: false });
 const Camera = dynamic(() => import('../pages/Camera'), { ssr: false });
@@ -60,10 +59,10 @@ export default function SmartArea({ activeTab, onTabChange, devicesResult, contr
         ))}
       </div>
 
-      {activeTab === 'Pictures' && <Slideshow />}
-
+      <div style={{ display: activeTab === 'Pictures' ? 'contents' : 'none' }}>
+        <Slideshow />
+      </div>
       <div style={{ display: activeTab === 'Music' ? 'contents' : 'none' }}>
-        {/* MusicPlayer now receives the shared devices instance */}
         <MusicPlayer devicesResult={devicesResult} controlsRef={controlsRef} />
       </div>
       <div style={{ display: activeTab === 'Home' ? 'contents' : 'none' }}>
@@ -79,26 +78,19 @@ export default function SmartArea({ activeTab, onTabChange, devicesResult, contr
       <div style={{ display: activeTab === 'Camera' ? 'contents' : 'none' }}>
         <Camera />
       </div>
-      <div style={{ display: activeTab === 'Weather' ? 'contents' : 'none' }}>
-        <WeatherTab />
-      </div>
+      {activeTab === 'Weather' && <WeatherTab />}
       <div style={{ display: activeTab === 'Clock' ? 'contents' : 'none' }}>
         <ClockTab />
       </div>
-      <div style={{ display: activeTab === 'Monitor' ? 'contents' : 'none' }}>
-        <Monitor />
-      </div>
-      {isJellyfinConfigured ? (
-        <div style={{ display: activeTab === 'Jellyfin' ? 'contents' : 'none' }}>
-          <Jellyfin />
-        </div>
-      ) : (
-        <div style={{ display: activeTab === 'Jellyfin' ? 'contents' : 'none' }}>
-          <div className="monitor-empty">
-            💡 Jellyfin not configured — add environment variables to .env.local
-          </div>
-        </div>
-      )}
+      {activeTab === 'Monitor' && <Monitor />}
+      {isJellyfinConfigured
+        ? activeTab === 'Jellyfin' && <Jellyfin /> 
+        : activeTab === 'Jellyfin' && (
+            <div className="monitor-empty">
+              💡 Jellyfin not configured — add environment variables to .env.local
+            </div>
+          )
+      }
       <div style={{ display: activeTab === 'Settings' ? 'contents' : 'none' }}>
         <Settings />
       </div>

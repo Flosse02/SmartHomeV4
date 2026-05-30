@@ -38,13 +38,6 @@ export async function GET() {
     }
 
     const info = await infoRes.json();
-    console.log('Jellyfin System Info:', {
-      serverName: info.ServerName,
-      version: info.Version,
-      operatingSystem: info.OperatingSystem,
-      systemArch: info.SystemArchitecture,
-      os: info.OperatingSystemDisplayName
-    });
 
     // Jellyfin uses different field names - map them properly
     const operatingSystem = info.OperatingSystemDisplayName || 
