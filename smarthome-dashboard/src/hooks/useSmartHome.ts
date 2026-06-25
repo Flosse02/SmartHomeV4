@@ -93,11 +93,15 @@ export function useSmartHome() {
     setError(null);
     try {
       const entities: HAEntity[] = await haFetch('/states');
-      const mediaPlayers = entities
-        .filter(e => e.entity_id.startsWith('media_player.') || e.entity_id.startsWith('camera.'))
+      const relevant = entities
+        .filter(e =>
+          e.entity_id.startsWith('media_player.') ||
+          e.entity_id.startsWith('camera.')       ||
+          e.entity_id.startsWith('light.')
+        )
         .filter(e => !e.attributes.restored)
         .map(e => toDevice(e, castGroupEntityIdsRef.current));
-      setDevices(mediaPlayers);
+      setDevices(relevant);
       setConnected(true);
     } catch (e: any) {
       setError(e.message);
@@ -259,6 +263,18 @@ export function useSmartHome() {
   const nowPlaying = useCallback((entityId: string) =>
     callService('media_player', 'media_current', { entity_id: entityId }), []);
 
+   const turnLightOn = useCallback((entityId: string) =>
+    callService('light', 'turn_on',  { entity_id: entityId }), []);
+ 
+  const turnLightOff = useCallback((entityId: string) =>
+    callService('light', 'turn_off', { entity_id: entityId }), []);
+ 
+  const toggleAllLights = useCallback((on: boolean) => {
+    devices
+      .filter(d => d.type === 'light')
+      .forEach(d => on ? callService('light', 'turn_on', { entity_id: d.id }) : callService('light', 'turn_off', { entity_id: d.id }));
+  }, [devices]);
+
   return {
     devices,
     loading,
@@ -276,6 +292,9 @@ export function useSmartHome() {
     turnOff,
     joinGroup,
     leaveGroup,
+    turnLightOn,
+    turnLightOff,
+    toggleAllLights,
     speakers:      devices.filter(d => d.type === 'speaker'),
     speakerGroups: devices.filter(d => d.type === 'speaker_group'),
     tvs:           devices.filter(d => d.type === 'tv'),

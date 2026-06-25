@@ -9,7 +9,7 @@ import {
   VolumeVeryLowIcon, VolumeLowIcon, UnknownDeviceIcon, RefreshIcon, CameraIcon,
   HouseIcon, LightIcon, NightModeIcon
 } from '@/lib/icons';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 interface SmartHomeProps {
   selectedDevice: SmartDevice | null;
@@ -140,6 +140,8 @@ export default function SmartHome({ selectedDevice, onSelectDevice, devices }: S
   const running = smarthome.devices.filter(d => d.state === 'playing').length;
   const activeDevices = smarthome.devices.filter(d => d.state !== 'off' && d.state !== 'unavailable');
   const allMuted = activeDevices.length > 0 && activeDevices.every(d => d.attributes.is_volume_muted);
+  const allLightsOn = smarthome.lights.length > 0 && smarthome.lights.every(d => d.state === 'on');
+  const anyLightOn  = smarthome.lights.some(d => d.state === 'on');
 
   if (!process.env.NEXT_PUBLIC_HA_TOKEN) {
     return (
@@ -157,6 +159,23 @@ export default function SmartHome({ selectedDevice, onSelectDevice, devices }: S
   const handleMuteAll = () => {
     const shouldMute = !allMuted;
     activeDevices.forEach(d => smarthome.mute(d.id, shouldMute));
+  };
+
+  const handleLightsToggle = () => smarthome.toggleAllLights(!anyLightOn);
+ 
+  const [nightMode, setNightMode] = useState(false);
+  const [awayMode, setAwayMode]   = useState(false);
+ 
+  const handleNightMode = () => {
+    const next = !nightMode;
+    setNightMode(next);
+    smarthome.toggleAllLights(!next);
+  };
+ 
+  const handleAway = () => {
+    const next = !awayMode;
+    setAwayMode(next);
+    smarthome.toggleAllLights(!next);
   };
 
   return (
@@ -221,10 +240,10 @@ export default function SmartHome({ selectedDevice, onSelectDevice, devices }: S
           <div className="home-card">
             <div className="home-section-title">Quick controls</div>
             <div className="home-quick-grid">
-              <ToggleSwitch icon={<LightIcon />} label="Lights"   active={false} onToggle={() => {}} />
-              <ToggleSwitch icon={<NightModeIcon />} label="Night"    active={false} onToggle={() => {}} />
-              <ToggleSwitch icon={<HouseIcon />} label="Away"     active={false} onToggle={() => {}} />
-              <ToggleSwitch icon={<VolumeMuteIcon />}    label="Mute all" active={allMuted} onToggle={handleMuteAll} />
+              <ToggleSwitch icon={<LightIcon />}      label="Lights"   active={allLightsOn} onToggle={handleLightsToggle} />
+              <ToggleSwitch icon={<NightModeIcon />}  label="Night"    active={nightMode}   onToggle={handleNightMode} />
+              <ToggleSwitch icon={<HouseIcon />}      label="Away"     active={awayMode}    onToggle={handleAway} />
+              <ToggleSwitch icon={<VolumeMuteIcon />} label="Mute all" active={allMuted}    onToggle={handleMuteAll} />
             </div>
           </div>
  
