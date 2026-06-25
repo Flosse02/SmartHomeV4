@@ -156,8 +156,11 @@ export default function Settings() {
           </div>
           <div className="settings-right">
             <ToggleSwitch
-              value={hour24}
-              onChange={(v) => { setHour24(v); setDirty(true); }}
+              active={hour24}
+              onToggle={() => {
+                setHour24(!hour24);
+                setDirty(true);
+              }}
               label={hour24 ? '24-hour' : '12-hour'}
             />
           </div>

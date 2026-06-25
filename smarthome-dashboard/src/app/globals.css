@@ -997,64 +997,50 @@ body {
   gap: 8px;
 }
 
-.toggle-wrap {
+.toggle-switch {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+
+.toggle-switch-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.toggle-switch-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex: 1;
 }
 
 .toggle {
-  position: relative;
-  width: 44px;
-  height: 24px;
-  flex-shrink: 0;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  border: none;
   cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
 }
 
-.toggle input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-  position: absolute;
-}
+.toggle--on  { background: var(--success); }
+.toggle--off { background: rgba(255, 255, 255, 0.12); }
 
-.toggle-track {
-  position: absolute;
-  inset: 0;
-  background: rgba(255,255,255,0.12);
-  border-radius: 24px;
-  transition: background 0.2s;
-  border: 0.5px solid rgba(255,255,255,0.15);
-}
-
-.toggle input:checked + .toggle-track {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
-.toggle-track::after {
+.toggle::after {
   content: '';
   position: absolute;
-  width: 18px;
-  height: 18px;
-  background: #fff;
+  top: 3px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  top: 2px;
-  left: 2px;
-  transition: transform 0.2s;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  background: #fff;
+  transition: left 0.15s ease;
 }
 
-.toggle input:checked + .toggle-track::after {
-  transform: translateX(20px);
-}
-
-.toggle-label {
-  font-size: 12px;
-  font-family: var(--font-mono);
-  color: var(--text-secondary);
-  min-width: 48px;
-}
+.toggle--on::after  { left: 19px; }
+.toggle--off::after { left: 3px; }
 
 /* ============================================
   Form Controls
@@ -2063,6 +2049,360 @@ body {
   text-transform: uppercase;
   color: var(--text-muted);
   padding: 8px 0 4px;
+}
+
+/* ============================================
+   HOME
+   ============================================ */
+
+.home-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  gap: 12px;
+}
+
+/* ── Header ── */
+
+.home-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.home-header h1 {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.home-header-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.home-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.home-status-dot--on  { background: var(--success); }
+.home-status-dot--off { background: var(--error); }
+
+.home-status-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.home-refresh-btn {
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 0.5px solid var(--border-default);
+  border-radius: 6px;
+  padding: 3px 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.home-refresh-btn:hover { background: var(--border-default); }
+
+/* ── Error ── */
+
+.home-error {
+  font-size: 12px;
+  color: var(--error);
+  background: rgba(248, 113, 113, 0.1);
+  border-radius: 6px;
+  padding: 8px 12px;
+  border: 0.5px solid rgba(248, 113, 113, 0.2);
+}
+
+/* ── Stat cards ── */
+
+.home-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.home-stat-card {
+  border: 0.5px solid var(--border-default);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.home-stat-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.home-stat-value {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.home-stat-value--green { color: var(--success); }
+.home-stat-value--blue  { color: var(--accent); }
+
+/* ── Main two-column grid ── */
+
+.home-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+}
+
+.home-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Generic card ── */
+
+.home-card {
+  border: 0.5px solid var(--border-default);
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Section title (shared pattern) ── */
+
+.home-section-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+/* ── Device cards ── */
+
+.home-device-card {
+  border: 0.5px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.home-device-card + .home-device-card { margin-top: 6px; }
+
+.home-device-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.home-device-type-icon {
+  font-size: 16px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.home-device-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.home-device-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-device-state {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  margin-top: 1px;
+}
+
+.home-device-state--playing { color: var(--accent); }
+
+/* ── Power button ── */
+
+.home-power-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.home-power-btn--on  { background: var(--success); }
+.home-power-btn--off { background: var(--error); }
+
+/* ── Now playing ── */
+
+.home-now-playing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.home-now-playing-art {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 0.5px solid var(--border-subtle);
+}
+
+.home-now-playing-title {
+  font-size: 12px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-now-playing-artist {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Playback controls ── */
+
+.home-playback-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.home-ctrl-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 0.5px solid var(--border-default);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+}
+
+.home-ctrl-btn:hover { background: var(--border-default); }
+
+.home-ctrl-btn--primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: #fff;
+}
+
+.home-ctrl-btn--primary:hover { opacity: 0.85; }
+
+.home-ctrl-btn--muted {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+}
+
+.home-volume-row {
+  flex: 1;
+}
+
+.home-volume-slider {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.home-volume-pct {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  min-width: 28px;
+  text-align: right;
+}
+
+/* ── Quick controls ── */
+
+.home-quick-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ── Camera placeholder ── */
+
+.home-cameras-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+
+/* ── Empty / loading state ── */
+
+.home-empty {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 20px 0;
+  font-family: var(--font-mono);
+}
+
+/* ── Unconfigured state ── */
+
+.home-unconfigured {
+  padding: 24px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.home-unconfigured-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.home-unconfigured-pre {
+  margin-top: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 0.5px solid var(--border-default);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-family: var(--font-mono);
 }
 
 @keyframes fadeOut {

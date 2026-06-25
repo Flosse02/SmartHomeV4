@@ -1,21 +1,20 @@
 interface ToggleProps {
-  value: boolean;
-  onChange: (v: boolean) => void;
+  icon?: React.ReactNode;
   label?: string;
+  active: boolean;
+  onToggle: () => void;
 }
 
-export function ToggleSwitch({ value, onChange, label }: ToggleProps) {
+export function ToggleSwitch({ icon, label, active, onToggle }: ToggleProps) {
   return (
-    <div className="toggle-wrap">
-      <label className="toggle">
-        <input
-          type="checkbox"
-          checked={value}
-          onChange={e => onChange(e.target.checked)}
-        />
-        <div className="toggle-track" />
-      </label>
-      {label && <span className="toggle-label">{label}</span>}
+    <div className="toggle-switch">
+      <span className="toggle-switch-icon">{icon}</span>
+      <span className="toggle-switch-label">{label}</span>
+      <button
+        className={`toggle ${active ? 'toggle--on' : 'toggle--off'}`}
+        onClick={e => onToggle()}
+        aria-label={`Toggle ${label}`}
+      />
     </div>
   );
 }
