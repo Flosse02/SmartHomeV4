@@ -1,8 +1,14 @@
 'use client';
 
+import { ToggleSwitch } from '@/components/form/ToggleSwitch';
 import { SmartDevice, useDevices } from '@/hooks/useDevices';
 import { useSmartHome, SmartHomeDevice } from '@/hooks/useSmartHome';
-import { VolumeMuteIcon, VolumeHighIcon, TvIcon, TabletIcon, SpeakerIcon, SpeakerGroupIcon, PowerIcon, PauseIcon, PlayIcon, StopIcon, VolumeVeryLowIcon, VolumeLowIcon, UnknownDeviceIcon, RefreshIcon, CameraIcon } from '@/lib/icons';
+import {
+  VolumeMuteIcon, VolumeHighIcon, TvIcon, TabletIcon, SpeakerIcon,
+  SpeakerGroupIcon, PowerIcon, PauseIcon, PlayIcon, StopIcon,
+  VolumeVeryLowIcon, VolumeLowIcon, UnknownDeviceIcon, RefreshIcon, CameraIcon,
+  HouseIcon, LightIcon, NightModeIcon
+} from '@/lib/icons';
 import { useMemo } from 'react';
 
 interface SmartHomeProps {
@@ -17,7 +23,7 @@ function VolumeSlider({ value, onChange }: { value: number; onChange: (v: number
       type="range" min={0} max={1} step={0.01}
       value={value}
       onChange={e => onChange(parseFloat(e.target.value))}
-      style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer' }}
+      className="home-volume-slider"
     />
   );
 }
@@ -28,150 +34,101 @@ function DeviceCard({ device, smarthome }: { device: SmartHomeDevice; smarthome:
   const isOff     = device.state === 'off' || device.state === 'unavailable';
   const volume    = device.attributes.volume_level ?? 0;
   const isMuted   = device.attributes.is_volume_muted ?? false;
-  const mediaTitle   = device.attributes.media_title;
-  const mediaArtist  = device.attributes.media_artist;
+  const mediaTitle    = device.attributes.media_title;
+  const mediaArtist   = device.attributes.media_artist;
   const entityPicture = device.attributes.entity_picture
     ? `${process.env.NEXT_PUBLIC_HA_URL}${device.attributes.entity_picture}`
     : null;
 
-  const typeIcon = device.type === 'tv' ? <TvIcon/>
-    : device.type === 'speaker_group' ? <SpeakerGroupIcon/>
-    : device.type === 'tablet' ? <TabletIcon/>
-    : device.type === 'speaker' ? <SpeakerIcon/>
-    : device.type === 'camera' ? <CameraIcon/>
-    : <UnknownDeviceIcon/>;
+  const typeIcon = device.type === 'tv'           ? <TvIcon />
+    : device.type === 'speaker_group'             ? <SpeakerGroupIcon />
+    : device.type === 'tablet'                    ? <TabletIcon />
+    : device.type === 'speaker'                   ? <SpeakerIcon />
+    : device.type === 'camera'                    ? <CameraIcon />
+    : <UnknownDeviceIcon />;
 
   const VolumeIcon = useMemo(() => {
     if (isMuted || volume === 0) return <VolumeMuteIcon />;
-    if (volume <= 0.1) return <VolumeVeryLowIcon />;
-    if (volume < 0.5) return <VolumeLowIcon />;
+    if (volume <= 0.1)           return <VolumeVeryLowIcon />;
+    if (volume < 0.5)            return <VolumeLowIcon />;
     return <VolumeHighIcon />;
   }, [isMuted, volume]);
 
-
   return (
-    <div style={{
-      background: 'rgba(255,255,255,0.04)',
-      border: '1px solid rgba(255,255,255,0.08)',
-      borderRadius: 10, padding: '12px 14px',
-      display: 'flex', flexDirection: 'column', gap: 8,
-    }}>
+    <div className="home-device-card">
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 18 }}>{typeIcon}</span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            fontSize: 13, fontWeight: 500, color: 'var(--text-primary)',
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-          }}>
-            {device.name}
-          </div>
-          <div style={{ fontSize: 10, color: isPlaying ? 'var(--accent)' : 'var(--text-muted)', marginTop: 1 }}>
+      <div className="home-device-header">
+        <span className="home-device-type-icon">{typeIcon}</span>
+        <div className="home-device-info">
+          <div className="home-device-name">{device.name}</div>
+          <div className={`home-device-state ${isPlaying ? 'home-device-state--playing' : ''}`}>
             {isOff ? 'Off' : device.state}
           </div>
         </div>
-
-        {/* Power toggle */}
         <button
+          className={`home-power-btn ${isOff ? 'home-power-btn--off' : 'home-power-btn--on'}`}
           onClick={() => isOff ? smarthome.turnOn(device.id) : smarthome.turnOff(device.id)}
-          style={{
-            display: 'flex', 
-            gap: 4,
-            background: isOff ? 'var(--error)' : 'var(--success)',
-            border: 'none', borderRadius: 6, padding: '4px 8px',
-            color: isOff ? 'var(--text-primary)' : 'var(--text-primary)',
-            cursor: 'pointer', fontSize: 11,
-          }}
         >
-          {isOff ? <><PowerIcon/>off</> : <><PowerIcon/>On</>}
+          <PowerIcon /> {isOff ? 'off' : 'on'}
         </button>
       </div>
 
       {/* Now playing */}
       {(mediaTitle || mediaArtist) && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="home-now-playing">
           {entityPicture && (
-            <img src={entityPicture} style={{ width: 32, height: 32, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }} />
+            <img src={entityPicture} className="home-now-playing-art" />
           )}
-          <div style={{ minWidth: 0 }}>
-            {mediaTitle && (
-              <div style={{ fontSize: 12, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {mediaTitle}
-              </div>
-            )}
-            {mediaArtist && (
-              <div style={{ fontSize: 11, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {mediaArtist}
-              </div>
-            )}
+          <div className="home-now-playing-text">
+            {mediaTitle  && <div className="home-now-playing-title">{mediaTitle}</div>}
+            {mediaArtist && <div className="home-now-playing-artist">{mediaArtist}</div>}
           </div>
         </div>
       )}
 
       {/* Playback controls */}
       {!isOff && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div className="home-playback-controls">
           <button
+            className="home-ctrl-btn home-ctrl-btn--primary"
             onClick={() => isPlaying ? smarthome.pause(device.id) : smarthome.play(device.id)}
-            style={{
-              background: 'var(--accent)', border: 'none', borderRadius: 6,
-              color: '#fff', cursor: 'pointer', fontSize: 13,
-              padding: '4px 10px', opacity: isPaused || isPlaying ? 1 : 0.4,
-            }}
+            style={{ opacity: isPaused || isPlaying ? 1 : 0.4 }}
           >
-            {isPlaying ? <PauseIcon/> : <PlayIcon/>}
+            {isPlaying ? <PauseIcon /> : <PlayIcon />}
           </button>
-
-          <button
-            onClick={() => smarthome.stop(device.id)}
-            style={{
-              background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: 6,
-              color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 13, padding: '4px 8px',
-            }}
-          >
-            <StopIcon/>
+          <button className="home-ctrl-btn" onClick={() => smarthome.stop(device.id)}>
+            <StopIcon />
           </button>
-
           <button
+            className={`home-ctrl-btn ${isMuted ? 'home-ctrl-btn--muted' : ''}`}
             onClick={() => smarthome.mute(device.id, !isMuted)}
-            style={{
-              background: isMuted ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.06)',
-              border: 'none', borderRadius: 6,
-              color: isMuted ? 'var(--text-primary)' : 'var(--text-secondary)',
-              cursor: 'pointer', fontSize: 13, padding: '4px 8px',
-            }}
           >
             {VolumeIcon}
           </button>
-
-          {/* Volume */}
-          <div style={{ flex: 1 }}>
-            <VolumeSlider
-              value={isMuted ? 0 : volume}
-              onChange={v => smarthome.setVolume(device.id, v)}
-            />
+          <div className="home-volume-row">
+            <VolumeSlider value={isMuted ? 0 : volume} onChange={v => smarthome.setVolume(device.id, v)} />
           </div>
-          <span style={{ fontSize: 10, color: 'var(--text-muted)', minWidth: 28, textAlign: 'right' }}>
-            {Math.round(volume * 100)}%
-          </span>
+          <span className="home-volume-pct">{Math.round(volume * 100)}%</span>
         </div>
       )}
     </div>
   );
 }
 
+function StatCard({ label, value, accent }: { label: string; value: string | number; accent?: 'green' | 'blue' | 'default' }) {
+  return (
+    <div className="home-stat-card">
+      <div className="home-stat-label">{label}</div>
+      <div className={`home-stat-value ${accent ? `home-stat-value--${accent}` : ''}`}>{value}</div>
+    </div>
+  );
+}
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: 20 }}>
-      <div style={{
-        fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase',
-        letterSpacing: '0.08em', marginBottom: 8, fontWeight: 600,
-      }}>
-        {title}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {children}
-      </div>
+    <div className="home-section">
+      <div className="home-section-title">{title}</div>
+      <div className="home-section-body">{children}</div>
     </div>
   );
 }
@@ -179,12 +136,17 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function SmartHome({ selectedDevice, onSelectDevice, devices }: SmartHomeProps) {
   const smarthome = useSmartHome();
 
+  const devicesOn = smarthome.devices.filter(d => d.state !== 'off' && d.state !== 'unavailable').length;
+  const running = smarthome.devices.filter(d => d.state === 'playing').length;
+  const activeDevices = smarthome.devices.filter(d => d.state !== 'off' && d.state !== 'unavailable');
+  const allMuted = activeDevices.length > 0 && activeDevices.every(d => d.attributes.is_volume_muted);
+
   if (!process.env.NEXT_PUBLIC_HA_TOKEN) {
     return (
-      <div style={{ padding: 24, color: 'var(--text-muted)', fontSize: 13 }}>
-        <div style={{ marginBottom: 8, color: 'var(--text-primary)', fontWeight: 500 }}>Home Assistant not configured</div>
-        <div>Add to <code>.env.local</code>:</div>
-        <pre style={{ marginTop: 8, background: 'rgba(255,255,255,0.05)', borderRadius: 6, padding: '8px 12px', fontSize: 12 }}>
+      <div className="home-unconfigured">
+        <div className="home-unconfigured-title">Home Assistant not configured</div>
+        <div className="home-unconfigured-body">Add to <code>.env.local</code>:</div>
+        <pre className="home-unconfigured-pre">
           NEXT_PUBLIC_HA_URL=http://homeassistant.local:8123{'\n'}
           NEXT_PUBLIC_HA_TOKEN=your_long_lived_token
         </pre>
@@ -192,76 +154,90 @@ export default function SmartHome({ selectedDevice, onSelectDevice, devices }: S
     );
   }
 
+  const handleMuteAll = () => {
+    const shouldMute = !allMuted;
+    activeDevices.forEach(d => smarthome.mute(d.id, shouldMute));
+  };
+
   return (
-    <div style={{ height: '100%', overflowY: 'auto', padding: '16px 20px' }}>
+    <div className="home-page">
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-          Devices
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{
-            width: 6, height: 6, borderRadius: '50%',
-            background: smarthome.connected ? 'var(--success)' : 'var(--error)',
-          }} />
-          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+      <div className="home-header">
+        <h1>Home</h1>
+        <div className="home-header-status">
+          <span className={`home-status-dot ${smarthome.connected ? 'home-status-dot--on' : 'home-status-dot--off'}`} />
+          <span className="home-status-label">
             {smarthome.connected ? 'Connected' : smarthome.error ? 'Error' : 'Connecting…'}
           </span>
-          <button onClick={smarthome.fetchDevices} style={{
-            fontSize: 11, background: 'rgba(255,255,255,0.06)', border: 'none',
-            borderRadius: 6, padding: '3px 8px', color: 'var(--text-secondary)', cursor: 'pointer',
-          }}>
-            {smarthome.loading ? '...' : <RefreshIcon/>}
+          <button className="home-refresh-btn" onClick={smarthome.fetchDevices}>
+            {smarthome.loading ? '…' : <RefreshIcon />}
           </button>
         </div>
       </div>
 
       {smarthome.error && (
-        <div style={{
-          fontSize: 12, color: 'var(--color-text-danger)',
-          background: 'rgba(248,113,113,0.1)', borderRadius: 6,
-          padding: '8px 12px', marginBottom: 16,
-        }}>
-          {smarthome.error}
-        </div>
+        <div className="home-error">{smarthome.error}</div>
       )}
 
-      {smarthome.loading && (
-        <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: 24 }}>
-          Loading devices...
-        </div>
-      )}
+      {/* Stat cards */}
+      <div className="home-stats-grid">
+        <StatCard label="Devices on"   value={devicesOn}  accent="green" />
+        <StatCard label="Running"  value={running} accent="blue" />
+        <StatCard label="Last motion"  value="—" />
+      </div>
 
-      {!smarthome.loading && smarthome.devices.length === 0 && smarthome.connected && (
-        <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: 24 }}>
-          No media devices found in Home Assistant
-        </div>
-      )}
-
-      {smarthome.speakers.length > 0 && (
-        <Section title="Speakers">
-          {smarthome.speakers.map(d => <DeviceCard key={d.id} device={d} smarthome={smarthome} />)}
-        </Section>
-      )}
-
-      {smarthome.tvs.length > 0 && (
-        <Section title="TVs & Displays">
-          {smarthome.tvs.map(d => <DeviceCard key={d.id} device={d} smarthome={smarthome} />)}
-        </Section>
-      )}
-
-      {smarthome.tablets.length > 0 && (
-        <Section title="Tablets">
-          {smarthome.tablets.map(d => <DeviceCard key={d.id} device={d} smarthome={smarthome} />)}
-        </Section>
-      )}
-
-      {smarthome.speakerGroups.length > 0 && (
-        <Section title="Speaker Groups">
+      {/* Main grid */}
+      <div className="home-main-grid">
+ 
+        {/* Left: media devices */}
+        <div className="home-card">
+          <div className="home-section-title">Media devices</div>
+ 
+          {smarthome.loading && (
+            <div className="home-empty">Loading devices…</div>
+          )}
+ 
+          {!smarthome.loading && smarthome.devices.length === 0 && smarthome.connected && (
+            <div className="home-empty">No media devices found in Home Assistant</div>
+          )}
+ 
+          {smarthome.speakers.map(d      => <DeviceCard key={d.id} device={d} smarthome={smarthome} />)}
+          {smarthome.tvs.map(d           => <DeviceCard key={d.id} device={d} smarthome={smarthome} />)}
+          {smarthome.tablets.map(d       => <DeviceCard key={d.id} device={d} smarthome={smarthome} />)}
           {smarthome.speakerGroups.map(d => <DeviceCard key={d.id} device={d} smarthome={smarthome} />)}
-        </Section>
-      )}
+ 
+          <div className="home-section-divider" />
+          <div className="home-section-title">Lights</div>
+          {smarthome.lights.map(d => <DeviceCard key={d.id} device={d} smarthome={smarthome} />)}
+          {smarthome.lights.length === 0 && (
+            <div className="home-empty">No lights configured yet</div>
+          )}
+        </div>
+ 
+        {/* Right: quick controls + cameras + speaker groups */}
+        <div className="home-right-col">
+ 
+          <div className="home-card">
+            <div className="home-section-title">Quick controls</div>
+            <div className="home-quick-grid">
+              <ToggleSwitch icon={<LightIcon />} label="Lights"   active={false} onToggle={() => {}} />
+              <ToggleSwitch icon={<NightModeIcon />} label="Night"    active={false} onToggle={() => {}} />
+              <ToggleSwitch icon={<HouseIcon />} label="Away"     active={false} onToggle={() => {}} />
+              <ToggleSwitch icon={<VolumeMuteIcon />}    label="Mute all" active={allMuted} onToggle={handleMuteAll} />
+            </div>
+          </div>
+ 
+          <div className="home-card">
+            <div className="home-section-title">Cameras</div>
+            {smarthome.cameras.map(d => <DeviceCard key={d.id} device={d} smarthome={smarthome} />)}
+            {smarthome.cameras.length === 0 && (
+               <div className="home-empty">No cameras configured yet</div>
+            )}
+          </div>
+ 
+        </div>
+      </div>
     </div>
   );
 }

@@ -42,9 +42,12 @@ import {
   MdSpeed,
   MdAccessTime,
   MdComputer,
+  MdLightbulb,
+  MdBedtime,
+  MdCameraAlt,
 } from 'react-icons/md';
 
-import { TbCpu, TbLeaf } from 'react-icons/tb';
+import { TbCpu, TbHome, TbLeaf } from 'react-icons/tb';
 import { FcGoogle } from 'react-icons/fc';
 import {
   WiDaySunny, 
@@ -132,7 +135,7 @@ export function SpeakerIcon({ size = 14, color = 'currentColor' }: { size?: numb
 }
 
 export function CameraIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
-  return <MdCamera size={size} color={color} />;
+  return <MdCameraAlt size={size} color={color} />;
 }
 
 export function SpeakerGroupIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
@@ -265,6 +268,18 @@ export function RaspberryPiIcon({ size = 14, color = 'currentColor' }: { size?: 
 
 export function CPUIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
   return <TbCpu size={size} color={color} />;
+}
+
+export function HouseIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <TbHome size={size} color={color} />;
+}
+
+export function LightIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdLightbulb size={size} color={color} />;
+}
+
+export function NightModeIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdBedtime size={size} color={color} />;
 }
 
 export function WeatherIcon({ code, size = 18, color = 'currentColor' }: { code: number; size?: number; color?: string }) {

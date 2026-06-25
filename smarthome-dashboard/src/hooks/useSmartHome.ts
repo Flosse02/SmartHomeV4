@@ -9,7 +9,7 @@ export interface HAEntity {
 export interface SmartHomeDevice {
   id: string;
   name: string;
-  type: 'speaker' | 'speaker_group' | 'tv' | 'unknown' | 'tablet' | 'camera';
+  type: 'speaker' | 'speaker_group' | 'tv' | 'unknown' | 'tablet' | 'camera' | 'light';
   state: string;
   attributes: Record<string, any>;
 }
@@ -38,6 +38,9 @@ function classifyDevice(entity: HAEntity, groupEntityIds: string[]): SmartHomeDe
     return 'camera';
   }
 
+  if (id.startsWith('light.')) {
+    return 'light';
+  }
 
   return 'unknown';
 }
@@ -253,6 +256,9 @@ export function useSmartHome() {
   const leaveGroup = useCallback((entityId: string) =>
     callService('media_player', 'unjoin', { entity_id: entityId }), []);
 
+  const nowPlaying = useCallback((entityId: string) =>
+    callService('media_player', 'media_current', { entity_id: entityId }), []);
+
   return {
     devices,
     loading,
@@ -261,6 +267,7 @@ export function useSmartHome() {
     fetchDevices,
     play,
     pause,
+    nowPlaying,
     stop,
     setVolume,
     mute,
@@ -274,5 +281,6 @@ export function useSmartHome() {
     tvs:           devices.filter(d => d.type === 'tv'),
     tablets:       devices.filter(d => d.type === 'tablet'),
     cameras: devices.filter(d => d.type === 'camera'),
+    lights: devices.filter(d => d.type === 'light'),
   };
 }
