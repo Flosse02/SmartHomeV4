@@ -124,11 +124,23 @@ function StatCard({ label, value, accent }: { label: string; value: string | num
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function PresenceCard({ device }: { device: SmartHomeDevice }) {
+  const isHome    = device.state === 'home';
+  const isUnknown = device.state === 'unknown';
+  const lastChanged = device.attributes.last_changed
+    ? new Date(device.attributes.last_changed).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : null;
+ 
   return (
-    <div className="home-section">
-      <div className="home-section-title">{title}</div>
-      <div className="home-section-body">{children}</div>
+    <div className="home-presence-card">
+      <div className={`home-presence-dot ${isHome ? 'home-presence-dot--home' : isUnknown ? 'home-presence-dot--unknown' : 'home-presence-dot--away'}`} />
+      <div className="home-presence-info">
+        <div className="home-presence-name">{device.name}</div>
+        {lastChanged && <div className="home-presence-since">since {lastChanged}</div>}
+      </div>
+      <div className={`home-presence-status ${isHome ? 'home-presence-status--home' : isUnknown ? 'home-presence-status--unknown' : 'home-presence-status--away'}`}>
+        {isUnknown ? 'unknown' : isHome ? 'home' : 'away'}
+      </div>
     </div>
   );
 }
@@ -252,6 +264,14 @@ export default function SmartHome({ selectedDevice, onSelectDevice, devices }: S
             {smarthome.cameras.map(d => <DeviceCard key={d.id} device={d} smarthome={smarthome} />)}
             {smarthome.cameras.length === 0 && (
                <div className="home-empty">No cameras configured yet</div>
+            )}
+          </div>
+
+          <div className="home-card">
+            <div className="home-section-title">Who's home</div>
+            {smarthome.people.map(d => <PresenceCard key={d.id} device={d} />)}
+            {smarthome.people.length === 0 && (
+              <div className="home-empty">No presence tracking configured</div>
             )}
           </div>
  

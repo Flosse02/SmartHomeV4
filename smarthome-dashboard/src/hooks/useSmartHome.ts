@@ -9,7 +9,7 @@ export interface HAEntity {
 export interface SmartHomeDevice {
   id: string;
   name: string;
-  type: 'speaker' | 'speaker_group' | 'tv' | 'unknown' | 'tablet' | 'camera' | 'light';
+  type: 'speaker' | 'speaker_group' | 'tv' | 'unknown' | 'tablet' | 'camera' | 'light' | 'person';
   state: string;
   attributes: Record<string, any>;
 }
@@ -32,15 +32,9 @@ function classifyDevice(entity: HAEntity, groupEntityIds: string[]): SmartHomeDe
     return 'speaker';
   }
 
-  if (id.startsWith('camera.')) {
-    const model = (attrs.friendly_name ?? '').toLowerCase();
-    if (model.includes('google') || model.includes('nest')) return 'camera';
-    return 'camera';
-  }
-
-  if (id.startsWith('light.')) {
-    return 'light';
-  }
+  if (id.startsWith('camera.')) return 'camera';
+  if (id.startsWith('light.'))   return 'light';
+  if (id.startsWith('person.'))  return 'person';
 
   return 'unknown';
 }
@@ -84,7 +78,6 @@ export function useSmartHome() {
   const msgIdRef                  = useRef(1);
   const mountedRef                = useRef(false);
 
-  // Refs to cross-reference device registry → entity registry
   const castGroupDeviceIdsRef  = useRef<string[]>([]);
   const castGroupEntityIdsRef  = useRef<string[]>([]);
 
@@ -97,7 +90,8 @@ export function useSmartHome() {
         .filter(e =>
           e.entity_id.startsWith('media_player.') ||
           e.entity_id.startsWith('camera.')       ||
-          e.entity_id.startsWith('light.')
+          e.entity_id.startsWith('light.')        ||
+          e.entity_id.startsWith('person.')
         )
         .filter(e => !e.attributes.restored)
         .map(e => toDevice(e, castGroupEntityIdsRef.current));
@@ -149,18 +143,14 @@ export function useSmartHome() {
       }
 
       if (msg.type === 'result' && Array.isArray(msg.result)) {
-        // Device registry — has 'model' field
         if (msg.result[0]?.model !== undefined) {
           castGroupDeviceIdsRef.current = msg.result
             .filter((d: any) => d.model === 'Google Cast Group')
             .map((d: any) => d.id);
-        }
-        // Entity registry — has 'entity_id' field
-        else if (msg.result[0]?.entity_id !== undefined) {
+        } else if (msg.result[0]?.entity_id !== undefined) {
           castGroupEntityIdsRef.current = msg.result
             .filter((e: any) => castGroupDeviceIdsRef.current.includes(e.device_id))
             .map((e: any) => e.entity_id);
-          // Re-classify devices now that we know the group entity IDs
           setDevices(prev => prev.map(d => ({
             ...d,
             type: classifyDevice(
@@ -174,7 +164,12 @@ export function useSmartHome() {
 
       if (msg.type === 'event' && msg.event?.event_type === 'state_changed') {
         const { entity_id, new_state } = msg.event.data;
-        if (!entity_id.startsWith('media_player.') || !new_state) return;
+        const isRelevant =
+          entity_id.startsWith('media_player.') ||
+          entity_id.startsWith('camera.')       ||
+          entity_id.startsWith('light.')        ||
+          entity_id.startsWith('person.');
+        if (!isRelevant || !new_state) return;
 
         setDevices(prev => {
           const idx     = prev.findIndex(d => d.id === entity_id);
@@ -217,14 +212,15 @@ export function useSmartHome() {
     };
   }, []);
 
+  // ── Media player services ──
   const play = useCallback((entityId: string) =>
-    callService('media_player', 'media_play', { entity_id: entityId }), []);
+    callService('media_player', 'media_play',  { entity_id: entityId }), []);
 
   const pause = useCallback((entityId: string) =>
     callService('media_player', 'media_pause', { entity_id: entityId }), []);
 
   const stop = useCallback((entityId: string) =>
-    callService('media_player', 'media_stop', { entity_id: entityId }), []);
+    callService('media_player', 'media_stop',  { entity_id: entityId }), []);
 
   const setVolume = useCallback((entityId: string, volume: number) =>
     callService('media_player', 'volume_set', {
@@ -246,29 +242,27 @@ export function useSmartHome() {
     }), []);
 
   const turnOn = useCallback((entityId: string) =>
-    callService('media_player', 'turn_on', { entity_id: entityId }), []);
+    callService('media_player', 'turn_on',  { entity_id: entityId }), []);
 
   const turnOff = useCallback((entityId: string) =>
     callService('media_player', 'turn_off', { entity_id: entityId }), []);
 
   const joinGroup = useCallback((entityId: string, groupId: string) =>
     callService('media_player', 'join', {
-      entity_id:    groupId,
+      entity_id:     groupId,
       group_members: [entityId],
     }), []);
 
   const leaveGroup = useCallback((entityId: string) =>
     callService('media_player', 'unjoin', { entity_id: entityId }), []);
 
-  const nowPlaying = useCallback((entityId: string) =>
-    callService('media_player', 'media_current', { entity_id: entityId }), []);
-
-   const turnLightOn = useCallback((entityId: string) =>
+  // ── Light services ──
+  const turnLightOn = useCallback((entityId: string) =>
     callService('light', 'turn_on',  { entity_id: entityId }), []);
- 
+
   const turnLightOff = useCallback((entityId: string) =>
     callService('light', 'turn_off', { entity_id: entityId }), []);
- 
+
   const toggleAllLights = useCallback((on: boolean) => {
     devices
       .filter(d => d.type === 'light')
@@ -283,7 +277,6 @@ export function useSmartHome() {
     fetchDevices,
     play,
     pause,
-    nowPlaying,
     stop,
     setVolume,
     mute,
@@ -299,7 +292,8 @@ export function useSmartHome() {
     speakerGroups: devices.filter(d => d.type === 'speaker_group'),
     tvs:           devices.filter(d => d.type === 'tv'),
     tablets:       devices.filter(d => d.type === 'tablet'),
-    cameras: devices.filter(d => d.type === 'camera'),
-    lights: devices.filter(d => d.type === 'light'),
+    cameras:       devices.filter(d => d.type === 'camera'),
+    lights:        devices.filter(d => d.type === 'light'),
+    people:        devices.filter(d => d.type === 'person'),
   };
 }

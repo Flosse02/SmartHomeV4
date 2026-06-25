@@ -2399,6 +2399,66 @@ body {
   font-family: var(--font-mono);
 }
 
+.home-presence-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+}
+ 
+.home-presence-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+ 
+.home-presence-dot--home { background: var(--success); }
+.home-presence-dot--away { background: var(--text-muted); }
+ 
+.home-presence-info {
+  flex: 1;
+  min-width: 0;
+}
+ 
+.home-presence-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-transform: capitalize;
+}
+ 
+.home-presence-since {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  margin-top: 1px;
+}
+ 
+.home-presence-status {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+ 
+.home-presence-status--home {
+  background: rgba(var(--success-rgb), 0.12);
+  color: var(--success);
+}
+ 
+.home-presence-status--away {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+}
+
+.home-presence-status--unknown {
+  background: rgba(224, 163, 59, 0.12);
+  color: var(--amber, #e0a33b);
+}
+
 @keyframes fadeOut {
   0% { opacity: 1; }
   70% { opacity: 1; }
