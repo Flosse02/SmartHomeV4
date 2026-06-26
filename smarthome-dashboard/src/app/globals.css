@@ -3040,21 +3040,20 @@ body {
   text-transform: uppercase;
   padding: 3px 8px;
   border-radius: 6px;
+  border: 0.5px solid var(--border-default);
+  color: var(--text);
 }
  
 .home-presence-status--home {
-  background: rgba(var(--success-rgb), 0.12);
-  color: var(--success);
+  background: var(--success);
 }
  
 .home-presence-status--away {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-muted);
+  background: var(--error);
 }
 
 .home-presence-status--unknown {
-  background: rgba(224, 163, 59, 0.12);
-  color: var(--amber, #e0a33b);
+  background: var(--warning);
 }
 
 @keyframes fadeOut {
