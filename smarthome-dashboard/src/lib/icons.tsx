@@ -46,6 +46,7 @@ import {
   MdBedtime,
   MdCameraAlt,
   MdSearch,
+  MdMusicNote,
 } from 'react-icons/md';
 
 import { TbCpu, TbHome, TbLeaf } from 'react-icons/tb';
@@ -285,6 +286,10 @@ export function LightIcon({ size = 14, color = 'currentColor' }: { size?: number
 
 export function NightModeIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
   return <MdBedtime size={size} color={color} />;
+}
+
+export function MusicNoteIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdMusicNote size={size} color={color} />;
 }
 
 export function WeatherIcon({ code, size = 18, color = 'currentColor' }: { code: number; size?: number; color?: string }) {
