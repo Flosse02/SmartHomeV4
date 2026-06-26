@@ -45,6 +45,7 @@ import {
   MdLightbulb,
   MdBedtime,
   MdCameraAlt,
+  MdSearch,
 } from 'react-icons/md';
 
 import { TbCpu, TbHome, TbLeaf } from 'react-icons/tb';
@@ -244,6 +245,10 @@ export function MemoryIcon({ size = 14, color = 'currentColor' }: { size?: numbe
 
 export function StorageIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
   return <MdStorage size={size} color={color} />;
+}
+
+export function SearchIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdSearch size={size} color={color} />;
 }
 
 export function AccessTimeIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {

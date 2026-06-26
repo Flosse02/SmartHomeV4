@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, JSX } from 'react';
 import { CloseIcon, FolderIcon, UpArrowIcon } from '@/lib/icons';
 
 interface BrowseEntry { name: string; path: string; }
@@ -60,14 +60,15 @@ interface InputBarProps {
   fileExplorer?: boolean;
   value: string | number;
   type?: string;
-  suffix?: string;
+  suffix?: string | JSX.Element;
   min?: number;
   max?: number;
   onChange: (value: string) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   style?: React.CSSProperties;
 }
 
-export function InputBar({ placeholder, fileExplorer, value, type, suffix, min, max, onChange, style }: InputBarProps) {
+export function InputBar({ placeholder, fileExplorer, value, type, suffix, min, max, onChange, onKeyDown, style }: InputBarProps) {
   const [showBrowser, setShowBrowser] = useState(false);
   let extraPadding='4px'
   if (suffix) {
@@ -83,6 +84,7 @@ export function InputBar({ placeholder, fileExplorer, value, type, suffix, min, 
           min={min}
           max={max}
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={onKeyDown}
         />
         {suffix && <span className="input-suffix">{suffix}</span>}
         {fileExplorer && (
