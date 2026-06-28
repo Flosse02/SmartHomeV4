@@ -16,10 +16,11 @@ const WeatherTab = dynamic(() => import('../pages/Weather'), { ssr: false });
 const ClockTab = dynamic(() => import('../pages/ClockTab'), { ssr: false });
 const Monitor = dynamic(() => import('../pages/Monitor'), { ssr: false });
 const Jellyfin = dynamic(() => import('../pages/Jellyfin'), { ssr: false });
+const Recipes = dynamic(() => import('../pages/Recipes'), { ssr: false });
 
-export type SmartAreaTab = 'Pictures' | 'Music' | 'Home' | 'Notes' | 'Camera' | 'Weather' | 'Clock' | 'Monitor' | 'Jellyfin' | 'Settings';
+export type SmartAreaTab = 'Pictures' | 'Music' | 'Home' | 'Notes' | 'Camera' | 'Weather' | 'Clock' | 'Monitor' | 'Jellyfin' | 'Recipes' | 'Settings';
 
-const TABS: SmartAreaTab[] = ['Pictures', 'Music', 'Home', 'Notes', 'Camera', 'Weather', 'Clock', 'Monitor', 'Jellyfin', 'Settings'];
+const TABS: SmartAreaTab[] = ['Pictures', 'Music', 'Home', 'Notes', 'Camera', 'Weather', 'Clock', 'Monitor', 'Jellyfin', 'Recipes', 'Settings'];
 
 interface SmartAreaProps {
   activeTab:     SmartAreaTab;
@@ -91,6 +92,9 @@ export default function SmartArea({ activeTab, onTabChange, devicesResult, contr
             </div>
           )
       }
+      <div style={{ display: activeTab === 'Recipes' ? 'contents' : 'none' }}>
+        <Recipes />
+      </div>
       <div style={{ display: activeTab === 'Settings' ? 'contents' : 'none' }}>
         <Settings />
       </div>

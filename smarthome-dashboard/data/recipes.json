@@ -1,0 +1,124 @@
+[
+  {
+    "title": "Devilled Sausages",
+    "description": "Put that packet back on the shelf! This easy recipe for made from scratch devilled sausages in the slow cooker or oven is the only one you will need!",
+    "servings": 4,
+    "prepTime": null,
+    "cookTime": null,
+    "tags": [
+      "Dinner",
+      "Sausages",
+      "One Pot"
+    ],
+    "image": "https://www.thekiwicountrygirl.com/wp-content/uploads/2019/10/Devilled-Sausages-3.jpg",
+    "ingredients": [
+      {
+        "amount": 8,
+        "unit": "",
+        "name": "Sausages"
+      },
+      {
+        "amount": 1,
+        "unit": "",
+        "name": "Onion (sliced)"
+      },
+      {
+        "amount": 1,
+        "unit": "apple",
+        "name": "Apple( cored and cut in cubes)"
+      },
+      {
+        "amount": 1,
+        "unit": "cup",
+        "name": "Beef stock"
+      },
+      {
+        "amount": 1,
+        "unit": "tin",
+        "name": "Chopped tomatoes"
+      },
+      {
+        "amount": 1,
+        "unit": "cup",
+        "name": "Fruit chutney"
+      },
+      {
+        "amount": 2,
+        "unit": "Tbsp",
+        "name": "Tomato sauce"
+      },
+      {
+        "amount": 1,
+        "unit": "Tbsp",
+        "name": "Worchestershire sauce"
+      },
+      {
+        "amount": 1,
+        "unit": "Tbsp",
+        "name": "Ground coriander"
+      },
+      {
+        "amount": 2,
+        "unit": "Tsp",
+        "name": "Allspice"
+      },
+      {
+        "amount": 1,
+        "unit": "",
+        "name": "Salt & Pepper to taste"
+      }
+    ],
+    "steps": [
+      {
+        "text": "Cook sausage in casserole dish until slightly browned."
+      },
+      {
+        "text": "Add all ingredients to sausages, stir together well, cover and cook at 180°C for 2 hours. If desired, stir through 2 cups frozen peas 30 minutes before serving."
+      }
+    ],
+    "id": "feb7a73e-67e2-4b19-b505-c54a15139671",
+    "createdAt": "2026-06-28T07:50:36.474Z"
+  },
+  {
+    "title": "Custard",
+    "description": "Easy Delicious Custard",
+    "servings": 4,
+    "prepTime": null,
+    "cookTime": null,
+    "tags": [
+      "Desert",
+      "Sauce"
+    ],
+    "image": null,
+    "ingredients": [
+      {
+        "amount": 2,
+        "unit": "Cups",
+        "name": "Milk"
+      },
+      {
+        "amount": 2,
+        "unit": "Cups",
+        "name": "Custard powder"
+      },
+      {
+        "amount": 2,
+        "unit": "tbsp",
+        "name": "Sugar"
+      }
+    ],
+    "steps": [
+      {
+        "text": "Mix the sugar and custard powder as well as 1 tbsp of milk in a container"
+      },
+      {
+        "text": "Heat the milk in a pot until it starts bubling"
+      },
+      {
+        "text": "Pour milk into container and mix until combined"
+      }
+    ],
+    "id": "e2490e9c-5ce0-4b30-b751-539394f8bee5",
+    "createdAt": "2026-06-28T07:45:47.141Z"
+  }
+]
