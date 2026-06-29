@@ -6,6 +6,7 @@ import SmartArea, { type SmartAreaTab } from '@/components/SmartArea';
 import { KioskSleepMode } from '@/components/kiosk';
 import type { CalendarEvent, NowPlaying } from '@/components/kiosk/types';
 import { useDevices } from '@/hooks/useDevices';
+import { SleepProvider } from '@/context/SleepContext';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<SmartAreaTab>('Pictures');
@@ -41,31 +42,33 @@ export default function Home() {
     load();
   }, []);
 
-  return (
-    <KioskSleepMode
-      events={events}
-      nowPlaying={nowPlaying}
-      onWake={() => {console.log('Waking up from sleep mode')}}
-      onPause={() => controlsRef.current?.pause()}
-      onPrev={()  => controlsRef.current?.prev()}
-      onNext={()  => controlsRef.current?.next()}
-    >
-      <main className="dashboard-root">
-        <section className="top-half">
-          <SmartArea
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            devicesResult={devicesResult}
-            controlsRef={controlsRef}
-          />
-        </section>
+return (
+    <SleepProvider>
+      <KioskSleepMode
+        events={events}
+        nowPlaying={nowPlaying}
+        onWake={() => console.log('Waking up from sleep mode')}
+        onPause={() => controlsRef.current?.pause()}
+        onPrev={() => controlsRef.current?.prev()}
+        onNext={() => controlsRef.current?.next()}
+      >
+        <main className="dashboard-root">
+          <section className="top-half">
+            <SmartArea
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              devicesResult={devicesResult}
+              controlsRef={controlsRef}
+            />
+          </section>
 
-        <div className="panel-divider" />
+          <div className="panel-divider" />
 
-        <section className="bottom-half">
-          <CalendarPanel />
-        </section>
-      </main>
-    </KioskSleepMode>
+          <section className="bottom-half">
+            <CalendarPanel />
+          </section>
+        </main>
+      </KioskSleepMode>
+    </SleepProvider>
   );
 }

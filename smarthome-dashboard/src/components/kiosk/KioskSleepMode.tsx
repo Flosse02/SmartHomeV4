@@ -6,6 +6,7 @@ import { useIdleTimer } from './useIdleTimer'
 import { useKiosk } from './useKiosk'
 import SleepOverlay from './SleepOverlay'
 import KioskToast from './KioskToast'
+import { useSleep } from '@/context/SleepContext';
 
 const DEFAULT_IDLE_MS = 10 * 60 * 1000
 
@@ -20,6 +21,7 @@ export default function KioskSleepMode({
 }: KioskSleepModeProps) {
   const [sleeping, setSleeping] = useState(false)
   const [idleMs, setIdleMs]     = useState(DEFAULT_IDLE_MS)
+  const { sleepDisabled } = useSleep();
 
   // Load idle timeout from settings
   useEffect(() => {
@@ -32,8 +34,17 @@ export default function KioskSleepMode({
       });
   }, [])
 
-  const goToSleep = useCallback(() => setSleeping(true), [])
-  const resetIdle = useIdleTimer(goToSleep, idleMs)
+  const goToSleep = useCallback(() => {
+    if (sleepDisabled) return;
+    setSleeping(true);
+  }, [sleepDisabled]);
+  const resetIdle = useIdleTimer(
+    useCallback(() => {
+      if (sleepDisabled) return;
+      setSleeping(true);
+    }, [sleepDisabled]),
+    idleMs
+  );
 
   const wake = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {

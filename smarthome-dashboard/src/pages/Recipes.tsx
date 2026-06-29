@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { CloseIcon, SearchIcon } from '@/lib/icons';
+import { AddIcon, CloseIcon, SearchIcon } from '@/lib/icons';
+import { useSleep } from '@/context/SleepContext';
+import { InputBar } from '@/components/form/inputBar';
+import { StyledButton } from '@/components/form/styledButton';
 
-interface Ingredient { amount: number; unit: string; name: string; }
+interface Ingredient { amount: string; unit: string; name: string; }
 interface Step       { text: string; }
 interface Recipe {
   id:          string;
@@ -28,19 +31,52 @@ function fmtTime(min?: number) {
   return `${Math.floor(min / 60)}h ${min % 60 ? `${min % 60}m` : ''}`.trim();
 }
 
-function scaleAmount(amount: number | null, base: number, current: number) {
-  if (amount === null || amount === undefined) return '';
-  const scaled = (amount * current) / base;
-  if (scaled === Math.floor(scaled)) return String(scaled);
-  return scaled.toFixed(1).replace(/\.0$/, '');
+function scaleAmount(amount: string | null, base: number, current: number) {
+  if (!amount) return '';
+
+  const ratio = current / base;
+
+  // Detect ranges like "8-10"
+  if (amount.includes('-')) {
+    const [min, max] = amount.split('-').map(v => parseFloat(v.trim()));
+
+    if (!isNaN(min) && !isNaN(max)) {
+      const scaledMin = min * ratio;
+      const scaledMax = max * ratio;
+
+      const format = (n: number) =>
+        n % 1 === 0 ? String(n) : n.toFixed(1).replace(/\.0$/, '');
+
+      return `${format(scaledMin)}-${format(scaledMax)}`;
+    }
+
+    // fallback: don't break weird strings
+    return amount;
+  }
+
+  const num = parseFloat(amount);
+  if (isNaN(num)) return amount;
+
+  const scaled = num * ratio;
+
+  return scaled % 1 === 0
+    ? String(scaled)
+    : scaled.toFixed(1).replace(/\.0$/, '');
 }
 
 // ── Cooking mode ──────────────────────────────────────────────────────────────
 
-function CookingMode({ recipe, onClose }: { recipe: Recipe; onClose: () => void }) {
+function CookingMode({recipe, servings, onClose}: {recipe: Recipe; servings: number; onClose: () => void; }) {
   const [step,    setStep]    = useState(0);
   const [checked, setChecked] = useState<Set<number>>(new Set());
   const total = recipe.steps.length;
+  const { setSleepDisabled } = useSleep();
+
+  useEffect(() => {
+    setSleepDisabled(true);
+    return () => setSleepDisabled(false);
+  }, [setSleepDisabled]);
+
 
   const toggleIngredient = (i: number) => {
     setChecked(prev => {
@@ -74,7 +110,7 @@ function CookingMode({ recipe, onClose }: { recipe: Recipe; onClose: () => void 
               >
                 <span className="recipe-cooking-ingredient-check">{checked.has(i) ? '✓' : '○'}</span>
                 <span className="recipe-cooking-ingredient-text">
-                  <span className="recipe-cooking-ingredient-amount">{[scaleAmount(ing.amount, recipe.servings, recipe.servings), ing.unit].filter(Boolean).join(' ')}</span>
+                  <span className="recipe-cooking-ingredient-amount">{[scaleAmount(ing.amount, recipe.servings, servings), ing.unit].filter(Boolean).join(' ')}</span>
                   {' '}{ing.name}
                 </span>
               </button>
@@ -124,7 +160,7 @@ function EditRecipeForm({ recipe, onSave, onDelete, onClose }: { recipe: Recipe;
     cookTime:    recipe.cookTime    ?? '',
     tags:        recipe.tags.join(', '),
     image:       recipe.image       ?? '',
-    ingredients: recipe.ingredients.map(i => ({ amount: i.amount != null ? String(i.amount) : '', unit: i.unit ?? '', name: i.name })),
+    ingredients: recipe.ingredients.map(i => ({ amount: i.amount != null ? i.amount : '', unit: i.unit ?? '', name: i.name })),
     steps:       recipe.steps.map(s => ({ text: s.text })),
   });
   const [confirmDel, setConfirmDel] = useState(false);
@@ -148,7 +184,7 @@ function EditRecipeForm({ recipe, onSave, onDelete, onClose }: { recipe: Recipe;
       cookTime:    Number(form.cookTime) || null,
       tags:        form.tags.split(',').map(t => t.trim()).filter(Boolean),
       image:       form.image.trim() || null,
-      ingredients: form.ingredients.filter(i => i.name.trim()).map(i => ({ amount: i.amount.trim() ? parseFloat(i.amount) : null, unit: i.unit.trim() || null, name: i.name.trim() })),
+      ingredients: form.ingredients.filter(i => i.name.trim()).map(i => ({ amount: i.amount.trim() ? i.amount.trim() : null, unit: i.unit.trim() || null, name: i.name.trim() })),
       steps:       form.steps.filter(s => s.text.trim()),
     });
   };
@@ -221,7 +257,8 @@ function RecipeView({ recipe, onClose, onDelete, onUpdate }: { recipe: Recipe; o
   const [cookingMode, setCookingMode] = useState(false);
   const [editing,     setEditing]     = useState(false);
 
-  if (cookingMode) return <CookingMode recipe={recipe} onClose={() => setCookingMode(false)} />;
+  if (cookingMode) return ( <CookingMode recipe={recipe} servings={servings} onClose={() => setCookingMode(false)} /> );
+
   if (editing) return (
     <EditRecipeForm
       recipe={recipe}
@@ -325,7 +362,7 @@ function AddRecipeForm({ onSave, onClose }: { onSave: (r: any) => void; onClose:
         cookTime:    data.cookTime    ?? '',
         tags:        (data.tags ?? []).join(', '),
         image:       data.image       ?? '',
-        ingredients: data.ingredients?.length ? data.ingredients.map((i: any) => ({ amount: String(i.amount), unit: i.unit, name: i.name })) : [{ amount: '', unit: '', name: '' }],
+        ingredients: data.ingredients?.length ? data.ingredients.map((i: any) => ({ amount: i.amount != null ? String(i.amount) : '', unit: i.unit ?? '', name: i.name })) : [{ amount: '', unit: '', name: '' }],
         steps:       data.steps?.length ? data.steps : [{ text: '' }],
       });
       setTab('manual');
@@ -354,7 +391,7 @@ function AddRecipeForm({ onSave, onClose }: { onSave: (r: any) => void; onClose:
       cookTime:    Number(form.cookTime) || null,
       tags:        form.tags.split(',').map(t => t.trim()).filter(Boolean),
       image:       form.image.trim() || null,
-      ingredients: form.ingredients.filter(i => i.name.trim()).map(i => ({ amount: i.amount.trim() ? parseFloat(i.amount) : null, unit: i.unit.trim() || null, name: i.name.trim() })),
+      ingredients: form.ingredients.filter(i => i.name.trim()).map(i => ({ amount: i.amount != null && String(i.amount).trim() ? String(i.amount).trim() : null, unit: i.unit?.trim() || null, name: i.name.trim() })),
       steps:       form.steps.filter(s => s.text.trim()),
     });
   };
@@ -373,7 +410,7 @@ function AddRecipeForm({ onSave, onClose }: { onSave: (r: any) => void; onClose:
 
         {tab === 'url' && (
           <div className="recipe-import-row">
-            <input className="recipe-input recipe-import-input" placeholder="https://..." value={importUrl} onChange={e => setImportUrl(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleImport()} />
+            <input className="recipe-input recipe-import-input" placeholder="https://  ..." value={importUrl} onChange={e => setImportUrl(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleImport()} />
             <button className="recipe-cook-btn" onClick={handleImport} disabled={importing}>{importing ? '…' : 'Import'}</button>
             {importError && <div className="recipe-import-error">{importError}</div>}
           </div>
@@ -432,7 +469,7 @@ function AddRecipeForm({ onSave, onClose }: { onSave: (r: any) => void; onClose:
 
 // ── Recipe grid card ──────────────────────────────────────────────────────────
 
-function RecipeCard({ recipe, onClick }: { recipe: Recipe; onClick: () => void }) {
+function RecipeCard({ recipe, onClick, onTagClick, activeTags }: { recipe: Recipe; onClick: () => void; onTagClick: (tag: string) => void; activeTags: string[] }) {
   return (
     <div className="recipe-card" onClick={onClick}>
       {recipe.image
@@ -449,7 +486,13 @@ function RecipeCard({ recipe, onClick }: { recipe: Recipe; onClick: () => void }
         </div>
         {recipe.tags.length > 0 && (
           <div className="recipe-card-tags">
-            {recipe.tags.slice(0, 3).map(t => <span key={t} className="recipe-meta-badge recipe-meta-badge--tag">{t}</span>)}
+            {recipe.tags.slice(0, 3).map(t => (
+              <span
+                key={t}
+                className={`recipe-meta-badge recipe-meta-badge--tag ${activeTags.includes(t) ? 'recipe-meta-badge--tag-active' : ''}`}
+                onClick={e => { e.stopPropagation(); onTagClick(t); }}
+              >{t}</span>
+            ))}
           </div>
         )}
       </div>
@@ -462,9 +505,11 @@ function RecipeCard({ recipe, onClick }: { recipe: Recipe; onClick: () => void }
 export default function Recipes() {
   const [recipes,  setRecipes]  = useState<Recipe[]>([]);
   const [query,    setQuery]    = useState('');
+  const [activeTags,  setActiveTags]  = useState<string[]>([]);
   const [selected, setSelected] = useState<Recipe | null>(null);
-  const [adding,   setAdding]   = useState(false);
   const [loading,  setLoading]  = useState(true);
+  const [adding,      setAdding]      = useState(false);
+
 
   const load = useCallback(async (q = '') => {
     setLoading(true);
@@ -484,11 +529,26 @@ export default function Recipes() {
     return () => clearTimeout(t);
   }, [query]);
 
+  const toggleTag = (tag: string) => {
+    setActiveTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
+ 
+  const allTags = Array.from(new Set(recipes.flatMap(r => r.tags))).sort();
+ 
+  const filtered = recipes.filter(r => {
+    const matchesQuery = !query || r.title.toLowerCase().includes(query.toLowerCase());
+    const matchesTags  = activeTags.length === 0 || activeTags.every(t => r.tags.includes(t));
+    return matchesQuery && matchesTags;
+  });
+
   const handleSave = async (data: any) => {
     await fetch('/api/recipes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
     setAdding(false);
     load();
   };
+
 
   const handleDelete = async (id: string) => {
     await fetch(`/api/recipes?id=${id}`, { method: 'DELETE' });
@@ -509,7 +569,7 @@ export default function Recipes() {
       {adding && (
         <AddRecipeForm onSave={handleSave} onClose={() => setAdding(false)} />
       )}
-
+ 
       <div className="recipe-page">
         <div className="recipe-toolbar">
           <h1 className="recipe-page-title">Recipes</h1>
@@ -524,19 +584,34 @@ export default function Recipes() {
           </div>
           <button className="recipe-cook-btn" onClick={() => setAdding(true)}>+ Add</button>
         </div>
-
-        {loading && <div className="recipe-empty">Loading…</div>}
-
-        {!loading && recipes.length === 0 && (
-          <div className="recipe-empty">
-            {query ? 'No recipes match your search' : 'No recipes yet — add one or import from a URL'}
+ 
+        {allTags.length > 0 && (
+          <div className="recipe-tag-filters">
+            {allTags.map(tag => (
+              <button
+                key={tag}
+                className={`recipe-tag-filter ${activeTags.includes(tag) ? 'recipe-tag-filter--active' : ''}`}
+                onClick={() => toggleTag(tag)}
+              >
+                {tag}
+                {activeTags.includes(tag) && <span className="recipe-tag-filter-x">✕</span>}
+              </button>
+            ))}
           </div>
         )}
-
-        {!loading && recipes.length > 0 && (
+ 
+        {loading && <div className="recipe-empty">Loading…</div>}
+ 
+        {!loading && filtered.length === 0 && (
+          <div className="recipe-empty">
+            {query || activeTags.length > 0 ? 'No recipes match your filters' : 'No recipes yet — add one or import from a URL'}
+          </div>
+        )}
+ 
+        {!loading && filtered.length > 0 && (
           <div className="recipe-grid">
-            {recipes.map(r => (
-              <RecipeCard key={r.id} recipe={r} onClick={() => setSelected(r)} />
+            {filtered.map(r => (
+              <RecipeCard key={r.id} recipe={r} onClick={() => setSelected(r)} onTagClick={toggleTag} activeTags={activeTags} />
             ))}
           </div>
         )}

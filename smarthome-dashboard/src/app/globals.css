@@ -1677,25 +1677,42 @@ body {
 /* ============================================
   Form Controls
   ============================================ */
+.styled-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 
-.button {
-  background: var(--bg-elevated);
-  border: none;
-  border-radius: 6px;
   padding: 0.4rem 1rem;
-  color: var(--text-primary);
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: 600;
+  user-select: none;
 }
 
-.button:disabled {
-  opacity: 0.2;
-  cursor: not-allowed;
+.styled-button--primary {
+  background: var(--accent);
+  color: white;
 }
 
-.button:hover {
-  cursor: pointer;
+.styled-button:hover {
   opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+.styled-button:active {
+  transform: scale(0.95);
+}
+
+.styled-button.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  pointer-events: none; 
+}
+
+.styled-button.is-disabled:hover {
+  transform: none;
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
 }
 
 .input-wrapper {
@@ -4449,6 +4466,40 @@ body {
   align-self: flex-end;
   margin-top: 8px;
 }
+
+.recipe-tag-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex-shrink: 0;
+}
+ 
+.recipe-tag-filter {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 0.5px solid var(--border-default);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s;
+}
+ 
+.recipe-tag-filter:hover { border-color: var(--accent); color: var(--accent); }
+ 
+.recipe-tag-filter--active {
+  background: rgba(var(--accent-rgb, 99, 102, 241), 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+ 
+.recipe-tag-filter-x { font-size: 9px; opacity: 0.7; }
 
 @keyframes fadeOut {
   0% { opacity: 1; }

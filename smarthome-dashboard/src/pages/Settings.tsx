@@ -9,6 +9,7 @@ import { useTheme } from '@/context/ThemeContext';
 import GoogleAuthButton from '@/components/form/GoogleAuthButton';
 import { formatTimezone } from '@/lib/utils/FormatTimeZone';
 import { ToggleSwitch } from '@/components/form/ToggleSwitch';
+import { StyledButton } from '@/components/form/styledButton';
 
 type Theme = 'Light' | 'Dark' | 'Auto';
 

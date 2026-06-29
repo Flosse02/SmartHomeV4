@@ -61,6 +61,7 @@ interface InputBarProps {
   value: string | number;
   type?: string;
   suffix?: string | JSX.Element;
+  prefix?: string | JSX.Element;
   min?: number;
   max?: number;
   onChange: (value: string) => void;
@@ -68,15 +69,14 @@ interface InputBarProps {
   style?: React.CSSProperties;
 }
 
-export function InputBar({ placeholder, fileExplorer, value, type, suffix, min, max, onChange, onKeyDown, style }: InputBarProps) {
+export function InputBar({ placeholder, fileExplorer, value, type, suffix, prefix, min, max, onChange, onKeyDown, style }: InputBarProps) {
   const [showBrowser, setShowBrowser] = useState(false);
-  let extraPadding='4px'
-  if (suffix) {
-    extraPadding = '40px'
-  }
+
+  console.log('InputBar', { placeholder, fileExplorer, value, type, suffix, prefix, min, max, onChange, onKeyDown, style });
   return (
     <>
-      <div className="input-wrapper" style={{ paddingRight: extraPadding, ...style }}>
+      <div className="input-wrapper" style={{ paddingRight: 4, ...style }}>
+        {prefix && <span className="input-prefix" style={{paddingRight: 5}}>{prefix}</span>}
         <input
           type={type}
           value={value}
@@ -86,7 +86,7 @@ export function InputBar({ placeholder, fileExplorer, value, type, suffix, min, 
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={onKeyDown}
         />
-        {suffix && <span className="input-suffix">{suffix}</span>}
+        {suffix && <span className="input-suffix" style={{paddingRight: 20}}>{suffix}</span>}
         {fileExplorer && (
           <button type="button" className="input-file-btn" onClick={() => setShowBrowser(true)} title="Browse folder">
             <FolderIcon />
