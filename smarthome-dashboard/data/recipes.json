@@ -14,12 +14,12 @@
     "ingredients": [
       {
         "amount": 8,
-        "unit": "",
+        "unit": null,
         "name": "Sausages"
       },
       {
         "amount": 1,
-        "unit": "",
+        "unit": null,
         "name": "Onion (sliced)"
       },
       {
@@ -63,8 +63,8 @@
         "name": "Allspice"
       },
       {
-        "amount": 1,
-        "unit": "",
+        "amount": null,
+        "unit": null,
         "name": "Salt & Pepper to taste"
       }
     ],
@@ -89,7 +89,7 @@
       "Desert",
       "Sauce"
     ],
-    "image": null,
+    "image": "https://myfoodbook.com.au/sites/default/files/styles/schema_img/public/recipe_photo/Basic-custard_3061.jpg",
     "ingredients": [
       {
         "amount": 2,

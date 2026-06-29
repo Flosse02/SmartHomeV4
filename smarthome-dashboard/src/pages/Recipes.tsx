@@ -28,7 +28,8 @@ function fmtTime(min?: number) {
   return `${Math.floor(min / 60)}h ${min % 60 ? `${min % 60}m` : ''}`.trim();
 }
 
-function scaleAmount(amount: number, base: number, current: number) {
+function scaleAmount(amount: number | null, base: number, current: number) {
+  if (amount === null || amount === undefined) return '';
   const scaled = (amount * current) / base;
   if (scaled === Math.floor(scaled)) return String(scaled);
   return scaled.toFixed(1).replace(/\.0$/, '');
@@ -37,18 +38,51 @@ function scaleAmount(amount: number, base: number, current: number) {
 // ── Cooking mode ──────────────────────────────────────────────────────────────
 
 function CookingMode({ recipe, onClose }: { recipe: Recipe; onClose: () => void }) {
-  const [step, setStep] = useState(0);
+  const [step,    setStep]    = useState(0);
+  const [checked, setChecked] = useState<Set<number>>(new Set());
   const total = recipe.steps.length;
+
+  const toggleIngredient = (i: number) => {
+    setChecked(prev => {
+      const next = new Set(prev);
+      next.has(i) ? next.delete(i) : next.add(i);
+      return next;
+    });
+  };
 
   return (
     <div className="recipe-cooking-backdrop">
       <div className="recipe-cooking">
+
         <div className="recipe-cooking-header">
           <span className="recipe-cooking-title">{recipe.title}</span>
           <div className="recipe-cooking-progress">{step + 1} / {total}</div>
           <button onClick={onClose} className="recipe-cooking-close"><CloseIcon /></button>
         </div>
 
+        {/* Ingredient checklist */}
+        <div className="recipe-cooking-ingredients">
+          <div className="recipe-cooking-ingredients-label">
+            Ingredients · {checked.size}/{recipe.ingredients.length} used
+          </div>
+          <div className="recipe-cooking-ingredients-list">
+            {recipe.ingredients.map((ing, i) => (
+              <button
+                key={i}
+                className={`recipe-cooking-ingredient ${checked.has(i) ? 'recipe-cooking-ingredient--checked' : ''}`}
+                onClick={() => toggleIngredient(i)}
+              >
+                <span className="recipe-cooking-ingredient-check">{checked.has(i) ? '✓' : '○'}</span>
+                <span className="recipe-cooking-ingredient-text">
+                  <span className="recipe-cooking-ingredient-amount">{[scaleAmount(ing.amount, recipe.servings, recipe.servings), ing.unit].filter(Boolean).join(' ')}</span>
+                  {' '}{ing.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Step */}
         <div className="recipe-cooking-step">
           <div className="recipe-cooking-step-num">Step {step + 1}</div>
           <div className="recipe-cooking-step-text">{recipe.steps[step].text}</div>
@@ -81,18 +115,126 @@ function CookingMode({ recipe, onClose }: { recipe: Recipe; onClose: () => void 
 
 // ── Recipe detail view ────────────────────────────────────────────────────────
 
-function RecipeView({ recipe, onClose, onDelete }: { recipe: Recipe; onClose: () => void; onDelete: (id: string) => void }) {
-  const [servings,     setServings]     = useState(recipe.servings);
-  const [cookingMode,  setCookingMode]  = useState(false);
-  const [confirmDel,   setConfirmDel]   = useState(false);
+function EditRecipeForm({ recipe, onSave, onDelete, onClose }: { recipe: Recipe; onSave: (r: any) => void; onDelete: (id: string) => void; onClose: () => void }) {
+  const [form, setForm] = useState({
+    title:       recipe.title,
+    description: recipe.description ?? '',
+    servings:    recipe.servings,
+    prepTime:    recipe.prepTime    ?? '',
+    cookTime:    recipe.cookTime    ?? '',
+    tags:        recipe.tags.join(', '),
+    image:       recipe.image       ?? '',
+    ingredients: recipe.ingredients.map(i => ({ amount: i.amount != null ? String(i.amount) : '', unit: i.unit ?? '', name: i.name })),
+    steps:       recipe.steps.map(s => ({ text: s.text })),
+  });
+  const [confirmDel, setConfirmDel] = useState(false);
+
+  const setIngredient = (i: number, field: string, val: string) => {
+    setForm(f => { const ings = [...f.ingredients]; ings[i] = { ...ings[i], [field]: val }; return { ...f, ingredients: ings }; });
+  };
+
+  const setStep = (i: number, val: string) => {
+    setForm(f => { const steps = [...f.steps]; steps[i] = { text: val }; return { ...f, steps }; });
+  };
+
+  const handleSave = () => {
+    if (!form.title.trim()) return;
+    onSave({
+      id:          recipe.id,
+      title:       form.title.trim(),
+      description: form.description.trim(),
+      servings:    Number(form.servings) || 4,
+      prepTime:    Number(form.prepTime) || null,
+      cookTime:    Number(form.cookTime) || null,
+      tags:        form.tags.split(',').map(t => t.trim()).filter(Boolean),
+      image:       form.image.trim() || null,
+      ingredients: form.ingredients.filter(i => i.name.trim()).map(i => ({ amount: i.amount.trim() ? parseFloat(i.amount) : null, unit: i.unit.trim() || null, name: i.name.trim() })),
+      steps:       form.steps.filter(s => s.text.trim()),
+    });
+  };
+
+  return (
+    <div className="recipe-detail-backdrop">
+      <div className="recipe-detail recipe-form">
+        <div className="recipe-form-header">
+          <span className="recipe-col-label">Edit Recipe</span>
+          <div className="recipe-edit-header-actions">
+            {confirmDel
+              ? <>
+                  <button onClick={() => { onDelete(recipe.id); onClose(); }} className="recipe-del-btn recipe-del-btn--confirm">Confirm delete</button>
+                  <button onClick={() => setConfirmDel(false)} className="recipe-del-btn">Cancel</button>
+                </>
+              : <button onClick={() => setConfirmDel(true)} className="recipe-del-btn">Delete</button>
+            }
+            <button onClick={onClose} className="recipe-close-btn"><CloseIcon /></button>
+          </div>
+        </div>
+
+        <div className="recipe-form-body">
+          <div className="recipe-form-section">
+            <div className="recipe-col-label">Basic Info</div>
+            <input className="recipe-input" placeholder="Recipe title *" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
+            <textarea className="recipe-input recipe-textarea" placeholder="Description" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+            <div className="recipe-form-row">
+              <input className="recipe-input" placeholder="Servings" type="number" value={form.servings} onChange={e => setForm(f => ({ ...f, servings: e.target.value as any }))} />
+              <input className="recipe-input" placeholder="Prep (min)" type="number" value={form.prepTime} onChange={e => setForm(f => ({ ...f, prepTime: e.target.value as any }))} />
+              <input className="recipe-input" placeholder="Cook (min)" type="number" value={form.cookTime} onChange={e => setForm(f => ({ ...f, cookTime: e.target.value as any }))} />
+            </div>
+            <input className="recipe-input" placeholder="Tags (comma separated)" value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} />
+            <input className="recipe-input" placeholder="Image URL (optional)" value={form.image} onChange={e => setForm(f => ({ ...f, image: e.target.value }))} />
+          </div>
+
+          <div className="recipe-form-section">
+            <div className="recipe-col-label">Ingredients</div>
+            {form.ingredients.map((ing, i) => (
+              <div key={i} className="recipe-ing-row">
+                <input className="recipe-input recipe-ing-amount" placeholder="Amt"        value={ing.amount} onChange={e => setIngredient(i, 'amount', e.target.value)} />
+                <input className="recipe-input recipe-ing-unit"   placeholder="Unit"       value={ing.unit}   onChange={e => setIngredient(i, 'unit',   e.target.value)} />
+                <input className="recipe-input recipe-ing-name"   placeholder="Ingredient" value={ing.name}   onChange={e => setIngredient(i, 'name',   e.target.value)} />
+                <button className="recipe-remove-btn" onClick={() => setForm(f => ({ ...f, ingredients: f.ingredients.filter((_, j) => j !== i) }))}>✕</button>
+              </div>
+            ))}
+            <button className="recipe-add-row-btn" onClick={() => setForm(f => ({ ...f, ingredients: [...f.ingredients, { amount: '', unit: '', name: '' }] }))}>+ Ingredient</button>
+          </div>
+
+          <div className="recipe-form-section">
+            <div className="recipe-col-label">Steps</div>
+            {form.steps.map((step, i) => (
+              <div key={i} className="recipe-step-row">
+                <span className="recipe-step-num">{i + 1}</span>
+                <textarea className="recipe-input recipe-textarea recipe-step-input" placeholder={`Step ${i + 1}…`} value={step.text} onChange={e => setStep(i, e.target.value)} />
+                <button className="recipe-remove-btn" onClick={() => setForm(f => ({ ...f, steps: f.steps.filter((_, j) => j !== i) }))}>✕</button>
+              </div>
+            ))}
+            <button className="recipe-add-row-btn" onClick={() => setForm(f => ({ ...f, steps: [...f.steps, { text: '' }] }))}>+ Step</button>
+          </div>
+
+          <button className="recipe-cook-btn recipe-save-btn" onClick={handleSave} disabled={!form.title.trim()}>Save Changes</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RecipeView({ recipe, onClose, onDelete, onUpdate }: { recipe: Recipe; onClose: () => void; onDelete: (id: string) => void; onUpdate: (r: any) => void }) {
+  const [servings,    setServings]    = useState(recipe.servings);
+  const [cookingMode, setCookingMode] = useState(false);
+  const [editing,     setEditing]     = useState(false);
 
   if (cookingMode) return <CookingMode recipe={recipe} onClose={() => setCookingMode(false)} />;
+  if (editing) return (
+    <EditRecipeForm
+      recipe={recipe}
+      onSave={data => { onUpdate(data); setEditing(false); }}
+      onDelete={onDelete}
+      onClose={() => setEditing(false)}
+    />
+  );
 
   return (
     <div className="recipe-detail-backdrop">
       <div className="recipe-detail">
 
-        {/* Header */}
         <div className="recipe-detail-header">
           {recipe.image && <img src={recipe.image} className="recipe-detail-image" />}
           <div className="recipe-detail-header-info">
@@ -104,26 +246,16 @@ function RecipeView({ recipe, onClose, onDelete }: { recipe: Recipe; onClose: ()
               {recipe.tags.map(t => <span key={t} className="recipe-meta-badge recipe-meta-badge--tag">{t}</span>)}
             </div>
             {recipe.source && (
-              <a href={recipe.source} target="_blank" rel="noreferrer" className="recipe-detail-source">
-                View original ↗
-              </a>
+              <a href={recipe.source} target="_blank" rel="noreferrer" className="recipe-detail-source">View original ↗</a>
             )}
           </div>
           <div className="recipe-detail-actions">
-            <button onClick={() => setCookingMode(true)} className="recipe-cook-btn">Cook</button>
-            {confirmDel
-              ? <>
-                  <button onClick={() => { onDelete(recipe.id); onClose(); }} className="recipe-del-btn recipe-del-btn--confirm">Confirm</button>
-                  <button onClick={() => setConfirmDel(false)} className="recipe-del-btn">Cancel</button>
-                </>
-              : <button onClick={() => setConfirmDel(true)} className="recipe-del-btn">Delete</button>
-            }
             <button onClick={onClose} className="recipe-close-btn"><CloseIcon /></button>
+            <button onClick={() => setEditing(true)} className="recipe-del-btn">Edit</button>
           </div>
         </div>
 
         <div className="recipe-detail-body">
-          {/* Ingredients */}
           <div className="recipe-ingredients-col">
             <div className="recipe-col-header">
               <span className="recipe-col-label">Ingredients</span>
@@ -136,16 +268,13 @@ function RecipeView({ recipe, onClose, onDelete }: { recipe: Recipe; onClose: ()
             <div className="recipe-ingredients-list">
               {recipe.ingredients.map((ing, i) => (
                 <div key={i} className="recipe-ingredient">
-                  <span className="recipe-ingredient-amount">
-                    {scaleAmount(ing.amount, recipe.servings, servings)} {ing.unit}
-                  </span>
+                  <span className="recipe-ingredient-amount">{[scaleAmount(ing.amount, recipe.servings, servings), ing.unit].filter(Boolean).join(' ')}</span>
                   <span className="recipe-ingredient-name">{ing.name}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Steps */}
           <div className="recipe-steps-col">
             <div className="recipe-col-label">Method</div>
             <div className="recipe-steps-list">
@@ -158,6 +287,7 @@ function RecipeView({ recipe, onClose, onDelete }: { recipe: Recipe; onClose: ()
             </div>
           </div>
         </div>
+        <button onClick={() => setCookingMode(true)} className="recipe-cook-btn">Cook</button>
       </div>
     </div>
   );
@@ -224,7 +354,7 @@ function AddRecipeForm({ onSave, onClose }: { onSave: (r: any) => void; onClose:
       cookTime:    Number(form.cookTime) || null,
       tags:        form.tags.split(',').map(t => t.trim()).filter(Boolean),
       image:       form.image.trim() || null,
-      ingredients: form.ingredients.filter(i => i.name.trim()).map(i => ({ amount: parseFloat(i.amount) || 1, unit: i.unit.trim(), name: i.name.trim() })),
+      ingredients: form.ingredients.filter(i => i.name.trim()).map(i => ({ amount: i.amount.trim() ? parseFloat(i.amount) : null, unit: i.unit.trim() || null, name: i.name.trim() })),
       steps:       form.steps.filter(s => s.text.trim()),
     });
   };
@@ -365,10 +495,16 @@ export default function Recipes() {
     load();
   };
 
+  const handleUpdate = async (data: any) => {
+    await fetch('/api/recipes', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    setSelected(prev => prev?.id === data.id ? { ...prev, ...data } : prev);
+    load();
+  };
+
   return (
     <>
       {selected && (
-        <RecipeView recipe={selected} onClose={() => setSelected(null)} onDelete={handleDelete} />
+        <RecipeView recipe={selected} onClose={() => setSelected(null)} onDelete={handleDelete} onUpdate={handleUpdate} />
       )}
       {adding && (
         <AddRecipeForm onSave={handleSave} onClose={() => setAdding(false)} />
