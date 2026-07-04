@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, cache } from 'react';
 import { AddIcon, CloseIcon, SearchIcon } from '@/lib/icons';
 import { useSleep } from '@/context/SleepContext';
 import { InputBar } from '@/components/form/inputBar';
@@ -528,6 +528,63 @@ export default function Recipes() {
     const t = setTimeout(() => load(query), 300);
     return () => clearTimeout(t);
   }, [query]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let reconnectTimer: ReturnType<typeof setTimeout>;
+
+    const connect = () => {
+      if (cancelled) return;
+
+      const wsUrl = `ws://${window.location.hostname}:3000/api/recipes/ws`;
+      console.log('[WS] connecting to', wsUrl);
+      const ws = new WebSocket(wsUrl);
+      console.log('[WS] NEW CONNECTION CREATED', ws);
+
+      ws.onopen = () => console.log('[WS] connected');
+
+      ws.onmessage = (e) => {
+        console.log('[WS] message received on', ws, e.data);
+        try {
+          const msg = JSON.parse(e.data);
+
+          if (msg.type === 'recipe_added') {
+              setRecipes(prev => {
+                if (prev.some(r => r.id === msg.recipe.id)) return prev;
+                const next = [msg.recipe, ...prev];
+                cache(next);
+                return next;
+              });
+            }
+          if (msg.type === 'recipe_updated') {
+            setRecipes(prev => prev.map(r => r.id === msg.recipe.id ? msg.recipe : r));
+            setSelected(prev => prev?.id === msg.recipe.id ? msg.recipe : prev);
+          }
+          if (msg.type === 'recipe_deleted') {
+            setRecipes(prev => prev.filter(r => r.id !== msg.id));
+            setSelected(prev => prev?.id === msg.id ? null : prev);
+          }
+        } catch (err) {
+          console.log('[WS] failed to parse message', err);
+        }
+      };
+
+      ws.onclose = () => {
+        console.log('[WS] closed, reconnecting in 5s');
+        if (!cancelled) reconnectTimer = setTimeout(connect, 5000);
+      };
+
+      ws.onerror = () => ws.close();
+    };
+
+    connect();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(reconnectTimer);
+    };
+  }, []);
+
 
   const toggleTag = (tag: string) => {
     setActiveTags(prev =>

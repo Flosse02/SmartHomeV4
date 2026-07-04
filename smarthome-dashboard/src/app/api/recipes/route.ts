@@ -19,6 +19,16 @@ interface Recipe {
   createdAt:    string;
 }
 
+function broadcast(type: string, payload: any) {
+  const wss = (global as any).wss;
+  if (!wss) return;
+  const message = JSON.stringify({ type, ...payload });
+  wss.clients.forEach((client: any) => {
+    if (client.readyState === 1) client.send(message); // 1 = OPEN
+  });
+}
+
+
 async function readDb(): Promise<Recipe[]> {
   try {
     const raw = await fs.readFile(DB_PATH, 'utf-8');
@@ -56,6 +66,7 @@ export async function POST(req: NextRequest) {
   };
   recipes.unshift(recipe);
   await writeDb(recipes);
+  broadcast('recipe_added', { recipe });
   return NextResponse.json(recipe);
 }
 
@@ -66,6 +77,7 @@ export async function PUT(req: NextRequest) {
   if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   recipes[idx] = { ...recipes[idx], ...body };
   await writeDb(recipes);
+  broadcast('recipe_updated', { recipe: recipes[idx] });
   return NextResponse.json(recipes[idx]);
 }
 
@@ -74,5 +86,6 @@ export async function DELETE(req: NextRequest) {
   const recipes = await readDb();
   const filtered = recipes.filter(r => r.id !== id);
   await writeDb(filtered);
+  broadcast('recipe_deleted', { id }); 
   return NextResponse.json({ success: true });
 }
