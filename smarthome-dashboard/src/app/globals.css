@@ -3961,9 +3961,40 @@ body {
 .recipe-detail-body {
   display: grid;
   grid-template-columns: 220px 1fr;
+  grid-template-rows: auto 1fr;
   gap: 0;
-  overflow: hidden;
   flex: 1;
+  overflow: hidden;
+}
+
+.recipe-note {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border: 0.5px solid var(--border-subtle);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  transition: 0.15s;
+}
+
+.recipe-note:hover {
+  border-color: var(--accent);
+  background: rgba(255,255,255,0.05);
+}
+
+.recipe-note-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.recipe-notes-col {
+  border-top: 0.5px solid var(--border-subtle);
+  padding: 14px 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .recipe-ingredients-col {
@@ -3973,6 +4004,14 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  grid-row: 1 / span 2;
+}
+
+.recipe-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
 }
 
 .recipe-steps-col {
@@ -4054,6 +4093,7 @@ body {
 /* ── Steps list ── */
 
 .recipe-steps-list { display: flex; flex-direction: column; gap: 12px; }
+.recipe-notes-list { display: flex; flex-direction: column; gap: 12px; }
 
 .recipe-step {
   display: flex;

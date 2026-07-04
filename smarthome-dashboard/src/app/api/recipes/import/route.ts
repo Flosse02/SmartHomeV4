@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
       servings:    4,
       ingredients: [],
       steps:       [],
+      notes:       [],
       source:      url,
     });
   } catch (err: any) {
@@ -48,9 +49,14 @@ function parseJsonLd(r: any, url: string) {
     }
     return { amount: 1, unit: '', name: raw };
   });
+  console.log('recipe: ', r);
 
   const steps = (r.recipeInstructions ?? []).map((s: any) => ({
     text: typeof s === 'string' ? s : s.text ?? '',
+  }));
+
+  const notes = (r.recipeNotes ?? []).map((n: any) => ({
+    text: typeof n === 'string' ? n : n.text ?? '',
   }));
 
   const servings = parseInt(
@@ -67,6 +73,7 @@ function parseJsonLd(r: any, url: string) {
     tags:        r.recipeCategory ? [r.recipeCategory].flat() : [],
     ingredients,
     steps,
+    notes,
     source:      url,
   };
 }

@@ -8,6 +8,7 @@ import { StyledButton } from '@/components/form/styledButton';
 
 interface Ingredient { amount: string; unit: string; name: string; }
 interface Step       { text: string; }
+interface Note       { text: string; }
 interface Recipe {
   id:          string;
   title:       string;
@@ -19,6 +20,7 @@ interface Recipe {
   tags:         string[];
   ingredients:  Ingredient[];
   steps:        Step[];
+  notes:        Note[];
   source?:      string;
   createdAt:    string;
 }
@@ -164,6 +166,7 @@ function EditRecipeForm({ recipe, onSave, onDelete, onClose }: { recipe: Recipe;
     image:       recipe.image       ?? '',
     ingredients: recipe.ingredients.map(i => ({ amount: i.amount != null ? i.amount : '', unit: i.unit ?? '', name: i.name })),
     steps:       recipe.steps.map(s => ({ text: s.text })),
+    notes:       recipe.notes.map(n => ({ text: n.text })),
   });
   const [confirmDel, setConfirmDel] = useState(false);
 
@@ -173,6 +176,10 @@ function EditRecipeForm({ recipe, onSave, onDelete, onClose }: { recipe: Recipe;
 
   const setStep = (i: number, val: string) => {
     setForm(f => { const steps = [...f.steps]; steps[i] = { text: val }; return { ...f, steps }; });
+  };
+
+  const setNote = (i: number, val: string) => {
+    setForm(f => { const notes = [...f.notes]; notes[i] = { text: val }; return { ...f, notes }; });
   };
 
   const handleSave = () => {
@@ -188,6 +195,7 @@ function EditRecipeForm({ recipe, onSave, onDelete, onClose }: { recipe: Recipe;
       image:       form.image.trim() || null,
       ingredients: form.ingredients.filter(i => i.name.trim()).map(i => ({ amount: i.amount != null && String(i.amount).trim() ? String(i.amount).trim() : null, unit: i.unit?.trim() || null, name: i.name.trim() })),
       steps:       form.steps.filter(s => s.text.trim()),
+      notes:       form.notes.filter(n => n.text.trim()),
     });
   };
 
@@ -245,6 +253,17 @@ function EditRecipeForm({ recipe, onSave, onDelete, onClose }: { recipe: Recipe;
               </div>
             ))}
             <button className="recipe-add-row-btn" onClick={() => setForm(f => ({ ...f, steps: [...f.steps, { text: '' }] }))}>+ Step</button>
+          </div>
+
+          <div className="recipe-form-section">
+            <div className="recipe-col-label">Notes</div>
+            {form.notes.map((note, i) => (
+              <div key={i} className="recipe-step-row">
+                <textarea className="recipe-input recipe-textarea recipe-step-input" placeholder={`Note ${i + 1}…`} value={note.text} onChange={e => setNote(i, e.target.value)} />
+                <button className="recipe-remove-btn" onClick={() => setForm(f => ({ ...f, notes: f.notes.filter((_, j) => j !== i) }))}>✕</button>
+              </div>
+            ))}
+            <button className="recipe-add-row-btn" onClick={() => setForm(f => ({ ...f, notes: [...f.notes, { text: '' }] }))}>+ Note</button>
           </div>
 
           <button className="recipe-cook-btn recipe-save-btn" onClick={handleSave} disabled={!form.title.trim()}>Save Changes</button>
@@ -313,16 +332,28 @@ function RecipeView({ recipe, onClose, onDelete, onUpdate }: { recipe: Recipe; o
               ))}
             </div>
           </div>
+          <div className="recipe-main-col">
+            <div className="recipe-steps-col">
+              <div className="recipe-col-label">Method</div>
+              <div className="recipe-steps-list">
+                {recipe.steps.map((step, i) => (
+                  <div key={i} className="recipe-step">
+                    <div className="recipe-step-num">{i + 1}</div>
+                    <div className="recipe-step-text">{step.text}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-          <div className="recipe-steps-col">
-            <div className="recipe-col-label">Method</div>
-            <div className="recipe-steps-list">
-              {recipe.steps.map((step, i) => (
-                <div key={i} className="recipe-step">
-                  <div className="recipe-step-num">{i + 1}</div>
-                  <div className="recipe-step-text">{step.text}</div>
-                </div>
-              ))}
+            <div className="recipe-notes-col">
+              <div className="recipe-col-label">Notes</div>
+              <div className="recipe-notes-list">
+                {recipe.notes.map((note, i) => (
+                  <div key={i} className="recipe-note">
+                    <div className="recipe-note-text">{note.text}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -339,6 +370,7 @@ const EMPTY_RECIPE = {
   tags: '', image: '',
   ingredients: [{ amount: '', unit: '', name: '' }],
   steps: [{ text: '' }],
+  notes: [{ text: '' }],
 };
 
 function AddRecipeForm({ onSave, onClose }: { onSave: (r: any) => void; onClose: () => void }) {
@@ -366,6 +398,7 @@ function AddRecipeForm({ onSave, onClose }: { onSave: (r: any) => void; onClose:
         image:       data.image       ?? '',
         ingredients: data.ingredients?.length ? data.ingredients.map((i: any) => ({ amount: i.amount != null ? String(i.amount) : '', unit: i.unit ?? '', name: i.name })) : [{ amount: '', unit: '', name: '' }],
         steps:       data.steps?.length ? data.steps : [{ text: '' }],
+        notes:       data.notes?.length ? data.notes : [{ text: '' }],
       });
       setTab('manual');
     } catch (e: any) {
@@ -383,6 +416,10 @@ function AddRecipeForm({ onSave, onClose }: { onSave: (r: any) => void; onClose:
     setForm(f => { const steps = [...f.steps]; steps[i] = { text: val }; return { ...f, steps }; });
   };
 
+  const setNote = (i: number, val: string) => {
+    setForm(f => { const notes = [...f.notes]; notes[i] = { text: val }; return { ...f, notes }; });
+  };
+
   const handleSave = () => {
     if (!form.title.trim()) return;
     onSave({
@@ -395,6 +432,7 @@ function AddRecipeForm({ onSave, onClose }: { onSave: (r: any) => void; onClose:
       image:       form.image.trim() || null,
       ingredients: form.ingredients.filter(i => i.name.trim()).map(i => ({ amount: i.amount != null && String(i.amount).trim() ? String(i.amount).trim() : null, unit: i.unit?.trim() || null, name: i.name.trim() })),
       steps:       form.steps.filter(s => s.text.trim()),
+      notes:       form.notes.filter(n => n.text.trim()),
     });
   };
 
@@ -459,6 +497,18 @@ function AddRecipeForm({ onSave, onClose }: { onSave: (r: any) => void; onClose:
                 </div>
               ))}
               <button className="recipe-add-row-btn" onClick={() => setForm(f => ({ ...f, steps: [...f.steps, { text: '' }] }))}>+ Step</button>
+            </div>
+
+            {/* Notes */}
+            <div className="recipe-form-section">
+              <div className="recipe-col-label">Notes</div>
+              {form.notes.map((note, i) => (
+                <div key={i} className="recipe-step-row">
+                  <textarea className="recipe-input recipe-textarea recipe-step-input" placeholder={`Note…`} value={note.text} onChange={e => setNote(i, e.target.value)} />
+                  <button className="recipe-remove-btn" onClick={() => setForm(f => ({ ...f, notes: f.notes.filter((_, j) => j !== i) }))}>✕</button>
+                </div>
+              ))}
+              <button className="recipe-add-row-btn" onClick={() => setForm(f => ({ ...f, notes: [...f.notes, { text: '' }] }))}>+ Note</button>
             </div>
 
             <button className="recipe-cook-btn recipe-save-btn" onClick={handleSave} disabled={!form.title.trim()}>Save Recipe</button>
