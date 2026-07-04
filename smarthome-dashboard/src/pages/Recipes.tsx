@@ -31,14 +31,17 @@ function fmtTime(min?: number) {
   return `${Math.floor(min / 60)}h ${min % 60 ? `${min % 60}m` : ''}`.trim();
 }
 
-function scaleAmount(amount: string | null, base: number, current: number) {
-  if (!amount) return '';
+function scaleAmount(amount: string | number | null | undefined, base: number, current: number) {
+  if (amount == null) return '';
+
+  const str = String(amount).trim();
+  if (!str) return '';
 
   const ratio = current / base;
 
-  // Detect ranges like "8-10"
-  if (amount.includes('-')) {
-    const [min, max] = amount.split('-').map(v => parseFloat(v.trim()));
+  // range like "8-10"
+  if (str.includes('-')) {
+    const [min, max] = str.split('-').map(v => parseFloat(v.trim()));
 
     if (!isNaN(min) && !isNaN(max)) {
       const scaledMin = min * ratio;
@@ -50,12 +53,11 @@ function scaleAmount(amount: string | null, base: number, current: number) {
       return `${format(scaledMin)}-${format(scaledMax)}`;
     }
 
-    // fallback: don't break weird strings
-    return amount;
+    return str;
   }
 
-  const num = parseFloat(amount);
-  if (isNaN(num)) return amount;
+  const num = parseFloat(str);
+  if (isNaN(num)) return str;
 
   const scaled = num * ratio;
 
@@ -184,7 +186,7 @@ function EditRecipeForm({ recipe, onSave, onDelete, onClose }: { recipe: Recipe;
       cookTime:    Number(form.cookTime) || null,
       tags:        form.tags.split(',').map(t => t.trim()).filter(Boolean),
       image:       form.image.trim() || null,
-      ingredients: form.ingredients.filter(i => i.name.trim()).map(i => ({ amount: i.amount.trim() ? i.amount.trim() : null, unit: i.unit.trim() || null, name: i.name.trim() })),
+      ingredients: form.ingredients.filter(i => i.name.trim()).map(i => ({ amount: i.amount != null && String(i.amount).trim() ? String(i.amount).trim() : null, unit: i.unit?.trim() || null, name: i.name.trim() })),
       steps:       form.steps.filter(s => s.text.trim()),
     });
   };
