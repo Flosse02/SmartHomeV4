@@ -20,18 +20,26 @@ This is being created to work on a raspberry pi, my current setup has a raspberr
     - Home Tab - Used to display and control your devices connected to your Home Assistant.
     - Notes Tab - Allows you to store and write notes, was initially meant to be intergrated with google keep but that is reserved for "Buisness Customers" only :(
     - Camera Tab - Intergrates with your cameras connected to Home Assistant and plays them for you to see. (Cannot verify as I do not have any)
+    - Weather Tab - Uses location to give indepth weather for today and next week, including hour by hour weather.
+    - Clock Tab - Tab that uses clock and also has timers, alarms and stopwatch.
+    - Monitor Tab - Monitors the device that it is run on and the jellyfin server.
+    - Jellyfin Tab - Info about jellyfin server including continue watching, recently added and allows to search and download movies, tvs and animes.
+    - Recipes Tab - Tab used to store, add and cook using recipes. Also connects to my [SmartPan](https://github.com/Flosse02/SmartPan) app which also has the same functions.
     - Settings Tab - Can control mutiple settings like locations and time related stuff.
 
 ### To be added
-- Weather tab, more indepth weather
-- Clock tab, will have things like timers alarms ect,
 - Transport tab - Will connect to  public transport api.
-- Monitor screen - Will have monitoring for both the pi this is run on and the jellyfin pi.
 
 ### To Be fixed
 - The music folder and photos folder do not worked when picked through the settings tab
 
 ## Getting Started
+### Setting Up SmartPan app
+Curently only works on android.
+1. Download app from github [SmartPan](https://github.com/Flosse02/SmartPan/releases)
+2. In settings input the ipaddress and port of this smarthome.
+3. Add recipes / enjoy using the app.
+
 ### Setting Up Google Acocunt For Testing
 
 1. Go to [https://console.cloud.google.com](https://console.cloud.google.com) and create a new project.
