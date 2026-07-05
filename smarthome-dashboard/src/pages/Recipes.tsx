@@ -3,27 +3,8 @@
 import { useState, useEffect, useCallback, cache } from 'react';
 import { AddIcon, CloseIcon, SearchIcon } from '@/lib/icons';
 import { useSleep } from '@/context/SleepContext';
-import { InputBar } from '@/components/form/inputBar';
-import { StyledButton } from '@/components/form/styledButton';
+import { Recipe } from '@/app/types/recipe';
 
-interface Ingredient { amount: string; unit: string; name: string; }
-interface Step       { text: string; }
-interface Note       { text: string; }
-interface Recipe {
-  id:          string;
-  title:       string;
-  description?: string;
-  image?:       string;
-  servings:     number;
-  prepTime?:    number;
-  cookTime?:    number;
-  tags:         string[];
-  ingredients:  Ingredient[];
-  steps:        Step[];
-  notes:        Note[];
-  source?:      string;
-  createdAt:    string;
-}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

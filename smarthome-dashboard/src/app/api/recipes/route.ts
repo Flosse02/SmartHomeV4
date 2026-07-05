@@ -1,23 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { Recipe } from '@/app/types/recipe';
 
 const DB_PATH = path.join(process.cwd(), 'data', 'recipes.json');
-
-interface Recipe {
-  id:          string;
-  title:       string;
-  description?: string;
-  image?:       string;
-  servings:     number;
-  prepTime?:    number;
-  cookTime?:    number;
-  tags:         string[];
-  ingredients:  { amount: number; unit: string; name: string }[];
-  steps:        { text: string }[];
-  source?:      string;
-  createdAt:    string;
-}
 
 function broadcast(type: string, payload: any) {
   const wss = (global as any).wss;
@@ -63,6 +49,8 @@ export async function POST(req: NextRequest) {
     id:        crypto.randomUUID(),
     createdAt: new Date().toISOString(),
     tags:      body.tags ?? [],
+    updatedAt: new Date().toISOString(),
+    souce:     'server',
   };
   recipes.unshift(recipe);
   await writeDb(recipes);
@@ -76,6 +64,8 @@ export async function PUT(req: NextRequest) {
   const idx = recipes.findIndex(r => r.id === body.id);
   if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   recipes[idx] = { ...recipes[idx], ...body };
+  recipes[idx].updatedAt = new Date().toISOString(),
+  recipes[idx].source = 'server',
   await writeDb(recipes);
   broadcast('recipe_updated', { recipe: recipes[idx] });
   return NextResponse.json(recipes[idx]);

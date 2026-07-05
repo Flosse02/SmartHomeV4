@@ -30,7 +30,8 @@ export async function POST(req: NextRequest) {
       ingredients: [],
       steps:       [],
       notes:       [],
-      source:      url,
+      url:         url,
+      source:      'server'
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -71,10 +72,11 @@ function parseJsonLd(r: any, url: string) {
     prepTime:    parseDuration(r.prepTime),
     cookTime:    parseDuration(r.cookTime),
     tags:        r.recipeCategory ? [r.recipeCategory].flat() : [],
-    ingredients,
+    ingredients, 
     steps,
     notes,
-    source:      url,
+    url:          url,
+    source:       'server',
   };
 }
 
