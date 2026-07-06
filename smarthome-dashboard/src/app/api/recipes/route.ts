@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     createdAt: new Date().toISOString(),
     tags:      body.tags ?? [],
     updatedAt: new Date().toISOString(),
-    souce:     'server',
+    source:    'server',
   };
   recipes.unshift(recipe);
   await writeDb(recipes);
@@ -64,8 +64,8 @@ export async function PUT(req: NextRequest) {
   const idx = recipes.findIndex(r => r.id === body.id);
   if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   recipes[idx] = { ...recipes[idx], ...body };
-  recipes[idx].updatedAt = new Date().toISOString(),
-  recipes[idx].source = 'server',
+  recipes[idx].updatedAt = new Date().toISOString();
+  recipes[idx].source = 'server';
   await writeDb(recipes);
   broadcast('recipe_updated', { recipe: recipes[idx] });
   return NextResponse.json(recipes[idx]);

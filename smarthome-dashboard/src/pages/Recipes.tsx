@@ -582,13 +582,11 @@ export default function Recipes() {
           const msg = JSON.parse(e.data);
 
           if (msg.type === 'recipe_added') {
-              setRecipes(prev => {
-                if (prev.some(r => r.id === msg.recipe.id)) return prev;
-                const next = [msg.recipe, ...prev];
-                cache(next);
-                return next;
-              });
-            }
+            setRecipes(prev => {
+              if (prev.some(r => r.id === msg.recipe.id)) return prev;
+              return [msg.recipe, ...prev];
+            });
+          }
           if (msg.type === 'recipe_updated') {
             setRecipes(prev => prev.map(r => r.id === msg.recipe.id ? msg.recipe : r));
             setSelected(prev => prev?.id === msg.recipe.id ? msg.recipe : prev);

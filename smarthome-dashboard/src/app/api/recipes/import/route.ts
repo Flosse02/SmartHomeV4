@@ -40,8 +40,7 @@ export async function POST(req: NextRequest) {
 
 function parseJsonLd(r: any, url: string) {
   const ingredients = (r.recipeIngredient ?? []).map((raw: string) => {
-    // Basic parse: try to split "1 cup flour" → amount, unit, name
-    const match = raw.match(/^([\d./½¼¾⅓⅔⅛]+)?\s*([a-zA-Z]+)?\s+(.+)$/);
+    const match = raw.match(/^([\d./1⁄21⁄43⁄41⁄32⁄31⁄8]+)?\s*([a-zA-Z]+)?\s+(.+)$/);
     if (match) {
       const amount = parseFraction(match[1] ?? '1');
       const unit   = match[2] ?? '';
@@ -50,15 +49,25 @@ function parseJsonLd(r: any, url: string) {
     }
     return { amount: 1, unit: '', name: raw };
   });
-  console.log('recipe: ', r);
 
-  const steps = (r.recipeInstructions ?? []).map((s: any) => ({
-    text: typeof s === 'string' ? s : s.text ?? '',
-  }));
+  const NOTE_PATTERNS = [/note/i, /make ahead/i, /storage/i, /freez/i, /\btip\b/i, /substitut/i, /leftover/i];
 
-  const notes = (r.recipeNotes ?? []).map((n: any) => ({
-    text: typeof n === 'string' ? n : n.text ?? '',
-  }));
+  const rawSteps = (r.recipeInstructions ?? []).map((s: any) =>
+    typeof s === 'string' ? s : s.text ?? ''
+  );
+
+  const steps: { text: string }[] = [];
+  const notes: { text: string }[] = [];
+
+  for (const text of rawSteps) {
+    const clean = text.trim();
+    if (!clean) continue;
+    if (NOTE_PATTERNS.some(p => p.test(clean))) {
+      notes.push({ text: clean });
+    } else {
+      steps.push({ text: clean });
+    }
+  }
 
   const servings = parseInt(
     typeof r.recipeYield === 'string' ? r.recipeYield : Array.isArray(r.recipeYield) ? r.recipeYield[0] : '4'
@@ -72,7 +81,7 @@ function parseJsonLd(r: any, url: string) {
     prepTime:    parseDuration(r.prepTime),
     cookTime:    parseDuration(r.cookTime),
     tags:        r.recipeCategory ? [r.recipeCategory].flat() : [],
-    ingredients, 
+    ingredients,
     steps,
     notes,
     url:          url,

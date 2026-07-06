@@ -3716,7 +3716,10 @@ body {
   padding: 16px;
   box-sizing: border-box;
   gap: 12px;
-  overflow: hidden;
+  
+  overflow-y: auto;
+  overflow-x: hidden; 
+  scrollbar-color: #000 #111;
 }
 
 /* ── Toolbar ── */
@@ -3768,9 +3771,9 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 10px;
-  overflow-y: auto;
   flex: 1;
   align-content: start;
+  scrollbar-width: thin; scrollbar-color: black transparent;
 }
 
 .recipe-empty {
