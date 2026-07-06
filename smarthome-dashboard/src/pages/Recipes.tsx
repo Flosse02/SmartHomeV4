@@ -543,7 +543,6 @@ export default function Recipes() {
   const [loading,  setLoading]  = useState(true);
   const [adding,      setAdding]      = useState(false);
 
-
   const load = useCallback(async (q = '') => {
     setLoading(true);
     try {

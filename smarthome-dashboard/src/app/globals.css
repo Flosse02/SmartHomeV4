@@ -3784,6 +3784,29 @@ body {
   padding: 40px 0;
 }
 
+.settings-button-delete {
+  background: transparent;
+  border: 1px solid var(--error, #e05858);
+  color: var(--error, #e05858);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  padding: 8px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.settings-button-delete:hover:not(:disabled) {
+  background: rgba(224, 88, 88, 0.12);
+}
+
+.settings-button-delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ── Recipe card ── */
 
 .recipe-card {

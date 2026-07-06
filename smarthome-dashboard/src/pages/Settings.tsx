@@ -16,7 +16,7 @@ type Theme = 'Light' | 'Dark' | 'Auto';
 export default function Settings() {
   const { theme, setTheme: setThemeContext, resolvedTheme } = useTheme();
   const [tempUnits,      setTempUnits]      = useState('');
-  const [speedUnits,     setSpeedUnits]    = useState('');
+  const [speedUnits,     setSpeedUnits]     = useState('');
   const [location,       setLocation]       = useState('');
   const [musicLocation,  setMusicLocation]  = useState('');
   const [photoLocation,  setPhotoLocation]  = useState('');
@@ -27,6 +27,10 @@ export default function Settings() {
   const [dirty,          setDirty]          = useState(false);
   const [saving,         setSaving]         = useState(false);
   const [saved,          setSaved]          = useState(false);
+  const [deduping,       setDeduping]       = useState(false);
+  const [dedupeMsg,      setDedupeMsg]      = useState<string | null>(null);
+  const [deletingAll,    setDeletingAll]    = useState(false);
+  const [deleteAllMsg,   setDeleteAllMsg]   = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -97,6 +101,52 @@ export default function Settings() {
     { value: 'km/h',  label: 'km/h'  },
     { value: 'mph', label: 'mph' },
   ];
+
+  const handleDedupe = async () => {
+    const confirmed = window.confirm(
+      'Remove duplicate recipes? This keeps the oldest copy of each and cannot be undone.'
+    );
+    if (!confirmed) return;
+
+    setDeduping(true);
+    setDedupeMsg(null);
+    try {
+      const res = await fetch('/api/recipes/dedupe', { method: 'POST' });
+      const data = await res.json();
+      setDedupeMsg(
+        data.removed > 0
+          ? `Removed ${data.removed} duplicate${data.removed === 1 ? '' : 's'}.`
+          : 'No duplicates found.'
+      );
+    } catch (e: any) {
+      setDedupeMsg('Something went wrong — please try again.');
+    } finally {
+      setDeduping(false);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    // This wipes every recipe on the server and every connected device —
+    // a plain confirm() is too easy to click through by habit, so require
+    // typing the word out to actually go through with it.
+    const typed = window.prompt(
+      'This will permanently delete ALL recipes on every device. This cannot be undone.\n\nType DELETE to confirm.'
+    );
+    if (typed !== 'DELETE') return;
+ 
+    setDeletingAll(true);
+    setDeleteAllMsg(null);
+    try {
+      const res = await fetch('/api/recipes/delete-all', { method: 'POST' });
+      const data = await res.json();
+      setDeleteAllMsg(`Deleted ${data.removed} recipe${data.removed === 1 ? '' : 's'}.`);
+    } catch (e: any) {
+      setDeleteAllMsg('Something went wrong — please try again.');
+    } finally {
+      setDeletingAll(false);
+    }
+  };
+
 
   return (
     <div className="settings">
@@ -244,6 +294,41 @@ export default function Settings() {
           </div>
           <div className="settings-right settings-control" >
             <GoogleAuthButton />
+          </div>
+        </div>
+      </div>
+
+      {/* Data */}
+      <div className="settings-section">
+        <h2 className="settings-section-label">Data</h2>
+        <div className="settings-row">
+          <div className="settings-label-wrapper">
+            <span className="settings-label">Clean Up Duplicates</span>
+            <span className="settings-hint">Remove duplicate recipes</span>
+          </div>
+          <div className="settings-right settings-control">
+            {dedupeMsg && <span style={{ marginRight: 12, fontSize: 13, opacity: 0.8, alignContent: 'center' }}>{dedupeMsg}</span>}
+            <button 
+              onClick={handleDedupe} disabled={deduping}
+              className="settings-button-delete"
+              >
+              {deduping ? 'Cleaning up…' : 'Clean'}
+            </button>
+          </div>
+        </div>
+        <div className="settings-row">
+          <div className="settings-label-wrapper">
+            <span className="settings-label">Remove Data</span>
+            <span className="settings-hint">Remove recipe data</span>
+          </div>
+          <div className="settings-right settings-control">
+            {deleteAllMsg && <span style={{ marginRight: 12, fontSize: 13, opacity: 0.8, alignContent: 'center' }}>{deleteAllMsg}</span>}
+            <button 
+              onClick={handleDeleteAll} disabled={deletingAll}
+              className="settings-button-delete"
+              >
+              {deduping ? 'Deleting...' : 'Delete'}
+            </button>
           </div>
         </div>
       </div>
