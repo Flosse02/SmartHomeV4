@@ -24,7 +24,7 @@ This is being created to work on a raspberry pi, my current setup has a raspberr
     - Clock Tab - Tab that uses clock and also has timers, alarms and stopwatch.
     - Monitor Tab - Monitors the device that it is run on and the jellyfin server.
     - Jellyfin Tab - Info about jellyfin server including continue watching, recently added and allows to search and download movies, tvs and animes.
-    - Recipes Tab - Tab used to store, add and cook using recipes. Also connects to my [SmartPan](https://github.com/Flosse02/SmartPan) app which also has the same functions.
+    - Recipes Tab - Tab used to store, add and cook using recipes. Syncs live with my [SmartPan](https://github.com/Flosse02/SmartPan) android app over websocket, no manual refresh needed. Includes buttons to remove duplicate recipes and to wipe all server-synced recipes.
     - Settings Tab - Can control mutiple settings like locations and time related stuff.
 
 ### To be added

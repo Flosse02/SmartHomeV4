@@ -284,8 +284,8 @@ function RecipeView({ recipe, onClose, onDelete, onUpdate }: { recipe: Recipe; o
               {fmtTime(recipe.cookTime) && <span className="recipe-meta-badge">Cook {fmtTime(recipe.cookTime)}</span>}
               {recipe.tags.map(t => <span key={t} className="recipe-meta-badge recipe-meta-badge--tag">{t}</span>)}
             </div>
-            {recipe.source && (
-              <a href={recipe.source} target="_blank" rel="noreferrer" className="recipe-detail-source">View original ↗</a>
+            {recipe.url && (
+              <a href={recipe.url} target="_blank" rel="noreferrer" className="recipe-detail-source">View original ↗</a>
             )}
           </div>
           <div className="recipe-detail-actions">

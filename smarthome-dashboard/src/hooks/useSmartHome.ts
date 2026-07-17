@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { HA_URL, HA_TOKEN, haFetch } from '@/lib/homeAssistant';
 
 export interface HAEntity {
   entity_id: string;
@@ -13,9 +14,6 @@ export interface SmartHomeDevice {
   state: string;
   attributes: Record<string, any>;
 }
-
-const HA_URL   = process.env.NEXT_PUBLIC_HA_URL   ?? 'http://localhost:8123';
-const HA_TOKEN = process.env.NEXT_PUBLIC_HA_TOKEN ?? '';
 
 function classifyDevice(entity: HAEntity, groupEntityIds: string[]): SmartHomeDevice['type'] {
   const id    = entity.entity_id;
@@ -47,19 +45,6 @@ function toDevice(entity: HAEntity, groupEntityIds: string[]): SmartHomeDevice {
     state:      entity.state,
     attributes: entity.attributes,
   };
-}
-
-async function haFetch(path: string, options?: RequestInit) {
-  const res = await fetch(`${HA_URL}/api${path}`, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${HA_TOKEN}`,
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-  });
-  if (!res.ok) throw new Error(`HA API error: ${res.status}`);
-  return res.json();
 }
 
 async function callService(domain: string, service: string, data: Record<string, any>) {

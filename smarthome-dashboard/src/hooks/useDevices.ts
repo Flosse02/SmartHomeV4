@@ -1,6 +1,7 @@
 import { NowPlaying } from '@/components/kiosk/types';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import * as mm from 'music-metadata-browser';
+import { HA_URL, HA_TOKEN, haFetch } from '@/lib/homeAssistant';
 
 export interface SmartDevice {
   id: string;
@@ -26,8 +27,6 @@ export type PlaybackState = {
 
 export type UseDevicesResult = ReturnType<typeof useDevices>
 
-const HA_URL   = process.env.NEXT_PUBLIC_HA_URL            ?? '';
-const HA_TOKEN = process.env.NEXT_PUBLIC_HA_TOKEN          ?? '';
 const JF_URL   = process.env.NEXT_PUBLIC_JELLYFIN_URL      ?? '';
 const JF_KEY   = process.env.NEXT_PUBLIC_JELLYFIN_API_KEY  ?? '';
 
@@ -117,11 +116,7 @@ export function useDevices() {
     setDiscovering(true);
     setDiscoverError(null);
     try {
-      const res = await fetch(`${HA_URL}/api/states`, {
-        headers: { Authorization: `Bearer ${HA_TOKEN}` },
-      });
-      if (!res.ok) throw new Error(`HA error ${res.status}`);
-      const entities: any[] = await res.json();
+      const entities: any[] = await haFetch('/states');
       const speakers = entities
         .filter(e => e.entity_id.startsWith('media_player.') && e.state !== 'unavailable')
         .map(e => ({
@@ -142,11 +137,7 @@ export function useDevices() {
   // ── HA state sync ───────────────────────────────────────────────────
   const syncHaDevice = useCallback(async (entityId: string) => {
     try {
-      const res = await fetch(`${HA_URL}/api/states/${entityId}`, {
-        headers: { Authorization: `Bearer ${HA_TOKEN}` },
-      });
-      if (!res.ok) return;
-      const e = await res.json();
+      const e = await haFetch(`/states/${entityId}`);
 
       const contentId: string = e.attributes.media_content_id ?? '';
       const match    = contentId.match(/\/Audio\/([a-f0-9]+)\/stream/i);
