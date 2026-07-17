@@ -6,7 +6,7 @@ export interface Recipe {
   id:           string;
   title:        string;
   description?: string;
-  image?:       string;
+  image?:       string | null;
   servings:     number;
   prepTime?:    number;
   cookTime?:    number;
