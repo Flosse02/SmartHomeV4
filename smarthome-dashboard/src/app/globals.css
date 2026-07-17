@@ -1686,6 +1686,12 @@ body {
   border-radius: 6px;
   cursor: pointer;
   user-select: none;
+
+  appearance: none;
+  border: none;
+  background: var(--border-subtle);
+  color: inherit;
+  font: inherit;
 }
 
 .styled-button--primary {

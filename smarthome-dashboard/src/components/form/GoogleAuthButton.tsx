@@ -53,7 +53,7 @@ export default function GoogleAuthButton() {
     return (
       <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
         <span>Signed in as {userName}</span>
-        <StyledButton placeholder="Sign Out" onPress={() => signOut()} />
+        <StyledButton colour={"red"} placeholder="Sign Out" onPress={() => signOut()} />
       </div>
     );
   }

@@ -5,6 +5,7 @@ interface StyledButtonProps {
   prefix?: React.ReactNode;
   suffix?: React.ReactNode;
   changeColour?: boolean;
+  colour?: string;
   onPress?: (value: string) => void;
 }
 
@@ -14,32 +15,24 @@ export function StyledButton({
   primaryColour = false,
   prefix,
   suffix,
+  colour,
   onPress,
 }: StyledButtonProps) {
   return (
-    <div
+    <button
+      type="button"
       className={`styled-button ${primaryColour ? 'styled-button--primary' : ''} ${disabled ? 'is-disabled' : ''}`}
-      role="button"
-      tabIndex={disabled ? -1 : 0}
-      aria-disabled={disabled}
-      onClick={() => {
-        if (!disabled) {
-          onPress?.(typeof placeholder === 'string' ? placeholder : '');
-        }
-      }}
-      onKeyDown={(e) => {
-        if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
-          onPress?.(typeof placeholder === 'string' ? placeholder : '');
-        }
-      }}
+      disabled={disabled}
+      onClick={() => onPress?.(typeof placeholder === 'string' ? placeholder : '')}
+      style={{background: colour}}
     >
       {prefix && <span style={{ marginRight: '0.5rem' }}>{prefix}</span>}
-      
+
       <span className="button-text">
         {placeholder || 'Button'}
       </span>
 
       {suffix && <span style={{ marginLeft: '0.5rem' }}>{suffix}</span>}
-    </div>
+    </button>
   );
 }
