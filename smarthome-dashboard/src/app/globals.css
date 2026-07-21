@@ -1215,8 +1215,146 @@ body {
    ============================================ */
 .notes {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   height: 100%;
+}
+
+.notes-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.notes-shopping {
+  width: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-right: 1px solid var(--border-default);
+  overflow-y: auto;
+}
+
+.notes-shopping-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.notes-shopping-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.notes-shopping-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.notes-shopping-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.notes-shopping-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.notes-shopping-item-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.notes-shopping-item-text span {
+  font-size: 13px;
+}
+
+.notes-shopping-item-source {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notes-shopping-item.checked .notes-shopping-item-text span:first-child {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.notes-shopping-item button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  opacity: 0.6;
+  font-size: 13px;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.notes-shopping-empty {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+
+.notes-shopping-add {
+  display: flex;
+  gap: 6px;
+}
+
+.notes-shopping-add input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 0.5px solid var(--border-default);
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.notes-shopping-add button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 4px;
+  border: 0.5px solid var(--border-default);
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .notes-toolbar {
@@ -1248,6 +1386,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 4px;
   padding: 6px 8px;
   border-radius: 6px 6px 0 0;
 }
@@ -1259,6 +1398,7 @@ body {
   font-size: 12px;
   font-weight: 500;
   width: 100%;
+  min-width: 0;
 }
 
 .sticky-header button {
@@ -1268,6 +1408,7 @@ body {
   font-size: 13px;
   opacity: 0.6;
   padding: 0;
+  flex-shrink: 0;
 }
 
 .sticky textarea {
@@ -1281,6 +1422,62 @@ body {
   min-height: 90px;
   box-sizing: border-box;
   line-height: 1.5;
+}
+
+.sticky-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  min-height: 90px;
+}
+
+.sticky-checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.sticky-checklist-item input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.sticky-checklist-item span {
+  flex: 1;
+  font-size: 13px;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.sticky-checklist-item.checked span {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.sticky-checklist-item button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.5;
+  font-size: 12px;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.sticky-checklist-add {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  padding: 4px 0;
+  width: 100%;
 }
 
 .color-dot {

@@ -46,3 +46,6 @@ settings.json
 # Recipes
 data/recipes.json
 data/recipe-images/
+
+# Shopping note
+data/shopping-note.json
