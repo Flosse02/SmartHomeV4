@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
+import { promises as fs } from 'fs';
 import path from 'path';
 
 const IMAGES_DIR = path.join(process.cwd(), 'data', 'recipe-images');
@@ -22,13 +22,14 @@ export async function GET(
     return new NextResponse('Forbidden', { status: 403 });
   }
 
-  if (!fs.existsSync(filepath)) {
+  const ext = path.extname(filename).toLowerCase().slice(1);
+
+  try {
+    const buffer = await fs.readFile(filepath);
+    return new NextResponse(buffer, {
+      headers: { 'Content-Type': MIME_TYPES[ext] ?? 'application/octet-stream' },
+    });
+  } catch {
     return new NextResponse('Not found', { status: 404 });
   }
-
-  const ext = path.extname(filename).toLowerCase().slice(1);
-  const buffer = fs.readFileSync(filepath);
-  return new NextResponse(buffer, {
-    headers: { 'Content-Type': MIME_TYPES[ext] ?? 'application/octet-stream' },
-  });
 }

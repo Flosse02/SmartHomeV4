@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
+import { promises as fs } from 'fs';
 import path from 'path';
 
 export async function GET(req: NextRequest) {
   const dir = req.nextUrl.searchParams.get('path') ?? '/';
   try {
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    const entries = await fs.readdir(dir, { withFileTypes: true });
     return NextResponse.json({
       path: dir,
       parent: path.dirname(dir),

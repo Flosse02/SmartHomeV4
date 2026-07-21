@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { Recipe } from '@/app/types/recipe';
+import { deleteRecipeImageFile } from '@/lib/recipeImages';
 
 const DB_PATH = path.join(process.cwd(), 'data', 'recipes.json');
 
@@ -60,7 +61,7 @@ export async function POST() {
     groups.get(key)!.push(r);
   }
 
-  const toDelete: string[] = [];
+  const toDelete: Recipe[] = [];
   const keep: Recipe[] = [];
 
   for (const group of groups.values()) {
@@ -71,16 +72,18 @@ export async function POST() {
     group.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     keep.push(group[0]); // oldest survives
     for (let i = 1; i < group.length; i++) {
-      toDelete.push(group[i].id);
+      toDelete.push(group[i]);
     }
   }
 
   await writeDb(keep);
 
+  await Promise.all(toDelete.map(r => deleteRecipeImageFile(r.image)));
+
   // Let every connected client (phone + other dashboard tabs) drop the
   // removed entries live, instead of requiring a manual reload.
-  for (const id of toDelete) {
-    broadcast('recipe_deleted', { id });
+  for (const r of toDelete) {
+    broadcast('recipe_deleted', { id: r.id });
   }
 
   return NextResponse.json({ removed: toDelete.length, remaining: keep.length });

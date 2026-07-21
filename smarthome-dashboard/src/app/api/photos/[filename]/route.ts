@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
+import { promises as fs } from 'fs';
 import path from 'path';
 import { readSettings } from '@/lib/settings';
 
@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ filename: string }> }
 ) {
   const { filename: rawFilename } = await params;  // ← await here
-  
+
   const { photoLocation } = readSettings();
   const dir = photoLocation || path.join(process.cwd(), 'public/photos');
 
@@ -19,18 +19,18 @@ export async function GET(
     return new NextResponse('Forbidden', { status: 403 });
   }
 
-  if (!fs.existsSync(filepath)) {
-    return new NextResponse('Not found', { status: 404 });
-  }
-
   const ext = path.extname(filename).toLowerCase().slice(1);
   const mimeTypes: Record<string, string> = {
     jpg: 'image/jpeg', jpeg: 'image/jpeg',
     png: 'image/png',  webp: 'image/webp',
   };
 
-  const buffer = fs.readFileSync(filepath);
-  return new NextResponse(buffer, {
-    headers: { 'Content-Type': mimeTypes[ext] ?? 'application/octet-stream' },
-  });
+  try {
+    const buffer = await fs.readFile(filepath);
+    return new NextResponse(buffer, {
+      headers: { 'Content-Type': mimeTypes[ext] ?? 'application/octet-stream' },
+    });
+  } catch {
+    return new NextResponse('Not found', { status: 404 });
+  }
 }

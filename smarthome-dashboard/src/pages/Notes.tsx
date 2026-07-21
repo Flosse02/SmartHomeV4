@@ -40,21 +40,6 @@ export default function Notes() {
     const [topZ, setTopZ] = useState(10);
     const nextId = useRef(2);
     const boardRef = useRef<HTMLDivElement>(null);
-    
-
-//   useEffect(() => {
-//   fetch('/api/notes')
-//     .then((r) => r.json())
-//     .then((data) => {
-//       if (Array.isArray(data)) {
-//         setNotes(data);
-//       } else {
-//         console.error("Notes API error:", data.error);
-//         setNotes([]);
-//       }
-//     })
-//     .catch(console.error);
-// }, []);
 
     useEffect(() => {
         localStorage.setItem('sticky-notes', JSON.stringify(notes));
@@ -151,10 +136,3 @@ export default function Notes() {
         </div>
     );
 }
-      
-      {/* {notes.map((note) => (
-        <div key={note.name}>
-          <strong>{note.title ?? 'Untitled'}</strong>
-          <p>{note.body?.text?.text}</p>
-        </div>
-      ))} */}

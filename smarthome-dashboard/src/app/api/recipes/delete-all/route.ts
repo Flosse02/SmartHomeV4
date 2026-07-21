@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { Recipe } from '@/app/types/recipe';
+import { deleteRecipeImageFile } from '@/lib/recipeImages';
 
 const DB_PATH = path.join(process.cwd(), 'data', 'recipes.json');
 
@@ -33,6 +34,8 @@ export async function POST() {
   const ids = recipes.map(r => r.id);
 
   await writeDb([]);
+
+  await Promise.all(recipes.map(r => deleteRecipeImageFile(r.image)));
 
   // Reuse the existing recipe_deleted handler already wired up on every
   // connected client (phone + dashboard) rather than introducing a new

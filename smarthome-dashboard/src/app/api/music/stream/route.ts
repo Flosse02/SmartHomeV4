@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import path from 'path';
 import { readSettings } from '@/lib/settings';
 
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest) {
   if (!abs.startsWith(path.resolve(musicLocation))) return new Response('Forbidden', { status: 403 });
 
   try {
-    const stat = fs.statSync(abs);
+    const stat = await fsPromises.stat(abs);
     const mime = AUDIO_MIME[path.extname(abs).toLowerCase()] ?? 'audio/mpeg';
     const range = req.headers.get('range');
 

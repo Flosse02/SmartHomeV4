@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { Recipe } from '@/app/types/recipe';
+import { deleteRecipeImageFile } from '@/lib/recipeImages';
 
 const DB_PATH = path.join(process.cwd(), 'data', 'recipes.json');
 
@@ -63,10 +64,12 @@ export async function PUT(req: NextRequest) {
   const recipes = await readDb();
   const idx = recipes.findIndex(r => r.id === body.id);
   if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const previousImage = recipes[idx].image;
   recipes[idx] = { ...recipes[idx], ...body };
   recipes[idx].updatedAt = new Date().toISOString();
   recipes[idx].source = 'server';
   await writeDb(recipes);
+  if (previousImage !== recipes[idx].image) await deleteRecipeImageFile(previousImage);
   broadcast('recipe_updated', { recipe: recipes[idx] });
   return NextResponse.json(recipes[idx]);
 }
@@ -74,8 +77,10 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('id');
   const recipes = await readDb();
+  const deleted = recipes.find(r => r.id === id);
   const filtered = recipes.filter(r => r.id !== id);
   await writeDb(filtered);
-  broadcast('recipe_deleted', { id }); 
+  if (deleted) await deleteRecipeImageFile(deleted.image);
+  broadcast('recipe_deleted', { id });
   return NextResponse.json({ success: true });
 }
