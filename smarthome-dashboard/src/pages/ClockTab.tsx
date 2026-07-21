@@ -270,9 +270,9 @@ function AlarmsSection({ timezone }: { timezone?: string }) {
                 {alarm.days.length === 0 ? 'Once' : alarm.days.map(d => DAY_FULL[d]).join(', ')}
               </div>
             </div>
-            <ToggleSwitch 
-              value={alarm.enabled}
-              onChange={() => setAlarms(prev => prev.map(a => a.id === alarm.id ? { ...a, enabled: !a.enabled } : a))}
+            <ToggleSwitch
+              active={alarm.enabled}
+              onToggle={() => setAlarms(prev => prev.map(a => a.id === alarm.id ? { ...a, enabled: !a.enabled } : a))}
             />
             <button onClick={() => setAlarms(prev => prev.filter(a => a.id !== alarm.id))}
               style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 15, padding: '0 4px' }}><CloseIcon /></button>

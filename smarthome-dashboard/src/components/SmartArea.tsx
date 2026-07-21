@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Slideshow from '../pages/Slideshow';
 import MusicPlayer from '../pages/MusicPlayer';
 import SmartHome from '../pages/SmartHome';
@@ -31,11 +31,35 @@ interface SmartAreaProps {
 
 export default function SmartArea({ activeTab, onTabChange, devicesResult, controlsRef }: SmartAreaProps) {
   const [selectedDevice, setSelectedDevice] = useState<SmartDevice | null>(null);
-  const isJellyfinConfigured = process.env.NEXT_PUBLIC_JELLYFIN_URL && 
+  const isJellyfinConfigured = process.env.NEXT_PUBLIC_JELLYFIN_URL &&
                              process.env.NEXT_PUBLIC_JELLYFIN_URL !== '' &&
                              process.env.NEXT_PUBLIC_JELLYFIN_API_KEY &&
                              process.env.NEXT_PUBLIC_JELLYFIN_API_KEY !== '';
- 
+
+  // Warm the JS chunks for the not-yet-visited tabs during idle time so the
+  // first click on Jellyfin/Monitor/etc. doesn't pay a load/compile delay.
+  // This only fetches the module — it doesn't mount the component, so none
+  // of that tab's own polling/effects start until the user actually opens it.
+  useEffect(() => {
+    const preload = () => {
+      void import('../pages/Notes');
+      void import('../pages/Camera');
+      void import('../pages/Settings');
+      void import('../pages/Weather');
+      void import('../pages/ClockTab');
+      void import('../pages/Monitor');
+      void import('../pages/Jellyfin');
+      void import('../pages/Recipes');
+    };
+
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(preload);
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = window.setTimeout(preload, 1000);
+    return () => window.clearTimeout(id);
+  }, []);
+
 
   return (
     <div className="smart-area">
