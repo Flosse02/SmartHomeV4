@@ -11,6 +11,7 @@ interface MultiSelectPickerProps {
   onChange: (selected: string[]) => void;
   placeholder?: string;
   searchable?: boolean;
+  setAll?: boolean;
 }
 
 export function MultiSelectPicker({
@@ -19,6 +20,7 @@ export function MultiSelectPicker({
   onChange,
   placeholder = "Select...",
   searchable = true,
+  setAll = true,
 }: MultiSelectPickerProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -52,13 +54,22 @@ export function MultiSelectPicker({
 
   const selectedInOptions = selected.filter(v => options.some(o => o.value === v));
 
-    const summary =
-    selectedInOptions.length === 0
-        ? placeholder
-        : selectedInOptions.length === 1
-        ? options.find(o => o.value === selectedInOptions[0])?.label
-        : `${selectedInOptions.length} selected`;
+  const handleSelectAll = () => {
+    const optionValues = options.map(o => o.value);
+    const merged = Array.from(new Set([...selected, ...optionValues]));
+    onChange(merged);
+  };
 
+  const handleSelectNone = () => {
+    onChange(selected.filter(v => !options.some(o => o.value === v)));
+  };
+
+  const summary =
+    selectedInOptions.length === 0
+      ? placeholder
+      : selectedInOptions.length === 1
+      ? options.find(o => o.value === selectedInOptions[0])?.label
+      : `${selectedInOptions.length} selected`;
 
   return (
     <div className="multiselect-wrapper" ref={ref}>
@@ -78,6 +89,31 @@ export function MultiSelectPicker({
               onChange={e => setQuery(e.target.value)}
               onClick={e => e.stopPropagation()}
             />
+          )}
+
+          {setAll && options.length > 0 && (
+            <div className="select-all-row">
+              <button
+                type="button"
+                className="select-all-btn"
+                onClick={e => {
+                  e.stopPropagation();
+                  handleSelectAll();
+                }}
+              >
+                Select all
+              </button>
+              <button
+                type="button"
+                className="select-all-btn"
+                onClick={e => {
+                  e.stopPropagation();
+                  handleSelectNone();
+                }}
+              >
+                Select none
+              </button>
+            </div>
           )}
 
           {filtered.length === 0 && (

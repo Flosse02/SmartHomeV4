@@ -218,6 +218,7 @@ export default function Settings() {
               selected={availablePages}
               onChange={handleAvailablePagesChange}
               placeholder="Select pages..."
+              setAll={true}
             />
           </div>
         </div>

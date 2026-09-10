@@ -2181,6 +2181,32 @@ body {
   color: var(--text-primary);
 }
 
+.select-all-row {
+  display: flex;
+  border-bottom: 0.5px solid var(--border-subtle);
+}
+
+.select-all-btn {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.select-all-btn:first-child {
+  border-right: 0.5px solid var(--border-subtle);
+}
+
+.select-all-btn:hover {
+  background: var(--border-subtle);
+  opacity: 1;
+}
+
 .checkmark {
   width: 14px;
   flex-shrink: 0;
