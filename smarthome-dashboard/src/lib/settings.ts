@@ -9,6 +9,10 @@ export const DEFAULTS = {
   slideshowTimer: '5',
   idleTimeout:    '10',
   location:       '',
+  defaultTab:     'Pictures',
+  theme:          'Dark',
+  layout:         'Default',
+  availablePages:  [] as string[],
 };
 
 export function readSettings() {

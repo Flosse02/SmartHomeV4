@@ -10,11 +10,17 @@ import GoogleAuthButton from '@/components/form/GoogleAuthButton';
 import { formatTimezone } from '@/lib/utils/FormatTimeZone';
 import { ToggleSwitch } from '@/components/form/ToggleSwitch';
 import { StyledButton } from '@/components/form/styledButton';
+import { SmartAreaTab, TABS } from '@/components/SmartArea';
+import { MultiSelectPicker } from '@/components/form/multiSelectPicker';
 
 type Theme = 'Light' | 'Dark' | 'Auto';
 
 export default function Settings() {
   const { theme, setTheme: setThemeContext, resolvedTheme } = useTheme();
+  
+  const [layout,         setLayout]         = useState('Default');
+  const [mainPage,       setMainPage]       = useState('Pictures');
+  const [availablePages, setAvailablePages] = useState<string[]>(TABS);
   const [tempUnits,      setTempUnits]      = useState('');
   const [speedUnits,     setSpeedUnits]     = useState('');
   const [location,       setLocation]       = useState('');
@@ -47,8 +53,10 @@ export default function Settings() {
         if (s.theme) setThemeContext(s.theme);
         setTimeZone(s.timeZone ?? '');
         setHour24(s.hour24 ?? false);
+        setMainPage(s.defaultTab ?? 'Pictures');
       });
   }, [setThemeContext]);
+
 
   const save = async () => {
     setSaving(true);
@@ -64,8 +72,11 @@ export default function Settings() {
         slideshowTimer, 
         idleTimeout,
         theme,
+        layout,
+        defaultTab: mainPage,
         timeZone,
         hour24,
+        availablePages,
       }),
     });
     setSaving(false);
@@ -86,11 +97,29 @@ export default function Settings() {
     setDirty(true);
   };
 
+  const handleLayoutChange = (value: string) => {
+    setLayout(value);
+    setDirty(true);
+  };
+
+  const handleAvailablePagesChange = (selected: string[]) => {
+    setAvailablePages(selected);
+    setDirty(true);
+  }
+
   const themeOptions = [
     { value: 'Dark',  label: 'Dark'  },
     { value: 'Light', label: 'Light' },
     { value: 'Auto',  label: 'Auto'  },
   ];
+
+  const layoutOptions = [
+    { value: 'Default', label: 'Default' },
+    { value: 'Compact', label: 'Compact' },
+  ];
+
+  const mainPageOptions = TABS.map(tab => ({ value: tab, label: tab }));
+  const availablePagesOptions = TABS.filter(tab => tab !== "Settings").map(tab => ({ value: tab, label: tab }));
 
   const tempUnitOptions = [
     { value: '°C',  label: '°C'  },
@@ -161,6 +190,35 @@ export default function Settings() {
           </div>
           <div className="settings-right">
             <Picker value={theme} options={themeOptions} onChange={handleThemeChange} />
+          </div>
+        </div>
+        <div className="settings-row">
+          <div className="settings-label-wrapper">
+            <span className="settings-label">Layout</span>
+          </div>
+          <div className="settings-right">
+            <Picker value={layout} options={layoutOptions} onChange={handleLayoutChange} />
+          </div>
+        </div>
+        <div className="settings-row">
+          <div className="settings-label-wrapper">
+            <span className="settings-label">Main Page</span>
+          </div>
+          <div className="settings-right">
+            <Picker value={mainPage} options={mainPageOptions} onChange={change(setMainPage)} />
+          </div>
+        </div>
+        <div className="settings-row">
+          <div className="settings-label-wrapper">
+            <span className="settings-label">Available Pages</span>
+          </div>
+          <div className="settings-right">
+            <MultiSelectPicker
+              options={availablePagesOptions}
+              selected={availablePages}
+              onChange={handleAvailablePagesChange}
+              placeholder="Select pages..."
+            />
           </div>
         </div>
       </div>

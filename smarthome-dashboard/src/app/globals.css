@@ -2113,6 +2113,89 @@ body {
   background: var(--border-subtle);
 }
 
+.multiselect-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 220px; /* wider than the single Picker since it shows a summary/chips */
+}
+
+.select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 100%;
+  width: max-content;
+  max-width: 280px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border: 0.5px solid var(--border-default);
+  border-radius: 8px;
+  z-index: 1000;
+  backdrop-filter: blur(12px);
+}
+
+.select-search {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  border-bottom: 0.5px solid var(--border-subtle);
+  outline: none;
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(12px);
+}
+
+.select-search::placeholder {
+  color: var(--text-secondary, var(--text-primary));
+  opacity: 0.5;
+}
+
+.select-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  cursor: pointer;
+  border-bottom: 0.5px solid var(--border-subtle);
+  user-select: none;
+}
+
+.select-option:last-child {
+  border-bottom: none;
+}
+
+.select-option:hover {
+  background: var(--border-subtle);
+}
+
+.select-option-selected {
+  color: var(--text-primary);
+}
+
+.checkmark {
+  width: 14px;
+  flex-shrink: 0;
+  display: inline-block;
+  color: var(--accent, var(--text-primary));
+}
+
+.select-empty {
+  padding: 10px 14px;
+  font-size: 13px;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  opacity: 0.5;
+}
+
 .location-dropdown {
   position: absolute;
   top: calc(100% + 4px);

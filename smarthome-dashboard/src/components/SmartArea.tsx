@@ -8,6 +8,7 @@ import SmartHome from '../pages/SmartHome';
 import Clock from './Clock';
 import { SmartDevice, useDevices, UseDevicesResult } from '@/hooks/useDevices';
 import { Weather } from './Weather';
+import CalendarPanel from './CalendarPanel';
 
 const Notes = dynamic(() => import('../pages/Notes'), { ssr: false });
 const Camera = dynamic(() => import('../pages/Camera'), { ssr: false });
@@ -17,19 +18,31 @@ const ClockTab = dynamic(() => import('../pages/ClockTab'), { ssr: false });
 const Monitor = dynamic(() => import('../pages/Monitor'), { ssr: false });
 const Jellyfin = dynamic(() => import('../pages/Jellyfin'), { ssr: false });
 const Recipes = dynamic(() => import('../pages/Recipes'), { ssr: false });
+const Solar = dynamic(() => import('../pages/Solar'), { ssr: false });
 
-export type SmartAreaTab = 'Pictures' | 'Music' | 'Home' | 'Notes' | 'Camera' | 'Weather' | 'Clock' | 'Monitor' | 'Jellyfin' | 'Recipes' | 'Settings';
+export type SmartAreaTab = 'Pictures' | 'Music' | 'Home' | 'Notes' | 'Camera' | 'Solar' | 'Weather' | 'Clock' | 'Monitor' | 'Jellyfin' | 'Recipes' | 'Calendar' | 'Settings';
 
-const TABS: SmartAreaTab[] = ['Pictures', 'Music', 'Home', 'Notes', 'Camera', 'Weather', 'Clock', 'Monitor', 'Jellyfin', 'Recipes', 'Settings'];
+export const TABS: SmartAreaTab[] = ['Pictures', 'Music', 'Home', 'Notes', 'Camera', 'Solar', 'Weather', 'Clock', 'Monitor', 'Jellyfin', 'Recipes', 'Calendar', 'Settings'];
 
 interface SmartAreaProps {
-  activeTab:     SmartAreaTab;
-  onTabChange:   (tab: SmartAreaTab) => void;
-  devicesResult: UseDevicesResult;
-  controlsRef?:  React.RefObject<{ pause: () => void; prev: () => void; next: () => void } | null>;
+  activeTab:       SmartAreaTab;
+  onTabChange:     (tab: SmartAreaTab) => void;
+  devicesResult:   UseDevicesResult;
+  controlsRef?:    React.RefObject<{ pause: () => void; prev: () => void; next: () => void } | null>;
+  layout?:         string;
+  availablePages?: SmartAreaTab[];
+  mainPage?:       SmartAreaTab;
 }
 
-export default function SmartArea({ activeTab, onTabChange, devicesResult, controlsRef }: SmartAreaProps) {
+export default function SmartArea({
+  activeTab,
+  onTabChange,
+  devicesResult,
+  controlsRef,
+  layout,
+  availablePages,
+  mainPage,
+}: SmartAreaProps) {
   const [selectedDevice, setSelectedDevice] = useState<SmartDevice | null>(null);
   const isJellyfinConfigured = process.env.NEXT_PUBLIC_JELLYFIN_URL &&
                              process.env.NEXT_PUBLIC_JELLYFIN_URL !== '' &&
@@ -40,6 +53,21 @@ export default function SmartArea({ activeTab, onTabChange, devicesResult, contr
   // first click on Jellyfin/Monitor/etc. doesn't pay a load/compile delay.
   // This only fetches the module — it doesn't mount the component, so none
   // of that tab's own polling/effects start until the user actually opens it.
+
+  const isCompact = layout === 'Compact';
+
+  const baseTabs: SmartAreaTab[] = availablePages && availablePages.length > 0
+    ? TABS.filter(tab =>
+        tab === mainPage ||
+        tab === 'Settings' ||
+        availablePages.includes(tab)
+      )
+    : TABS;
+
+  const visibleTabs: SmartAreaTab[] = isCompact
+    ? [baseTabs[0], 'Calendar', ...baseTabs.slice(1)]
+    : baseTabs;
+
   useEffect(() => {
     const preload = () => {
       void import('../pages/Notes');
@@ -50,6 +78,7 @@ export default function SmartArea({ activeTab, onTabChange, devicesResult, contr
       void import('../pages/Monitor');
       void import('../pages/Jellyfin');
       void import('../pages/Recipes');
+      void import('../pages/Solar');
     };
 
     if (typeof window.requestIdleCallback === 'function') {
@@ -73,7 +102,7 @@ export default function SmartArea({ activeTab, onTabChange, devicesResult, contr
       </div>
 
       <div className="smart-tabs">
-        {TABS.map(tab => (
+        {visibleTabs.map(tab => (
           <button
             key={tab}
             className={`smart-tab ${activeTab === tab ? 'active' : ''}`}
@@ -104,6 +133,7 @@ export default function SmartArea({ activeTab, onTabChange, devicesResult, contr
         <Camera />
       </div>
       {activeTab === 'Weather' && <WeatherTab />}
+      {activeTab === 'Solar' && <Solar />}
       <div style={{ display: activeTab === 'Clock' ? 'contents' : 'none' }}>
         <ClockTab />
       </div>
@@ -119,6 +149,11 @@ export default function SmartArea({ activeTab, onTabChange, devicesResult, contr
       <div style={{ display: activeTab === 'Recipes' ? 'contents' : 'none' }}>
         <Recipes />
       </div>
+      {isCompact && (
+        <div style={{ display: activeTab === 'Calendar' ? 'contents' : 'none' }}>
+          <CalendarPanel />
+        </div>
+      )}
       <div style={{ display: activeTab === 'Settings' ? 'contents' : 'none' }}>
         <Settings />
       </div>
