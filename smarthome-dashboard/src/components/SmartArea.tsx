@@ -61,7 +61,7 @@ export default function SmartArea({
         tab === mainPage ||
         tab === 'Settings' ||
         availablePages.includes(tab)
-      )
+      ).filter(tab => tab !== 'Calendar' || isCompact)
     : TABS;
 
   const visibleTabs: SmartAreaTab[] = isCompact
