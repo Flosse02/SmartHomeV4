@@ -24,6 +24,8 @@ export default function Settings() {
   const [tempUnits,      setTempUnits]      = useState('');
   const [speedUnits,     setSpeedUnits]     = useState('');
   const [location,       setLocation]       = useState('');
+  const [latitude,       setLatitude]       = useState<number | null>(null);
+  const [longitude,      setLongitude]      = useState<number | null>(null);
   const [musicLocation,  setMusicLocation]  = useState('');
   const [photoLocation,  setPhotoLocation]  = useState('');
   const [slideshowTimer, setSlideshowTimer] = useState('5');
@@ -44,6 +46,8 @@ export default function Settings() {
       .then(r => r.json())
       .then(s => {
         setLocation(s.location ?? '');
+        setLatitude(s.latitude ?? null);
+        setLongitude(s.longitude ?? null);
         setMusicLocation(s.musicLocation ?? '');
         setPhotoLocation(s.photoLocation ?? '');
         setSlideshowTimer(s.slideshowTimer ?? '5');
@@ -65,6 +69,8 @@ export default function Settings() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         location, 
+        latitude,
+        longitude,
         tempUnits,
         speedUnits,
         musicLocation, 
@@ -234,19 +240,21 @@ export default function Settings() {
           </div>
           <div className="settings-right settings-control">
             <LocationPicker
-            value={location}
-            placeHolder={location}
-            onChange={(city, tz) => {
-              if (city === null) {
-                setDirty(false);
-              } else {
-                setLocation(city);
-                if (tz) setTimeZone(tz);
-                setDirty(true);
-                setSaved(false);
-              }
-            }}
-          />
+              value={location}
+              placeHolder={location}
+              onChange={(city, tz, lat, lon) => {
+                if (city === null) {
+                  setDirty(false);
+                } else {
+                  setLocation(city);
+                  if (tz) setTimeZone(tz);
+                  if (lat != null) setLatitude(lat);
+                  if (lon != null) setLongitude(lon);
+                  setDirty(true);
+                  setSaved(false);
+                }
+              }}
+            />
           </div>
         </div>
         <div className="settings-row">

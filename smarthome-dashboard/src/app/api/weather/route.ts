@@ -23,23 +23,27 @@ async function fetchWithRetry(url: string, retries = 3, timeoutMs = 5000): Promi
 
 export async function GET() {
   try {
-    const { location } = readSettings();
-    if (!location) return NextResponse.json({ error: 'No location set' }, { status: 400 });
+    const { location, latitude, longitude } = readSettings();
+    console.log('Weather location:', location, latitude, longitude);
+
+    if (!location || latitude == null || longitude == null) {
+      return NextResponse.json({ error: 'No location set' }, { status: 400 });
+    }
 
     if (cachedWeather && Date.now() - cacheTime < CACHE_TTL) {
       return NextResponse.json(cachedWeather);
     }
 
-    const geoRes = await fetchWithRetry(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1`
-    );
-    if (!geoRes.ok) throw new Error('Failed to geocode');
-    const geoData = await geoRes.json();
-    const place = geoData.results?.[0];
-    if (!place) throw new Error('Location not found');
+    // No more geocoding step here — LocationPicker already resolved the
+    // disambiguated place (name + region + country) and its coordinates
+    // at selection time, and those are what get stored in settings.json.
+    // Re-geocoding a bare city name here was the source of the original
+    // "wrong Perth" bug, since names like "Perth" match multiple places
+    // worldwide and Open-Meteo's top search result isn't guaranteed to
+    // be the one the user actually picked.
 
     const weatherUrl =
-      `https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}` +
+      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}` +
       `&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,relative_humidity_2m,apparent_temperature,uv_index` +
       `&hourly=temperature_2m,weather_code,precipitation_probability&forecast_hours=24` +
       `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max,sunrise,sunset` +
@@ -58,15 +62,20 @@ export async function GET() {
     const weatherData = await weatherRes.json();
 
     // Fetch air quality separately
-    const aqRes = await fetchWithRetry(
-      `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${place.latitude}&longitude=${place.longitude}` +
-      `&current=us_aqi,pm2_5,pm10&timezone=auto`
-    );
-    const aqData = aqRes.ok ? await aqRes.json() : null;
+    let aqData: any = null;
+    try {
+      const aqRes = await fetchWithRetry(
+        `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${latitude}&longitude=${longitude}` +
+        `&current=us_aqi,pm2_5,pm10&timezone=auto`
+      );
+      if (aqRes.ok) aqData = await aqRes.json();
+    } catch (aqErr) {
+      console.error('Air quality fetch failed (non-fatal):', aqErr);
+    }
+
 
     cachedWeather = {
-      location:       place.name,
-      country:        place.country,
+      location:       location,
       temperature:    weatherData.current.temperature_2m,
       feelsLike:      weatherData.current.apparent_temperature,
       humidity:       weatherData.current.relative_humidity_2m,

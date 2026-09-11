@@ -12,7 +12,7 @@ interface GeoResult {
 export function LocationPicker({ value, placeHolder, onChange }: { 
   value: string; 
   placeHolder?: string;
-  onChange: (v: string | null, timezone?: string) => void; // null = invalid/unconfirmed
+  onChange: (v: string | null, timezone?: string, lat?: number, lon?: number) => void;
 }) {
   const [query,    setQuery]    = useState(value);
   const [results,  setResults]  = useState<GeoResult[]>([]);
@@ -37,7 +37,7 @@ export function LocationPicker({ value, placeHolder, onChange }: {
   const search = (q: string) => {
     setQuery(q);
     setValid(false);
-    onChange(null); // mark as invalid until a result is picked
+    onChange(null);
     if (timer.current) clearTimeout(timer.current);
     if (!q.trim()) { setResults([]); setOpen(false); return; }
     timer.current = setTimeout(async () => {
@@ -59,7 +59,7 @@ export function LocationPicker({ value, placeHolder, onChange }: {
     setValid(true);
     setOpen(false);
     setResults([]);
-    onChange(r.name, r.timezone); // pass both
+    onChange(label, r.timezone, r.latitude, r.longitude); // pass the full label + coords
   };
 
 

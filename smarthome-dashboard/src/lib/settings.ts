@@ -4,11 +4,13 @@ import path from 'path';
 const SETTINGS_PATH = path.join(process.cwd(), 'settings.json');
 
 export const DEFAULTS = {
+  location:       '',
+  latitude:       null as number | null,
+  longitude:      null as number | null,
   musicLocation:  '',
   photoLocation:  '',
   slideshowTimer: '5',
   idleTimeout:    '10',
-  location:       '',
   defaultTab:     'Pictures',
   theme:          'Dark',
   layout:         'Default',

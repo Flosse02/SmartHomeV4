@@ -1,9 +1,11 @@
 {
+  "location": "Perth, Western Australia, Australia",
+  "latitude": -31.95224,
+  "longitude": 115.8614,
   "musicLocation": "/mnt/c/Users/vande/Music",
   "photoLocation": "",
   "slideshowTimer": "5",
   "idleTimeout": "10",
-  "location": "Perth",
   "defaultTab": "Pictures",
   "theme": "Dark",
   "layout": "Default",
@@ -22,6 +24,7 @@
     "Calendar",
     "Settings"
   ],
+  "locaiton": "",
   "timeZone": "Australia/Perth",
   "hour24": false,
   "tempUnits": "°C",

@@ -2,7 +2,6 @@
 
 import { AQIIcon, aqiLabel, RaindropIcon, SunriseIcon, SunsetIcon, ThermometerIcon, UVIndexIcon, WeatherIcon, WindDirectionIcon, windDirLabel, WindIcon } from '@/lib/icons';
 import { useEffect } from 'react';
-import { WiBarometer } from 'react-icons/wi';
 import useSWR from 'swr';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
