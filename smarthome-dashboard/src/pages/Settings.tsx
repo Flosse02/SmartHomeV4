@@ -365,6 +365,31 @@ export default function Settings() {
         </div>
       </div>
 
+      {/* Home Assistant */}
+      <div className="settings-section">
+        <h2 className="settings-section-label">Home Assistant</h2>
+        <div className="settings-row">
+          <div className="settings-label-wrapper">
+            <span className="settings-label">Dashboard</span>
+            <span className="settings-hint">Open the full Home Assistant UI</span>
+          </div>
+          <div className="settings-right">
+            <StyledButton
+              placeholder="Open Home Assistant"
+              primaryColour
+              onPress={() => {
+                const haUrl = process.env.NEXT_PUBLIC_HA_URL;
+                if (!haUrl) {
+                  alert('Home Assistant URL not configured — set NEXT_PUBLIC_HA_URL in .env.local');
+                  return;
+                }
+                window.open(haUrl, 'home-assistant', 'noopener,noreferrer');
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Data */}
       <div className="settings-section">
         <h2 className="settings-section-label">Data</h2>
