@@ -47,6 +47,8 @@ import {
   MdCameraAlt,
   MdSearch,
   MdMusicNote,
+  MdBatteryFull,
+  MdBolt,
 } from 'react-icons/md';
 
 import { TbCpu, TbHome, TbLeaf } from 'react-icons/tb';
@@ -290,6 +292,18 @@ export function NightModeIcon({ size = 14, color = 'currentColor' }: { size?: nu
 
 export function MusicNoteIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
   return <MdMusicNote size={size} color={color} />;
+}
+
+export function SunIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <WiDaySunny size={size} color={color} />;
+}
+
+export function BoltIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdBolt size={size} color={color} />;
+}
+
+export function BatteryIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return <MdBatteryFull size={size} color={color} />;
 }
 
 export function WeatherIcon({ code, size = 18, color = 'currentColor' }: { code: number; size?: number; color?: string }) {

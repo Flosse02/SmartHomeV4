@@ -8,7 +8,6 @@
   "theme": "Dark",
   "layout": "Default",
   "availablePages": [
-    "Settings",
     "Pictures",
     "Music",
     "Home",
@@ -20,7 +19,8 @@
     "Monitor",
     "Jellyfin",
     "Recipes",
-    "Calendar"
+    "Calendar",
+    "Settings"
   ],
   "timeZone": "Australia/Perth",
   "hour24": false,

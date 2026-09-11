@@ -1,9 +1,0 @@
-{
-  "name": "smarthome-dashboard",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "sh runDev.sh",
-    "prod": "sh runProd.sh"
-  }
- }

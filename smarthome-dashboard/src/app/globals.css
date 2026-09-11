@@ -3010,6 +3010,180 @@ body {
   padding: 8px 0 4px;
 }
    
+/* ============================================
+   SOLAR
+   ============================================ */
+
+.solar-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 24px 8px;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.solar-hero-icon {
+  font-size: 32px;
+  line-height: 1;
+  margin-bottom: 4px;
+  color: var(--warning);
+}
+
+.solar-hero-value {
+  font-family: var(--font-mono);
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -1px;
+  color: var(--text-primary);
+}
+
+.solar-hero-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+
+/* ============================================
+   SOLAR — Diamond flow diagram
+   ============================================ */
+
+.solar-diamond-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 8px 24px 20px;
+}
+
+.solar-node-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid var(--border-default);
+  background: var(--bg-surface);
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.solar-node-icon--pv     { color: var(--warning); }
+.solar-node-icon--battery{ color: var(--accent); }
+.solar-node-icon--grid   { color: var(--text-secondary); }
+.solar-node-icon--home   { color: var(--success); }
+
+.solar-node-icon--border-pv      { border-color: var(--warning); }
+.solar-node-icon--border-battery { border-color: var(--accent); }
+.solar-node-icon--border-import  { border-color: var(--error); }
+.solar-node-icon--border-export  { border-color: var(--success); }
+
+.solar-glow {
+  animation: solarGlowPulse 2s ease-in-out infinite;
+}
+
+@keyframes solarGlowPulse {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.65; }
+}
+
+.solar-node-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  fill: var(--text-muted);
+}
+
+.solar-node-value {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  fill: var(--text-primary);
+}
+
+.solar-node-sub {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.solar-flow-path {
+  fill: none;
+  stroke: var(--border-default);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.solar-flow-path--active {
+  stroke-dasharray: 6 10;
+  animation: solarFlowDash 0.9s linear infinite;
+}
+@keyframes solarFlowDash {
+  to { stroke-dashoffset: -16; }
+}
+
+.solar-flow-path--pv     { stroke: var(--warning); }
+.solar-flow-path--battery{ stroke: var(--accent); }
+.solar-flow-path--grid-in{ stroke: var(--error); }
+.solar-flow-path--grid-out{ stroke: var(--success); }
+.solar-flow-path--home   { stroke: var(--success); }
+
+.solar-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  padding: 0 24px 20px;
+}
+
+.solar-flow-path--reverse {
+  animation-direction: reverse;
+}
+
+/* ── Battery ring ── */
+
+.solar-battery-ring {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.solar-battery-ring svg { transform: rotate(-90deg); }
+
+.solar-battery-ring-bg   { stroke: var(--border-default); fill: none; }
+.solar-battery-ring-fill {
+  fill: none;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+.solar-battery-ring-fill--charging    { stroke: var(--success); }
+.solar-battery-ring-fill--discharging { stroke: var(--warning); }
+.solar-battery-ring-fill--idle        { stroke: var(--accent); }
+
+.solar-battery-ring-pct {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ── Detail rows ── */
+
+.solar-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  padding: 0 24px 20px;
+}
+
 .jellyfin-poster-row {
   display: flex;
   gap: 10px;
