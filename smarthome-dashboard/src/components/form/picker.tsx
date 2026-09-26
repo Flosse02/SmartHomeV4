@@ -9,13 +9,14 @@ interface PickerProps {
   options: PickerOption[];
   value: string;
   onChange: (value: string) => void;
+  className?: string;
 }
 
-export function Picker({ options, value, onChange }: PickerProps) {
+export function Picker({ options, value, onChange, className }: PickerProps) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="select-wrapper">
+    <div className={`select-wrapper ${className || ''}`}>
       <div
         className="select"
         onClick={() => setOpen(o => !o)}

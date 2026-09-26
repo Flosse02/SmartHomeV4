@@ -1872,6 +1872,137 @@ body {
 .toggle--off::after { left: 3px; }
 
 /* ============================================
+   BINS — add to your existing settings.css
+   ============================================ */
+
+.bin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.bin-item {
+  border: 0.5px solid var(--border-subtle);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+}
+
+.bin-item .settings-row:last-child {
+  border-bottom: none;
+}
+
+/* Collapsed row header — click target for the whole bin */
+.bin-item-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  text-align: left;
+}
+
+.bin-item-chevron {
+  display: inline-flex;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.bin-item-chevron--open {
+  transform: rotate(90deg);
+}
+
+.bin-item-title {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.bin-remove-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.bin-remove-btn:hover {
+  background: var(--accent);
+  color: var(--text-primary);
+}
+
+/* Smooth pop-down/up using the grid-template-rows trick — no JS height calc needed */
+.bin-item-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.2s ease;
+}
+
+.bin-item-body--expanded {
+  grid-template-rows: 1fr;
+}
+
+.bin-item-body-inner {
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 16px;
+}
+
+.bin-item-body--expanded .bin-item-body-inner {
+  padding: 4px 16px 12px;
+  border-top: 0.5px solid var(--border-subtle);
+}
+
+.add-bin-btn {
+  align-self: flex-start;
+  margin-top: 12px;
+  padding: 8px 16px;
+  border: 1px dashed var(--border-default);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-bin-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+  transform: translateY(-1px);
+}
+
+.bin-picker-wrap {
+  min-width: 190px;
+}
+
+.bin-picker,
+.bin-picker > button,
+.bin-picker select {
+  min-width: 190px;
+  white-space: nowrap;
+}
+ 
+
+/* ============================================
   Form Controls
   ============================================ */
 .styled-button {

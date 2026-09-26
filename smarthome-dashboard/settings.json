@@ -29,5 +29,28 @@
   "hour24": false,
   "tempUnits": "°C",
   "speedUnits": "km/h",
-  "mainPage": "Pictures"
+  "mainPage": "Pictures",
+  "bins": [
+    {
+      "id": "f98f8c8f-ff94-4113-9fa8-df913e425cd4",
+      "type": "general",
+      "customName": "",
+      "day": 3,
+      "frequency": "fortnightly"
+    },
+    {
+      "id": "57b54aed-dccb-4ef7-b791-ddbe99edc3d2",
+      "type": "recycling",
+      "customName": "",
+      "day": 3,
+      "frequency": "fortnightly"
+    },
+    {
+      "id": "6c7da031-6ac4-47c3-95f9-70fd006f84b7",
+      "type": "organic",
+      "customName": "",
+      "day": 3,
+      "frequency": "weekly"
+    }
+  ]
 }

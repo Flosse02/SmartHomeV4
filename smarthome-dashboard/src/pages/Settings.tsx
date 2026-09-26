@@ -15,6 +15,14 @@ import { MultiSelectPicker } from '@/components/form/multiSelectPicker';
 
 type Theme = 'Light' | 'Dark' | 'Auto';
 
+interface Bin {
+  id: string;
+  type: string;
+  customName: string;
+  day: number;
+  frequency: string;
+}
+
 export default function Settings() {
   const { theme, setTheme: setThemeContext, resolvedTheme } = useTheme();
   
@@ -23,6 +31,8 @@ export default function Settings() {
   const [availablePages, setAvailablePages] = useState<string[]>(TABS);
   const [tempUnits,      setTempUnits]      = useState('');
   const [speedUnits,     setSpeedUnits]     = useState('');
+  const [bins,           setBins]           = useState<Bin[]>([]);
+  const [expandedBins,   setExpandedBins]   = useState<Set<string>>(new Set());
   const [location,       setLocation]       = useState('');
   const [latitude,       setLatitude]       = useState<number | null>(null);
   const [longitude,      setLongitude]      = useState<number | null>(null);
@@ -54,6 +64,7 @@ export default function Settings() {
         setIdleTimeout(s.idleTimeout ?? '10');
         setTempUnits(s.tempUnits ?? '°C');
         setSpeedUnits(s.speedUnits ?? 'km/h');
+        setBins(s.bins && s.bins.length ? s.bins : [makeDefaultBin()]);
         if (s.theme) setThemeContext(s.theme);
         setTimeZone(s.timeZone ?? '');
         setHour24(s.hour24 ?? false);
@@ -73,6 +84,7 @@ export default function Settings() {
         longitude,
         tempUnits,
         speedUnits,
+        bins,
         musicLocation, 
         photoLocation, 
         slideshowTimer, 
@@ -136,6 +148,81 @@ export default function Settings() {
     { value: 'km/h',  label: 'km/h'  },
     { value: 'mph', label: 'mph' },
   ];
+
+  const binTypeOptions = [
+    { value: 'general', label: 'General Waste' },
+    { value: 'recycling', label: 'Recycling' },
+    { value: 'organic', label: 'Organic / Green' },
+    { value: 'glass', label: 'Glass' },
+    { value: 'other', label: 'Other' },
+  ];
+  
+  const dayOptions = [
+    { value: '0', label: 'Sunday' },
+    { value: '1', label: 'Monday' },
+    { value: '2', label: 'Tuesday' },
+    { value: '3', label: 'Wednesday' },
+    { value: '4', label: 'Thursday' },
+    { value: '5', label: 'Friday' },
+    { value: '6', label: 'Saturday' },
+  ];
+  
+  const frequencyOptions = [
+    { value: 'weekly', label: 'Every week' },
+    { value: 'fortnightly', label: 'Every 2nd week' },
+    { value: 'monthly', label: 'Every month' },
+  ];
+
+  function makeId() {
+    return (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : `bin-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+
+  function makeDefaultBin(): Bin {
+    return {
+      id: makeId(),
+      type: 'general',
+      customName: '',
+      day: 3,
+      frequency: 'weekly',
+    };
+  }
+
+  const addBin = () => {
+    const newBin = makeDefaultBin();
+    setBins([...bins, newBin]);
+    setExpandedBins(prev => new Set(prev).add(newBin.id));
+    setDirty(true);
+  };
+
+  const removeBin = (id: string) => {
+    setBins(bins.filter(bin => bin.id !== id));
+    setExpandedBins(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    setDirty(true);
+  };
+
+  const updateBinField = (id: string, field: keyof Bin, value: string | number) => {
+    setBins(bins.map(bin => (bin.id === id ? { ...bin, [field]: value } : bin)));
+    setDirty(true);
+  };
+
+  const toggleBin = (id: string) => {
+    setExpandedBins(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const getBinLabel = (bin: Bin) => {
+    if (bin.type === 'other') return bin.customName.trim() || 'Other';
+    return binTypeOptions.find(o => o.value === bin.type)?.label ?? 'Bin';
+  };
 
   const handleDedupe = async () => {
     const confirmed = window.confirm(
@@ -283,6 +370,111 @@ export default function Settings() {
             />
           </div>
         </div>
+      </div>
+
+      {/* Bins */}
+      <div className="settings-section">
+        <h2 className="settings-section-label">Bins</h2>
+
+        <div className="bin-list">
+          {bins.map((bin, index) => {
+            const isExpanded = expandedBins.has(bin.id);
+            return (
+              <div className={`bin-item ${isExpanded ? 'bin-item--expanded' : ''}`} key={bin.id}>
+                <button
+                  type="button"
+                  className="bin-item-header"
+                  onClick={() => toggleBin(bin.id)}
+                  aria-expanded={isExpanded}
+                >
+                  <span className={`bin-item-chevron ${isExpanded ? 'bin-item-chevron--open' : ''}`}>▸</span>
+                  <span className="bin-item-title">{getBinLabel(bin)}</span>
+                  {bins.length > 1 && (
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      className="bin-remove-btn"
+                      onClick={(e) => { e.stopPropagation(); removeBin(bin.id); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); removeBin(bin.id); } }}
+                      aria-label={`Remove bin ${index + 1}`}
+                    >
+                      ×
+                    </span>
+                  )}
+                </button>
+
+                <div className={`bin-item-body ${isExpanded ? 'bin-item-body--expanded' : ''}`}>
+                  <div className="bin-item-body-inner">
+                    <div className="settings-row">
+                      <div className="settings-label-wrapper">
+                        <span className="settings-label">Type</span>
+                      </div>
+                      <div className="settings-right bin-picker-wrap">
+                        <Picker
+                          className="bin-picker"
+                          value={bin.type}
+                          options={binTypeOptions}
+                          onChange={(value) => updateBinField(bin.id, 'type', value)}
+                        />
+                      </div>
+                    </div>
+
+                    {bin.type === 'other' && (
+                      <div className="settings-row">
+                        <div className="settings-label-wrapper">
+                          <span className="settings-label">Name</span>
+                        </div>
+                        <div className="settings-right settings-control">
+                          <InputBar
+                            placeholder="e.g. Cardboard"
+                            type="text"
+                            value={bin.customName}
+                            onChange={(value) => updateBinField(bin.id, 'customName', value)}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="settings-row">
+                      <div className="settings-label-wrapper">
+                        <span className="settings-label">Collection day</span>
+                      </div>
+                      <div className="settings-right bin-picker-wrap">
+                        <Picker
+                          className="bin-picker"
+                          value={String(bin.day)}
+                          options={dayOptions}
+                          onChange={(value) => updateBinField(bin.id, 'day', Number(value))}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="settings-row">
+                      <div className="settings-label-wrapper">
+                        <span className="settings-label">Frequency</span>
+                        {bin.frequency === 'fortnightly' && (
+                          <span className="settings-hint">Based on this week vs. next</span>
+                        )}
+                      </div>
+                      <div className="settings-right bin-picker-wrap">
+                        <Picker
+                          className="bin-picker"
+                          value={bin.frequency}
+                          options={frequencyOptions}
+                          onChange={(value) => updateBinField(bin.id, 'frequency', value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <button type="button" className="add-bin-btn" onClick={addBin}>
+          + Add bin
+        </button>
       </div>
 
       {/* Weather */}
