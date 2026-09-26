@@ -365,12 +365,12 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Home Assistant */}
+      {/* Links */}
       <div className="settings-section">
-        <h2 className="settings-section-label">Home Assistant</h2>
+        <h2 className="settings-section-label">Links</h2>
         <div className="settings-row">
           <div className="settings-label-wrapper">
-            <span className="settings-label">Dashboard</span>
+            <span className="settings-label">Home Assistant</span>
             <span className="settings-hint">Open the full Home Assistant UI</span>
           </div>
           <div className="settings-right">
@@ -384,6 +384,46 @@ export default function Settings() {
                   return;
                 }
                 window.open(haUrl, 'home-assistant', 'noopener,noreferrer');
+              }}
+            />
+          </div>
+        </div>
+        <div className="settings-row">
+          <div className="settings-label-wrapper">
+            <span className="settings-label">Radarr</span>
+            <span className="settings-hint">Open the full Radarr UI</span>
+          </div>
+          <div className="settings-right">
+            <StyledButton
+              placeholder="Open Radarr"
+              primaryColour
+              onPress={() => {
+                const radarrUrl = process.env.NEXT_PUBLIC_RADARR_URL;
+                if (!radarrUrl) {
+                  alert('Radarr URL not configured — set NEXT_PUBLIC_RADARR_URL in .env.local');
+                  return;
+                }
+                window.open(radarrUrl, 'radarr', 'noopener,noreferrer');
+              }}
+            />
+          </div>
+        </div>
+        <div className="settings-row">
+          <div className="settings-label-wrapper">
+            <span className="settings-label">Sonarr</span>
+            <span className="settings-hint">Open the full Sonarr UI</span>
+          </div>
+          <div className="settings-right">
+            <StyledButton
+              placeholder="Open Sonarr"
+              primaryColour
+              onPress={() => {
+                const sonarrUrl = process.env.NEXT_PUBLIC_SONARR_URL;
+                if (!sonarrUrl) {
+                  alert('Sonarr URL not configured — set NEXT_PUBLIC_SONARR_URL in .env.local');
+                  return;
+                }
+                window.open(sonarrUrl, 'sonarr', 'noopener,noreferrer');
               }}
             />
           </div>
